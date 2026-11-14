@@ -1,0 +1,11 @@
+export type Quality = 'alta' | 'media' | 'baja';
+export interface Model { label: string; annual_mape_pct: number; cell_rmse_improvement_pct: number; chosen: boolean }
+export interface SeriesRow { year: number; modis_raw: number; viirs_raw: number | null; harmonized: number }
+export interface Country { label: string; quality: { level: Quality; reasons: string[] }; model_label: string; annual_error_pct: number; baseline_error_pct: number; error_reduction_pct: number; band_pct: number; peak_month_pm1_pct: number; spearman: number; terra_only_annual_error_pct: number; terra_only_baseline_pct: number; n_cells: number; models: Model[]; backcast: { train: string; test: string; annual_error_pct: number; baseline_error_pct: number }; drift: Record<string, { mk_p: number; sen_pct_per_year: number }>; series: SeriesRow[] }
+export interface Break { raw_jump_pct: number; raw_p: number; harmonized_jump_pct: number; harmonized_p: number; break_removed: boolean }
+interface Correlation { pearson_log: number; spearman: number }
+export interface Harmonization { methodology_version: string; data_cutoff: string; viirs_cutoff: string; attribution: string; countries: Record<string, Country>; independent: { breaks: Record<string, Break>; conafor_mexico: { years: string; national: { conafor_n_fires: { harmonized: Correlation; raw_concat: Correlation; harmonized_2001_2011: Correlation; raw_concat_2001_2011: Correlation }; conafor_area_ha: { harmonized: Correlation; raw_concat: Correlation } }; by_state: { states_matched: number; median_spearman_harmonized: number; median_spearman_raw: number; share_states_better_harmonized: number } }; country_model_crosscheck: Record<string, { pearson_log_2001_2011: number; median_ratio_2001_2011: number }> } }
+export const signed = (value: number, digits = 0) => `${value > 0 ? '+' : ''}${value.toFixed(digits)}%`;
+export const rawSeries = (rows: SeriesRow[]) => rows.map(row => ({ ...row, raw_concat: row.year < 2012 ? row.modis_raw : row.viirs_raw }));
+export const rankedModels = (models: Model[]) => [...models].sort((a, b) => a.annual_mape_pct - b.annual_mape_pct);
+export const qualityVariant = (level: Quality) => ({ alta: 'success', media: 'warning', baja: 'error' } as const)[level];

@@ -1,133 +1,167 @@
+// Typed client for the Firely API (see api/openapi.yaml). All shapes below were taken from real responses.
 export const API_URL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
 
 export type Reference = 'median' | 'mean';
 export type Metric = 'count' | 'frp';
+
+/** One of the area selectors every endpoint accepts. */
 export type Area =
   | { lat: number; lon: number; radius_km: number }
   | { admin: string }
   | { bbox: string }
-  | { geometry: string };
+  | { geometry: string }
+  | { h3: string };
 
 export interface Envelope {
   area?: Record<string, unknown>;
   methodology_version: string;
   data_cutoff: string;
   attribution: string;
-  harmonization_uncertainty?: { years_estimated?: number[]; median_rel_error?: number };
+  harmonization_uncertainty?: { years_estimated?: number[]; median_rel_error?: number } | null;
 }
 
 export interface CalendarRow {
   year: number;
   month: number;
   count_harm?: number;
-  frp_harm?: number;
   count_harm_lo?: number;
   count_harm_hi?: number;
+  frp_harm?: number;
   anomaly_ratio?: number;
   percentile?: number;
   return_period_years?: number;
-  clear_frac?: number;
+  clear_frac?: number | null;
   is_estimated?: boolean;
-  enso_phase?: string;
+  enso_phase?: string | null;
+}
+export interface CalendarResponse extends Envelope { mock?: boolean; reference?: Reference; rows: CalendarRow[] }
+
+export interface DailyRow { date?: string; day?: number; count_harm?: number; frp_harm?: number | null }
+export interface DailyResponse extends Partial<Envelope> { rows?: DailyRow[]; days?: DailyRow[] }
+
+export interface SeasonRow { year: number; onset: string; peak: string; end: string; annual_count_harm: number; is_estimated: boolean }
+export interface Trend { n: number; sen_days_per_decade: number | null; p_value: number | null }
+export interface SeasonResponse extends Envelope {
+  rows: SeasonRow[];
+  trend: { onset: Trend; peak: Trend };
+  trend_observed_only: { onset: Trend; peak: Trend };
+  summary_es: string;
+  method: string;
 }
 
-export interface CalendarResponse extends Envelope {
-  mock?: boolean;
-  reference?: Reference;
-  rows: CalendarRow[];
+export interface AnalogYear { year: number; similarity: number; year_end_count_harm: number; is_estimated: boolean; oni_phase?: string | null }
+export interface AnalogsResponse extends Envelope {
+  date: string;
+  current_count_harm: number;
+  current_oni_phase?: string | null;
+  analogs: AnalogYear[];
+  estimated_analog_years: number[];
+  projection: { p10: number; p50: number; p90: number } | null;
+  confidence: 'low' | 'medium' | 'high' | string;
+  method: string;
 }
 
-export interface DailyRow {
-  date?: string;
-  day?: number;
-  count_harm?: number;
-  frp_harm?: number;
+export interface ReturnPeriodResponse extends Envelope {
+  year: number; month: number; count_harm: number | null; percentile: number | null;
+  return_period_years: number | null; n_reference_years: number; method: string;
 }
 
-export interface DailyResponse extends Partial<Envelope> {
-  rows?: DailyRow[];
-  days?: DailyRow[];
+export interface WeekdayResponse extends Envelope {
+  counts_monday_first: number[]; n_events: number; chi_square: number | null; p_value: number | null; summary_es: string; method: string;
 }
 
-export interface ResolveAreaResponse extends Partial<Envelope> {
-  area?: Record<string, unknown>;
-  candidates: AreaCandidate[];
-  ambiguous: boolean;
-  intent: ResolvedIntent;
-}
+export interface NightRow { year: number; night_detections: number; total_detections: number; night_ratio: number }
+export interface NightResponse extends Envelope { rows: NightRow[]; method: string }
 
-export interface ResolvedIntent {
-  place_text?: string;
-  date_from?: string | null;
-  date_to?: string | null;
-  granularity?: string;
-  lang?: string;
-  source?: string;
+export interface ContextRow {
+  year: number; month: number; oni: number | null; enso_phase: string | null;
+  fwi_mean: number | null; fwi_anom: number | null; dc_anom: number | null; dmc_anom: number | null;
 }
+export interface ContextResponse extends Envelope { rows: ContextRow[]; coverage: string }
+
+export interface FireEvent {
+  event_id: string; start_date: string; end_date: string; duration_days: number; n_hotspots_harm: number;
+  frp_total: number; area_approx_km2: number; night_ratio: number; burn_type: string | null;
+  centroid_lat: number; centroid_lon: number; cells: string[]; rank: number;
+}
+export interface EventsResponse extends Envelope { rows: FireEvent[]; area_rank_basis?: string; area_approx_note?: string }
+
+export interface ReportedRow {
+  year: number; month: number; reported_fires: number | null; reported_area_ha: number | null;
+  detected_hotspots_state_year: number | null; state_year_reported_data: boolean;
+}
+export interface ReportedResponse extends Envelope { state?: { code: string; name: string }; rows: ReportedRow[]; coverage: string }
+
+export interface AdminCandidate { level: string; code: string; name: string; parent: string | null; country: string; bbox: [number, number, number, number] }
+export interface AdminSearchResponse extends Envelope { candidates: AdminCandidate[] }
 
 export interface AreaCandidate {
-  label: string;
-  kind?: string;
-  country?: string;
-  code?: string;
-  parent?: string;
-  bbox: [number, number, number, number] | string;
-  score?: number;
+  label: string; kind?: string; country?: string; code?: string; parent?: string;
+  bbox: [number, number, number, number] | string; score?: number;
 }
+export interface ResolvedIntent { place_text?: string; date_from?: string | null; date_to?: string | null; granularity?: string; lang?: string; source?: string }
+export interface ResolveAreaResponse extends Partial<Envelope> { candidates: AreaCandidate[]; ambiguous: boolean; intent: ResolvedIntent }
+
+export interface DescribeResponse { text: string; sources?: string[] }
 
 export interface RecentFeatureCollection {
   type: 'FeatureCollection';
-  features: Array<{ type: 'Feature'; geometry: { type: 'Point'; coordinates: [number, number] }; properties: { frp_mw?: number | null; ts_utc?: string } }>;
+  features: Array<{ type: 'Feature'; geometry: { type: 'Point'; coordinates: [number, number] }; properties: { frp_mw?: number | null; ts_utc?: string; platform?: string; confidence_h?: string } }>;
   data_cutoff?: string | null;
   attribution?: string;
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, public code?: string) { super(`API ${status}`); }
+  constructor(public status: number, public code?: string) { super(`API ${status}${code ? ` ${code}` : ''}`); }
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, init);
   if (!response.ok) {
-    const body = await response.json().catch(() => null) as { detail?: { code?: string } } | null;
-    throw new ApiError(response.status, body?.detail?.code);
+    const body = (await response.json().catch(() => null)) as { detail?: { code?: string } | string } | null;
+    throw new ApiError(response.status, typeof body?.detail === 'object' ? body.detail?.code : undefined);
   }
   return response.json() as Promise<T>;
 }
 
-function areaParams(area: Area): URLSearchParams {
+export function areaParams(area: Area): URLSearchParams {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(area)) params.set(key, String(value));
   return params;
 }
 
-export function getCalendar(area: Area, from: string, to: string, metric: Metric, reference: Reference, signal?: AbortSignal) {
+const withArea = (area: Area, extra: Record<string, string | number | undefined> = {}) => {
   const params = areaParams(area);
-  params.set('from', from);
-  params.set('to', to);
-  params.set('metric', metric);
-  params.set('reference', reference);
-  return request<CalendarResponse>(`/calendar?${params}`, { signal });
-}
+  for (const [key, value] of Object.entries(extra)) if (value !== undefined) params.set(key, String(value));
+  return params;
+};
 
-export function getDaily(area: Area, year: number, month: number, signal?: AbortSignal) {
-  const params = areaParams(area);
-  params.set('year', String(year));
-  params.set('month', String(month));
-  return request<DailyResponse | DailyRow[]>(`/calendar/daily?${params}`, { signal });
-}
+export const getCalendar = (area: Area, from: string, to: string, metric: Metric, reference: Reference, signal?: AbortSignal) =>
+  request<CalendarResponse>(`/calendar?${withArea(area, { from, to, metric, reference })}`, { signal });
+export const getDaily = (area: Area, year: number, month: number, signal?: AbortSignal) =>
+  request<DailyResponse | DailyRow[]>(`/calendar/daily?${withArea(area, { year, month })}`, { signal });
+export const getSeason = (area: Area, signal?: AbortSignal) => request<SeasonResponse>(`/season?${withArea(area)}`, { signal });
+export const getAnalogs = (area: Area, date: string, signal?: AbortSignal) =>
+  request<AnalogsResponse>(`/analogs?${withArea(area, { date })}`, { signal });
+export const getReturnPeriod = (area: Area, year: number, month: number, signal?: AbortSignal) =>
+  request<ReturnPeriodResponse>(`/return-period?${withArea(area, { year, month })}`, { signal });
+export const getWeekday = (area: Area, signal?: AbortSignal) => request<WeekdayResponse>(`/weekday?${withArea(area)}`, { signal });
+export const getNight = (area: Area, signal?: AbortSignal) => request<NightResponse>(`/night?${withArea(area)}`, { signal });
+export const getContext = (area: Area, from: string, to: string, signal?: AbortSignal) =>
+  request<ContextResponse>(`/context?${withArea(area, { from, to })}`, { signal });
+export const getEvents = (area: Area, from: string, to: string, minHotspots = 3, signal?: AbortSignal) =>
+  request<EventsResponse>(`/events?${withArea(area, { from, to, min_hotspots: minHotspots })}`, { signal });
+export const getReported = (area: Area, from: string, to: string, signal?: AbortSignal) =>
+  request<ReportedResponse>(`/reported?${withArea(area, { from, to })}`, { signal });
+export const searchAdmin = (q: string, signal?: AbortSignal) => request<AdminSearchResponse>(`/admin/search?q=${encodeURIComponent(q)}`, { signal });
+export const getRecent = (area: Area, hours: 24 | 48, signal?: AbortSignal) =>
+  request<RecentFeatureCollection>(`/recent?${withArea(area, { hours })}`, { signal });
 
-export function getRecent(area: Area, hours: 24 | 48, signal?: AbortSignal) {
-  const params = areaParams(area);
-  params.set('hours', String(hours));
-  return request<RecentFeatureCollection>(`/recent?${params}`, { signal });
-}
-
-export function resolveArea(text: string, lang = 'es', signal?: AbortSignal) {
-  return request<ResolveAreaResponse>('/resolve-area', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, lang }),
-    signal,
+export const resolveArea = (text: string, lang = 'es', signal?: AbortSignal) =>
+  request<ResolveAreaResponse>('/resolve-area', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, lang }), signal,
   });
-}
+export const describe = (kind: 'calendar' | 'chart', payload: unknown, lang = 'es', profile: 'brigadista' | 'cientifico' = 'brigadista', signal?: AbortSignal) =>
+  request<DescribeResponse>('/describe', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind, payload, lang, profile }), signal,
+  });

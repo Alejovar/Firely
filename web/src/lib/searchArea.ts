@@ -1,4 +1,4 @@
-import type { Area, AreaCandidate, ResolvedIntent } from './api/client';
+import type { Area, AreaCandidate, ResolvedIntent } from '../api/client';
 
 export function candidateArea(candidate: AreaCandidate): Area | null {
   const values = typeof candidate.bbox === 'string' ? candidate.bbox.split(',').map(Number) : candidate.bbox;
