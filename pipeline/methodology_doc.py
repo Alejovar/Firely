@@ -36,16 +36,23 @@ MODEL_DESC = {
 }
 
 
-def quality(v):
-    return v.get("quality") or assess_quality(v)
+def quality(v, brk=None):
+    return assess_quality(v, brk)
 
 
 def pct(x, d=1):
     return f"{x:.{d}f}%"
 
 
+EXTRA: dict = {}
+
+
 def load(processed: Path):
     summary = json.loads((processed / "metadata" / "harmonization_summary.json").read_text())
+    extra = processed / "metadata" / "validation_extra.json"
+    EXTRA.clear()
+    if extra.exists():
+        EXTRA.update(json.loads(extra.read_text()))
     star = {c: pd.read_csv(processed / "metadata" / f"star_chart_{c}.csv") for c in summary["countries"]}
     con = duckdb.connect()
     q = lambda sensor: con.execute(
@@ -70,7 +77,7 @@ def build_json(summary, star, cutoffs):
         s = star[c]
         s = s[(s.year >= 2001) & (s.year <= 2025)]
         out["countries"][c] = {
-            "label": label(c), "quality": quality(v), "model": v["model"], "model_label": MODEL_ES[v["model"]],
+            "label": label(c), "quality": quality(v, EXTRA.get('breaks', {}).get(c)), "model": v["model"], "model_label": MODEL_ES[v["model"]],
             "annual_error_pct": round(m["region_year_mape_pct"], 2),
             "baseline_error_pct": round(m["region_year_mape_baseline_pct"], 2),
             "error_reduction_pct": round(100 * (1 - m["region_year_mape_pct"] / m["region_year_mape_baseline_pct"]), 1),
@@ -90,6 +97,8 @@ def build_json(summary, star, cutoffs):
                         "viirs_raw": int(r.viirs_raw) if r.viirs_raw else None,
                         "harmonized": round(float(r.harmonized), 1)} for r in s.itertuples()],
         }
+    out["independent"] = {"breaks": EXTRA.get("breaks", {}), "conafor_mexico": EXTRA.get("conafor_mexico", {}),
+                          "country_model_crosscheck": EXTRA.get("country_model_crosscheck", {})}
     return out
 
 
@@ -104,7 +113,7 @@ def build_markdown(summary, star, cutoffs):
         jump[c] = a.viirs_raw / a.modis_raw
     lo, hi = min(jump.values()), max(jump.values())
     qrows = "\n".join(
-        f"| {label(c)} | **{quality(v)['level']}** | " + ("; ".join(quality(v)["reasons"]) or "cumple todos los criterios") + " |"
+        f"| {label(c)} | **{quality(v, EXTRA.get('breaks', {}).get(c))['level']}** | " + ("; ".join(quality(v, EXTRA.get('breaks', {}).get(c))["reasons"]) or "cumple todos los criterios") + " |"
         for c, v in summary["countries"].items())
     rows = []
     for c, v in summary["countries"].items():
@@ -121,6 +130,38 @@ def build_markdown(summary, star, cutoffs):
             f"p={v['drift']['trends'][k]['mk_p']:.2f}, {v['drift']['trends'][k]['sen_pct_per_year']:+.1f}%/año"
             for k in ("ratio_terra_aqua", "ratio_terra", "ratio_aqua")) + " |"
         for c, v in summary["countries"].items() if "drift" in v)
+    pc_path = Path(os.getenv("FIRELY_DATA_PROCESSED", "data/processed")) / "metadata" / "predictor_check.json"
+    pc = json.loads(pc_path.read_text()) if pc_path.exists() else {}
+    predrows = "\n".join(f"| {label(c)} | {v['terra_aqua']['annual_mape_pct']:.2f}% | {v['aqua_only']['annual_mape_pct']:.2f}% | "
+                          f"{'Terra+Aqua' if v['best'] == 'terra_aqua' else 'Aqua solo'} |" for c, v in pc.items())
+    pred_text = ("### ¿Por qué Terra+Aqua y no solo Aqua?\n\nAqua pasa a la misma hora que S-NPP y su órbita es estable, así que parece el mejor predictor. "
+                 "Lo probamos con la misma validación año-fuera (2013–2025), en el modelo elegido por cada país:\n\n"
+                 "| País | Error anual con Terra+Aqua | Error anual con Aqua solo | Mejor |\n|---|---|---|---|\n" + predrows +
+                 "\n\nUsar los dos satélites combinados da menos error en todos los países probados, así que es el predictor principal. "
+                 "Terra se usa solo antes de agosto de 2002, cuando Aqua aún no existía.\n") if pc else ""
+    brk = EXTRA.get("breaks", {})
+    breakrows = "\n".join(
+        f"| {label(c)} | {b['raw_jump_pct']:+.0f}% (p={b['raw_p']:.3f}) | {b['harmonized_jump_pct']:+.0f}% (p={b['harmonized_p']:.2f}) | "
+        f"{'sí' if b['break_removed'] else '**no**'} |" for c, b in brk.items() if b)
+    cm = EXTRA.get("country_model_crosscheck", {})
+    crossrows = "\n".join(
+        f"| {label(c)} | {x['pearson_log_2001_2011']} | {x['median_ratio_2001_2011']} |" for c, x in cm.items() if x.get("pearson_log_2001_2011") is not None)
+    cf = EXTRA.get("conafor_mexico", {})
+    if cf:
+        nf = cf["national"]["conafor_n_fires"]; ar = cf["national"]["conafor_area_ha"]; stt = cf.get("by_state", {})
+        conafor_text = (
+            f"Con los totales oficiales {cf['years']} ({nf['harmonized']['n_years']} años, 11 de ellos antes de 2012): la correlación (log) "
+            f"del **número de incendios** con la serie armonizada es **{nf['harmonized']['pearson_log']:.2f}**, y con la serie cruda "
+            f"pegada, **{nf['raw_concat']['pearson_log']:.2f}**. Dentro de 2001–2011 sola: {nf['harmonized_2001_2011']['pearson_log']:.2f} contra "
+            f"{nf['raw_concat_2001_2011']['pearson_log']:.2f}. "
+            + (f"Por estado ({stt['states_tested']} estados), la mediana de Spearman es {stt['median_spearman_harmonized']:.2f} con la armonizada contra "
+               f"{stt['median_spearman_raw']:.2f} con la cruda, y {100 * stt['share_states_better_harmonized']:.0f}% de los estados correlacionan mejor con la armonizada. " if stt else "")
+            + f"Para la **superficie quemada** (hectáreas) el resultado es más matizado: {ar['harmonized']['pearson_log']:.2f} (armonizada) contra "
+            f"{ar['raw_concat']['pearson_log']:.2f} (cruda) en todo el periodo, aunque en 2001–2011 la armonizada gana "
+            f"({ar['harmonized_2001_2011']['pearson_log']:.2f} contra {ar['raw_concat_2001_2011']['pearson_log']:.2f}). "
+            "Las hectáreas dependen de pocos incendios muy grandes y un conteo de puntos de calor no las mide directamente.")
+    else:
+        conafor_text = "(Sin datos de CONAFOR disponibles.)"
     any_v = next(iter(summary["countries"].values()))
     backcast_train = any_v.get("drift", {}).get("backcast_train", "")
     backcast_test = any_v.get("drift", {}).get("backcast_test", "")
@@ -217,6 +258,26 @@ La **línea base** es la corrección simple: multiplicar MODIS por un factor fij
 Además, el **mes de máxima actividad** se acierta, con una tolerancia de un mes, en al menos el
 {pm1:.0f}% de los años en todas las configuraciones.
 
+### Validación independiente (no usa los datos de calibración)
+
+**1. ¿Desapareció el salto de 2012?** Prueba de quiebre: se ajusta `log(total anual) = a + b·año + d·[año ≥ 2012]` sobre
+2003–2025, primero con la serie cruda pegada (MODIS hasta 2011, VIIRS desde 2012) y luego con la armonizada.
+Si la armonización funciona, el salto crudo es grande y el armonizado no se distingue de cero.
+
+| País | Salto crudo | Salto armonizado | ¿Quiebre eliminado? |
+|---|---|---|---|
+{breakrows}
+
+**2. CONAFOR (México).** Los incendios forestales reportados en campo por CONAFOR no dependen de ningún satélite.
+{conafor_text}
+
+**3. Contraste con un segundo modelo.** El análisis por país de `country_factors.zip` es otra implementación (modelo
+mensual por país con predictor Aqua). Sus totales anuales de 2001–2011 frente a los nuestros:
+
+| País | Correlación (log) 2001–2011 | Razón mediana nuestro/suyo |
+|---|---|---|
+{crossrows}
+
 ### Confiabilidad por país
 
 Cada país recibe una etiqueta calculada con sus propias validaciones. **No se esconden los datos de baja
@@ -241,6 +302,7 @@ que es la misma dirección del tiempo que las estimaciones de 2001–2011.
 |---|---|---|---|---|
 {backrows}
 
+{pred_text}
 ### Deriva de órbita de Terra y Aqua
 
 Desde ~2020 Terra y, después, Aqua se van desplazando de su hora de paso original. Lo medimos como la razón anual

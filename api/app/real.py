@@ -81,13 +81,16 @@ def _uncertainty():
         countries = json.loads(path.read_text(encoding="utf-8")).get("countries", {})
         from pipeline.harmonize import assess_quality  # countries rated 'baja' do not set the headline error
 
-        def level(c):
+        extra_path = db.processed_root() / "metadata" / "validation_extra.json"
+        breaks = json.loads(extra_path.read_text()).get("breaks", {}) if extra_path.is_file() else {}
+
+        def level(c, name=None):
             try:
-                return (c.get("quality") or assess_quality(c))["level"]
+                return assess_quality(c, breaks.get(name))["level"]
             except KeyError:  # summary written before the reliability rating existed
                 return "media"
 
-        errs = [c["validation"]["ta"]["region_year_median_ape_pct"] / 100 for c in countries.values() if level(c) != "baja"]
+        errs = [c["validation"]["ta"]["region_year_median_ape_pct"] / 100 for name, c in countries.items() if level(c, name) != "baja"]
     except (OSError, json.JSONDecodeError, KeyError, TypeError):
         return None
     if not errs:

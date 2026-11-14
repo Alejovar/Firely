@@ -139,6 +139,36 @@ Años con solo Terra (2001 a julio de 2002, sin Aqua): error anual 6.53% contra 
 Además, el **mes de máxima actividad** se acierta, con una tolerancia de un mes, en al menos el
 86% de los años en todas las configuraciones.
 
+### Validación independiente (no usa los datos de calibración)
+
+**1. ¿Desapareció el salto de 2012?** Prueba de quiebre: se ajusta `log(total anual) = a + b·año + d·[año ≥ 2012]` sobre
+2003–2025, primero con la serie cruda pegada (MODIS hasta 2011, VIIRS desde 2012) y luego con la armonizada.
+Si la armonización funciona, el salto crudo es grande y el armonizado no se distingue de cero.
+
+| País | Salto crudo | Salto armonizado | ¿Quiebre eliminado? |
+|---|---|---|---|
+| México | +218% (p=0.000) | -20% (p=0.28) | sí |
+| Argentina | +121% (p=0.003) | -29% (p=0.16) | sí |
+| Uruguay | +127% (p=0.005) | -23% (p=0.34) | sí |
+| Chile | +209% (p=0.000) | -2% (p=0.93) | sí |
+| Paraguay | +201% (p=0.000) | -4% (p=0.86) | sí |
+| Bolivia | +26% (p=0.529) | -66% (p=0.01) | **no** |
+
+**2. CONAFOR (México).** Los incendios forestales reportados en campo por CONAFOR no dependen de ningún satélite.
+Con los totales oficiales 2001-2025 (25 años, 11 de ellos antes de 2012): la correlación (log) del **número de incendios** con la serie armonizada es **0.80**, y con la serie cruda pegada, **-0.00**. Dentro de 2001–2011 sola: 0.84 contra 0.66. Por estado (30 estados), la mediana de Spearman es 0.52 con la armonizada contra 0.18 con la cruda, y 87% de los estados correlacionan mejor con la armonizada. Para la **superficie quemada** (hectáreas) el resultado es más matizado: 0.50 (armonizada) contra 0.66 (cruda) en todo el periodo, aunque en 2001–2011 la armonizada gana (0.94 contra 0.69). Las hectáreas dependen de pocos incendios muy grandes y un conteo de puntos de calor no las mide directamente.
+
+**3. Contraste con un segundo modelo.** El análisis por país de `country_factors.zip` es otra implementación (modelo
+mensual por país con predictor Aqua). Sus totales anuales de 2001–2011 frente a los nuestros:
+
+| País | Correlación (log) 2001–2011 | Razón mediana nuestro/suyo |
+|---|---|---|
+| México | 0.994 | 0.994 |
+| Argentina | 0.993 | 0.999 |
+| Uruguay | 0.985 | 1.069 |
+| Chile | 0.968 | 1.015 |
+| Paraguay | 0.974 | 0.951 |
+| Bolivia | 0.991 | 0.866 |
+
 ### Confiabilidad por país
 
 Cada país recibe una etiqueta calculada con sus propias validaciones. **No se esconden los datos de baja
@@ -156,7 +186,7 @@ confiabilidad: se muestran marcados.**
 | Uruguay | **baja** | la validación hacia atrás es peor que la línea base; la razón VIIRS/MODIS cambia con el tiempo (p=0.00); banda de incertidumbre ancha (±16%) |
 | Chile | **baja** | mejora de 3% frente a la línea base (menos de 20%); la razón VIIRS/MODIS cambia con el tiempo (p=0.00); banda de incertidumbre ancha (±17%) |
 | Paraguay | **alta** | cumple todos los criterios |
-| Bolivia | **media** | mejora de 13% frente a la línea base (menos de 20%) |
+| Bolivia | **baja** | mejora de 13% frente a la línea base (menos de 20%); persiste un quiebre en 2012 en la serie armonizada (-66%, p=0.007) |
 
 ### Validación hacia atrás (el caso real de 2001–2011)
 
@@ -172,6 +202,21 @@ que es la misma dirección del tiempo que las estimaciones de 2001–2011.
 | Chile | 14.85% | 15.24% | 2018-2025 | 2012-2017 |
 | Paraguay | 3.03% | 4.60% | 2018-2025 | 2012-2017 |
 | Bolivia | 8.12% | 9.47% | 2018-2025 | 2012-2017 |
+
+### ¿Por qué Terra+Aqua y no solo Aqua?
+
+Aqua pasa a la misma hora que S-NPP y su órbita es estable, así que parece el mejor predictor. Lo probamos con la misma validación año-fuera (2013–2025), en el modelo elegido por cada país:
+
+| País | Error anual con Terra+Aqua | Error anual con Aqua solo | Mejor |
+|---|---|---|---|
+| México | 2.84% | 4.70% | Terra+Aqua |
+| Argentina | 3.40% | 4.46% | Terra+Aqua |
+| Uruguay | 4.99% | 9.46% | Terra+Aqua |
+| Chile | 7.43% | 7.75% | Terra+Aqua |
+| Paraguay | 2.16% | 2.77% | Terra+Aqua |
+| Bolivia | 6.57% | 8.85% | Terra+Aqua |
+
+Usar los dos satélites combinados da menos error en todos los países probados, así que es el predictor principal. Terra se usa solo antes de agosto de 2002, cuando Aqua aún no existía.
 
 ### Deriva de órbita de Terra y Aqua
 

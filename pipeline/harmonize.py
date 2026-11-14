@@ -265,13 +265,15 @@ def drift_and_backcast(con, ccol, use_nb) -> dict:
             "stable_orbit_calibration": f"2012-02..{STABLE_END_YM}"}
 
 
-def assess_quality(meta: dict) -> dict:
+def assess_quality(meta: dict, brk: dict | None = None) -> dict:
     """Per-country reliability of the harmonized series, from its own validations (see methodology doc).
 
     alta : leave-one-year-out error is >=20% below the fixed-factor baseline, the BACKWARD validation also beats the
            baseline, and the Terra+Aqua/SNPP ratio shows no significant drift (Mann-Kendall p >= 0.05).
     media: improves on the baseline in both validations and the uncertainty band is <=15%.
-    baja : anything else (no improvement, worse backward, or a wide band): data are shown, flagged, not hidden."""
+    baja : anything else (no improvement, worse backward, or a wide band): data are shown, flagged, not hidden.
+    A residual break at 2012 in the harmonized series (pipeline.validation_extra: p < 0.05 and |jump| > 25%) also
+    forces 'baja': the estimates for 2001-2011 do not join the observed series."""
     m = meta["validation"]["ta"]
     loyo_red = 100 * (1 - m["region_year_mape_pct"] / m["region_year_mape_baseline_pct"])
     b = meta["drift"]["backcast"]["chosen"]
@@ -287,7 +289,12 @@ def assess_quality(meta: dict) -> dict:
         reasons.append(f"la razón VIIRS/MODIS cambia con el tiempo (p={drift_p:.2f})")
     if band > 15:
         reasons.append(f"banda de incertidumbre ancha (±{band:.0f}%)")
-    if loyo_red >= 20 and back_ok and drift_p >= 0.05:
+    residual_break = bool(brk) and brk.get("harmonized_p", 1) < 0.05 and abs(brk.get("harmonized_jump_pct", 0)) > 25
+    if residual_break:
+        reasons.append(f"persiste un quiebre en 2012 en la serie armonizada ({brk['harmonized_jump_pct']:+.0f}%, p={brk['harmonized_p']:.3f})")
+    if residual_break:
+        level = "baja"
+    elif loyo_red >= 20 and back_ok and drift_p >= 0.05:
         level = "alta"
     elif loyo_red > 0 and back_ok and band <= 15:
         level = "media"
