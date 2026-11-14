@@ -1,4 +1,5 @@
 # Datos (pesados y descargables de nuevo)
+data/raw
 data/raw/
 data/interim/
 data/processed/
