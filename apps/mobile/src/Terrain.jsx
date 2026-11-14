@@ -2,27 +2,27 @@ import React from 'react';
 
 export function Terrain({ points, hours, selected, onSelect, showArea }) {
   return (
-    <svg viewBox="0 0 800 650" width="100%" role="group" aria-label="Mapa ilustrativo con detecciones simuladas; sin precisión geográfica"
-      style={{ display: 'block', background: 'var(--color-background-surface)', borderRadius: 'var(--radius-container)' }}>
+    <svg viewBox="0 0 440 800" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" role="group" aria-label="Fondo histórico NASA de México con detecciones simuladas; no son ubicaciones verificadas"
+      style={{ display: 'block' }}>
       <defs>
-        <pattern id="contours" width="260" height="200" patternUnits="userSpaceOnUse" patternTransform="rotate(-32)">
-          <path d="M-30 35Q60-20 130 35T290 35M-30 51Q60-4 130 51T290 51M-30 67Q60 12 130 67T290 67M-30 83Q60 28 130 83T290 83M-30 99Q60 44 130 99T290 99M-30 115Q60 60 130 115T290 115M-30 131Q60 76 130 131T290 131M-30 147Q60 92 130 147T290 147M-30 163Q60 108 130 163T290 163"
-            fill="none" stroke="var(--color-text-secondary)" strokeOpacity=".18" />
-        </pattern>
+        <radialGradient id="fire-glow"><stop stopColor="var(--color-accent)" stopOpacity=".8" /><stop offset="1" stopColor="var(--color-accent)" stopOpacity="0" /></radialGradient>
+        <linearGradient id="map-shade" x2="0" y2="1"><stop stopColor="var(--color-background-body)" stopOpacity=".72" /><stop offset=".42" stopColor="var(--color-background-body)" stopOpacity=".12" /><stop offset="1" stopColor="var(--color-background-body)" stopOpacity=".9" /></linearGradient>
       </defs>
-      <rect width="800" height="650" fill="url(#contours)" />
-      <path d="M0 550Q190 390 280 490T800 100" fill="none" stroke="var(--color-text-secondary)" strokeOpacity=".35" strokeWidth="3" />
-      {showArea && <path data-testid="area-outline" d="M270 200 490 170 650 360 550 540 300 510 210 350Z" fill="var(--color-accent)" fillOpacity=".07" stroke="var(--color-accent)" strokeDasharray="8 8" />}
+      <g transform="translate(220 250) rotate(18) scale(1.5) translate(-780 -650)">
+        <image href="/maps/blue-marble-december-2004.jpg" width="3600" height="1800" />
+      </g>
+      <rect width="440" height="800" fill="url(#map-shade)" pointerEvents="none" />
+      {showArea && <path data-testid="area-outline" d="M185 163 254 178 283 238 247 285 185 259 165 206Z" fill="var(--color-accent)" fillOpacity=".05" stroke="var(--color-glass-edge)" strokeDasharray="4 5" />}
       {points.map((point, index) => point.age <= hours && (
-        <g key={index} transform={`translate(${point.x} ${point.y})`} role="button" tabIndex={0}
+        <g key={index} transform={`translate(${220 + (point.x - 440) * .85} ${235 + (point.y - 340) * .75})`} role="button" tabIndex={0}
           aria-label={`Seleccionar detección simulada ${index + 1}`} aria-pressed={selected === index}
           onClick={() => onSelect(index)} onKeyDown={event => {
             if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(index); }
           }} style={{ cursor: 'pointer' }}>
-          <circle r="26" fill="var(--color-background-body)" fillOpacity=".6" stroke={selected === index ? 'var(--color-text-primary)' : 'none'} />
-          <path d="M1-22C6-12 13-10 11-2c4-1 5-5 5-8 9 11 6 23-3 27C3 22-10 18-14 10c-5-10 2-18 5-25 1 6 5 9 7 9C-4-13 1-15 1-22Z"
-            fill="var(--color-accent)" />
-          <circle cy="9" r="5" fill="var(--color-text-primary)" />
+          <circle r="29" fill="url(#fire-glow)" pointerEvents="none" />
+          <circle r="22" fill="transparent" stroke={selected === index ? 'var(--color-text-primary)' : 'none'} />
+          <circle r={selected === index ? 9 : 5} fill="var(--color-accent)" stroke="var(--color-text-primary)" strokeWidth=".7" />
+          {selected === index && <circle r="31" fill="none" stroke="var(--color-accent)" strokeOpacity=".45" pointerEvents="none" />}
         </g>
       ))}
     </svg>

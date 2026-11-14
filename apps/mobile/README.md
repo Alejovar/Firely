@@ -1,6 +1,6 @@
 # Aplicación móvil de Firely
 
-App React 19 con componentes Astryx y tema Neutral oscuro, compilada con Vite y empaquetada para Android con Capacitor 8. Su identificador es `org.firely.mobile`; no reemplaza la prueba `org.firely.smoketest`.
+App React 19 con componentes Astryx y tema propio Firely Glass, basado en Neutral: superficies translúcidas, acentos naranjas y mapa a pantalla completa. Está compilada con Vite y empaquetada para Android con Capacitor 8. Su identificador es `org.firely.mobile`; no reemplaza la prueba `org.firely.smoketest`.
 
 La carpeta ya tiene un proyecto npm con React 19, React DOM, Astryx Core, el tema Neutral y StyleX. El CLI de Astryx está instalado como dependencia de desarrollo. Para restaurar las dependencias, ejecuta `npm ci` desde esta carpeta.
 
@@ -49,7 +49,19 @@ npm test
 
 Para usar un navegador Chromium instalado: `FIRELY_BROWSER=/usr/bin/brave-browser npm test`.
 
-Las pruebas recorren filtros, selección por teclado, fichas, capas, calendario, análisis y asistente; también verifican anchuras de 320, 390 y 1280. La prueba funcional bloquea peticiones externas. El tema Neutral incluye una fuente externa opcional; sin conexión se usa la fuente de respaldo.
+Las pruebas recorren filtros, selección por teclado, fichas, capas, calendario, análisis y asistente; también verifican anchuras de 320, 390 y 1280. La prueba funcional bloquea peticiones externas. Firely Glass utiliza fuentes del sistema y el fondo se incluye en el APK; no necesitan descargas al abrir la app.
+
+## Diseño
+
+La referencia visual está en `../../docs/2026-11-14_17-24-33.png`. La adaptación conserva las vistas existentes; los filtros de 24/48 horas se abren desde el selector MODIS + VIIRS. La campana muestra información del prototipo, no alertas operativas.
+
+El tema editable vive en `themes/firely-glass/`. Para reconstruirlo después de editar `firely-glass.theme.ts`:
+
+```sh
+npx astryx experimental theme compile themes/firely-glass/firely-glass.theme.ts
+```
+
+Astryx actualiza su copia de la app en `src/themes/firely-glass/`. Las vistas usan tokens del tema; no sobrescribas los archivos generados. Los PNG y HTML de previsualización quedan fuera de Git.
 
 ## Alcance
 
@@ -59,11 +71,11 @@ La prueba de instalación anterior se conserva localmente en `../../mobile-smoke
 
 Incluye:
 
-- Mapa ilustrativo, puntos seleccionables y fichas de ejemplo.
+- Fondo histórico NASA Blue Marble de diciembre de 2004, puntos simulados seleccionables y fichas de ejemplo. Fuente y atribución en `public/maps/README.md`.
 - Filtros de 24/48 horas y control para mostrar el límite ilustrativo.
 - Navegación entre Mapa, Calendario, Análisis y Asistente.
 - Calendario de ejemplo con selección de mes; análisis y asistente como vistas previas.
 
-Todos los datos son ficticios. El mapa no tiene precisión geográfica ni escala y no solicita geolocalización. No hay conexión a backend, NASA FIRMS ni IA. El calendario no filtra el mapa todavía. La navegación incluye soporte del botón Atrás de Android.
+Todos los datos de actividad son ficticios. El fondo histórico no representa el estado actual del territorio y los puntos superpuestos no son ubicaciones verificadas. No es un mapa navegable y no solicita geolocalización. No hay conexión a backend, NASA FIRMS ni IA. El calendario no filtra el mapa todavía. La navegación incluye soporte del botón Atrás de Android.
 
 La configuración de Docker está en `../../infra/docker/README.md`.

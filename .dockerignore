@@ -14,3 +14,5 @@
 !apps/mobile/astryx-themes.js
 !apps/mobile/src/
 !apps/mobile/src/**
+!apps/mobile/public/
+!apps/mobile/public/**

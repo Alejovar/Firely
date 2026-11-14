@@ -1,0 +1,34 @@
+{
+  "name": "firely-glass",
+  "like": "neutral",
+  "mode": "both",
+  "settings": [
+    {
+      "thing": "accent",
+      "value": "#ff7b24",
+      "source": "dial"
+    },
+    {
+      "thing": "neutral",
+      "value": "#254b60",
+      "source": "dial"
+    },
+    {
+      "thing": "surfaces",
+      "value": "glass",
+      "source": "dial"
+    },
+    {
+      "thing": "corners",
+      "value": "round",
+      "source": "dial"
+    },
+    {
+      "thing": "font",
+      "value": "system",
+      "source": "dial"
+    }
+  ],
+  "lifted": [],
+  "palette": "b836146b77fec77decd955f36ecafd5676bcda538bed8ff849512497699b502b"
+}

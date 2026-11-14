@@ -2,6 +2,11 @@ node_modules/
 dist/
 test-results/
 playwright-report/
+themes/**/preview.html
+themes/**/preview.png
+themes/**/sheet*.html
+themes/**/sheet*.png
+themes/**/*.pictures.json
 android/.gradle/
 android/build/
 android/app/build/

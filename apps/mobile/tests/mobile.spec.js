@@ -6,7 +6,11 @@ test('el prototipo funciona sin API y conserva filtros, fichas y navegación', a
   await page.route('**/*', route => route.request().url().startsWith('http://127.0.0.1:4173/') ? route.continue() : route.abort());
   await page.goto('/');
   await expect(page.getByText('8 puntos ·')).toBeVisible();
+  await page.getByRole('button', { name: 'Seleccionar detección simulada 2', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Punto de ejemplo 02' })).toBeVisible();
+  await page.getByRole('button', { name: 'Filtros', exact: true }).click();
   await page.getByRole('button', { name: 'Últimas 48 h', exact: true }).click();
+  await page.getByRole('button', { name: 'Entendido', exact: true }).click();
   await expect(page.getByText('12 puntos ·')).toBeVisible();
   const lastPoint = page.getByRole('button', { name: 'Seleccionar detección simulada 12', exact: true });
   await lastPoint.focus();
@@ -17,7 +21,9 @@ test('el prototipo funciona sin API y conserva filtros, fichas y navegación', a
   await expect(page.getByRole('dialog')).toContainText('46 horas');
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).not.toBeVisible();
+  await page.getByRole('button', { name: 'Filtros', exact: true }).click();
   await page.getByRole('button', { name: 'Últimas 24 h', exact: true }).click();
+  await page.getByRole('button', { name: 'Entendido', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Punto de ejemplo 01' })).toBeVisible();
   await page.getByRole('button', { name: 'Límite ilustrativo' }).click();
   await expect(page.getByTestId('area-outline')).toHaveCount(0);
@@ -30,7 +36,7 @@ test('el prototipo funciona sin API y conserva filtros, fichas y navegación', a
   await page.getByRole('button', { name: '¿Qué pasa en la Sierra de Arteaga?' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'no hay un modelo de IA conectado' })).toBeVisible();
   await page.goto('/#desconocida');
-  await expect(page.getByRole('heading', { name: 'Explora el territorio.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Coahuila, MX' })).toBeVisible();
   expect(errors).toEqual([]);
 });
 

@@ -5,14 +5,17 @@ import { Stack } from '@astryxdesign/core/Stack';
 import { Text } from '@astryxdesign/core/Text';
 import { Heading } from '@astryxdesign/core/Heading';
 import { Button } from '@astryxdesign/core/Button';
+import { IconButton } from '@astryxdesign/core/IconButton';
 import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
 import { Terrain } from './Terrain';
 import { months, monthlyValue, points, years } from './mock-data';
+import { FirelyIcon } from './FirelyIcon';
+import { glass } from './glass';
 
 const pages = { mapa: 'Mapa', calendario: 'Calendario', analisis: 'Análisis', asistente: 'Asistente' };
 const currentPage = () => Object.hasOwn(pages, location.hash.slice(1)) ? location.hash.slice(1) : 'mapa';
 const notice = 'Un punto de calor es una detección satelital, no un incendio confirmado. Este prototipo no muestra actividad real.';
-const panelStyle = { border: 'solid var(--color-border)', borderWidth: 'thin', borderRadius: 'var(--radius-container)' };
+const panelStyle = { ...glass, borderRadius: 'var(--radius-container)' };
 
 export function App() {
   const [page, setPage] = useState(currentPage);
@@ -58,44 +61,66 @@ export function App() {
   const pointName = `Punto de ejemplo ${String(selected + 1).padStart(2, '0')}`;
 
   return (
-    <Stack minHeight="100dvh" style={{ background: 'var(--color-background-body)', color: 'var(--color-text-primary)' }}>
+    <Stack minHeight="100dvh" style={{ position: 'relative', isolation: 'isolate', background: 'var(--color-background-body)', color: 'var(--color-text-primary)', overflow: 'clip' }}>
+      {page === 'mapa' && <Stack aria-label="Escenario de demostración" style={{ position: 'absolute', inset: 0, zIndex: -1 }}>
+        <Terrain points={points} hours={hours} selected={selected} onSelect={setSelected} showArea={showArea} />
+      </Stack>}
       <Stack as="header" direction="horizontal" hAlign="between" vAlign="center" padding={4}
-        style={{ paddingTop: 'max(var(--spacing-4), env(safe-area-inset-top))', borderBottom: 'thin solid var(--color-border)' }}>
-        <Button href="#mapa" label="firely." variant="ghost" />
-        <Text type="supporting">PROTOTIPO · DATOS SIMULADOS</Text>
-        <Button label="Información" size="sm" onClick={() => setDialog({ title: 'Una primera mirada a Firely', body: 'Prototipo visual con información ficticia. El mapa es ilustrativo y no tiene precisión geográfica. No hay conexión a NASA FIRMS, backend ni inteligencia artificial.' })} />
+        style={{ paddingTop: 'max(var(--spacing-5), env(safe-area-inset-top))', width: '100%', maxWidth: '48rem', marginInline: 'auto' }}>
+        <Button href="#mapa" label="Firely, inicio" variant="ghost" icon={<FirelyIcon name="flame" size="lg" color="orange" />}><Text type="large" weight="bold">Firely</Text></Button>
+        <Stack direction="horizontal" gap={2}>
+          <IconButton href="#asistente" label="Buscar" tooltip="Buscar un lugar" icon={<FirelyIcon name="search" />} />
+          <IconButton label="Información" tooltip="Acerca del prototipo" icon={<FirelyIcon name="bell" />} onClick={() => setDialog({ title: 'Una primera mirada a Firely', body: 'Prototipo con datos ficticios. El fondo es una imagen histórica NASA Blue Marble de diciembre de 2004, no una imagen en tiempo real. Los puntos son simulados. No hay conexión a NASA FIRMS, backend ni inteligencia artificial.' })} />
+        </Stack>
       </Stack>
 
-      <Stack as="main" gap={5} padding={4} width="100%" maxWidth="48rem"
-        style={{ marginInline: 'auto', flex: 1 }}>
-        <Stack gap={2} ref={heading} tabIndex={-1} style={{ outline: 'none' }}>
-          <Text type="supporting">COAHUILA, MX · SIERRA DE ARTEAGA</Text>
-          <Heading level={1}>{page === 'mapa' ? 'Explora el territorio.' : pages[page]}</Heading>
-        </Stack>
+      <Stack as="main" gap={page === 'mapa' ? 3 : 5} padding={4} width="100%" maxWidth="48rem"
+        style={{ marginInline: 'auto', flex: 1, pointerEvents: page === 'mapa' ? 'none' : 'auto' }}>
+        {page !== 'mapa' && <Stack gap={2} ref={heading} tabIndex={-1} style={{ outline: 'none' }}>
+          <Text type="supporting">COAHUILA, MX · DATOS SIMULADOS</Text>
+          <Heading level={1}>{pages[page]}</Heading>
+        </Stack>}
 
         {page === 'mapa' && <>
-          <Button href="#asistente" label="Busca un lugar o haz una pregunta" width="100%" />
-          <Stack gap={3}>
-            <Text type="supporting">MAPA ILUSTRATIVO · SIN UBICACIONES REALES</Text>
-            <Terrain points={points} hours={hours} selected={selected} onSelect={setSelected} showArea={showArea} />
-            <Stack direction="horizontal" gap={2} wrap="wrap">
-              <Button label="Límite ilustrativo" aria-pressed={showArea} variant={showArea ? 'primary' : 'secondary'} onClick={() => setShowArea(value => !value)} />
-              <Button label="Centrar mapa" onClick={() => { setSelected(0); setStatus('Vista ilustrativa restablecida · sin usar tu ubicación'); }} />
+          <Stack direction="horizontal" hAlign="between" vAlign="start" gap={2} style={{ pointerEvents: 'auto' }}>
+            <Button label="Filtros" icon={<FirelyIcon name="layers" />} onClick={() => setDialog({ title: 'Filtros', filters: true })}>MODIS + VIIRS <FirelyIcon name="chevronDown" size="sm" /></Button>
+            <Stack gap={2}>
+              <IconButton label="Límite ilustrativo" tooltip="Mostrar límite ilustrativo" icon={<FirelyIcon name="layers" />} aria-pressed={showArea} onClick={() => setShowArea(value => !value)} />
+              <IconButton label="Centrar mapa" tooltip="Restablecer selección" icon={<FirelyIcon name="target" />} onClick={() => { setSelected(0); setStatus('Vista ilustrativa restablecida · sin usar tu ubicación'); }} />
             </Stack>
           </Stack>
-          <Stack direction="horizontal" gap={2} wrap="wrap" role="group" aria-label="Antigüedad de las detecciones">
-            {[24, 48].map(value => <Button key={value} label={`Últimas ${value} h`} aria-pressed={hours === value}
-              variant={hours === value ? 'primary' : 'secondary'} onClick={() => filter(value)} />)}
-            <Button href="#calendario" label="Elegir fecha" />
+          <Stack height="clamp(7rem, 18dvh, 20rem)" style={{ pointerEvents: 'none' }} />
+          <Stack gap={3} padding={4} style={{ ...glass, marginTop: 'auto', pointerEvents: 'auto' }}>
+            <Stack width="2.5rem" height=".2rem" style={{ background: 'var(--color-glass-edge)', borderRadius: 'var(--radius-full)', marginInline: 'auto' }} />
+            <Stack direction="horizontal" hAlign="between" gap={2} vAlign="center">
+              <Stack gap={1}>
+                <Text type="supporting">Actividad en la región</Text>
+                <Heading level={1}>Coahuila, MX</Heading>
+              </Stack>
+              <Text type="supporting" weight="semibold" color="accent">SIMULADA</Text>
+            </Stack>
+            <Stack direction="horizontal" hAlign="between" gap={4} vAlign="center">
+              <Stack gap={1}>
+                <Text type="supporting">Últimas {hours} h · ejemplo</Text>
+                <Text type="large" weight="bold" hasTabularNumbers>{points.filter(item => item.age <= hours).length} puntos · VIIRS</Text>
+              </Stack>
+              <svg viewBox="0 0 140 48" width="36%" aria-hidden="true">
+                <defs><linearGradient id="trend-fill" x2="0" y2="1"><stop stopColor="var(--color-accent)" stopOpacity=".5" /><stop offset="1" stopColor="var(--color-accent)" stopOpacity="0" /></linearGradient></defs>
+                <path d="M0 42 14 32 27 34 40 25 54 27 68 15 82 18 96 7 110 2 124 9 140 4V48H0Z" fill="url(#trend-fill)" />
+                <path d="M0 42 14 32 27 34 40 25 54 27 68 15 82 18 96 7 110 2 124 9 140 4" fill="none" stroke="var(--color-accent)" strokeWidth="2" />
+              </svg>
+            </Stack>
+            <Text type="supporting">Tendencia ilustrativa · sin resultados científicos</Text>
+            <Stack direction="horizontal" hAlign="between" gap={2} vAlign="center">
+              <Heading level={2}>{pointName}</Heading>
+              <Text type="supporting">Hace {point.age} h ficticias</Text>
+            </Stack>
+            <Button label="Ver ficha de ejemplo" width="100%" onClick={() => setDialog({ title: pointName, body: `DATOS SIMULADOS. Sensor del escenario: VIIRS. Antigüedad ficticia: ${point.age} horas. FRP de ejemplo: ${point.frp} MW. Este punto no corresponde a una detección real. Una detección no confirma un incendio.` })} />
+            <Button href="#analisis" label="Ver análisis completo" variant="ghost" endContent={<FirelyIcon name="chevronRight" />} />
+            <Text type="supporting">{notice}</Text>
           </Stack>
-          <Text type="large" hasTabularNumbers>{points.filter(item => item.age <= hours).length} puntos · Detecciones de ejemplo · VIIRS</Text>
-          <Stack gap={2} padding={4} style={panelStyle}>
-            <Heading level={2}>{pointName}</Heading>
-            <Text>Hace {point.age} h ficticias</Text>
-            <Button label="Ver ficha de ejemplo" onClick={() => setDialog({ title: pointName, body: `DATOS SIMULADOS. Sensor del escenario: VIIRS. Antigüedad ficticia: ${point.age} horas. FRP de ejemplo: ${point.frp} MW. Este punto no corresponde a una detección real. Una detección no confirma un incendio.` })} />
-          </Stack>
-          <Text type="supporting">{notice}</Text>
-          <Stack role="status"><Text type="supporting">{status}</Text></Stack>
+          <Text type="supporting">Fondo: NASA Blue Marble · diciembre 2004</Text>
+          {status && <Stack role="status"><Text type="supporting">{status}</Text></Stack>}
         </>}
 
         {page === 'calendario' && <>
@@ -139,16 +164,27 @@ export function App() {
         </>}
       </Stack>
 
-      <Stack as="nav" aria-label="Navegación principal" direction="horizontal" gap={1} hAlign="center" padding={2}
-        style={{ position: 'sticky', bottom: 0, background: 'var(--color-background-body)', borderTop: 'thin solid var(--color-border)', paddingBottom: 'max(var(--spacing-2), env(safe-area-inset-bottom))', zIndex: 1 }}>
+      <Stack as="nav" aria-label="Navegación principal" direction="horizontal" gap={1} hAlign="between" padding={2}
+        style={{ ...glass, position: 'sticky', bottom: 'max(var(--spacing-3), env(safe-area-inset-bottom))', width: 'calc(100% - var(--spacing-6))', maxWidth: '45rem', marginInline: 'auto', marginBottom: 'max(var(--spacing-3), env(safe-area-inset-bottom))', zIndex: 1 }}>
         {Object.entries(pages).map(([key, label]) => <Button key={key} href={`#${key}`} label={label} size="sm"
-          aria-current={page === key ? 'page' : undefined} variant={page === key ? 'primary' : 'ghost'} />)}
+          aria-current={page === key ? 'page' : undefined} variant="ghost" width="25%">
+          <Stack gap={1} hAlign="center" style={{ color: page === key ? 'var(--color-text-accent)' : 'var(--color-text-primary)', filter: page === key ? 'drop-shadow(var(--shadow-fire))' : 'none' }}>
+            <FirelyIcon name={key === 'mapa' ? 'map' : key === 'calendario' ? 'calendar' : key === 'analisis' ? 'chart' : 'spark'} size="lg" />
+            <Text type="supporting" color="inherit">{label}</Text>
+          </Stack>
+        </Button>)}
       </Stack>
 
       <Dialog isOpen={Boolean(dialog)} onOpenChange={open => { if (!open) setDialog(null); }} padding={4}>
         <DialogHeader title={dialog?.title || 'Firely'} onOpenChange={() => setDialog(null)} />
         <Stack gap={4} paddingBlockStart={4}>
-          <Text>{dialog?.body}</Text>
+          {dialog?.filters ? <Stack gap={4}>
+            <Text>Sensor del escenario ficticio: VIIRS. Los filtros no consultan datos reales.</Text>
+            <Stack direction="horizontal" gap={2} wrap="wrap" role="group" aria-label="Antigüedad de las detecciones">
+              {[24, 48].map(value => <Button key={value} label={`Últimas ${value} h`} aria-pressed={hours === value} variant={hours === value ? 'primary' : 'secondary'} onClick={() => filter(value)} />)}
+            </Stack>
+            <Button href="#calendario" label="Elegir fecha" onClick={() => setDialog(null)} />
+          </Stack> : <Text>{dialog?.body}</Text>}
           <Button label="Entendido" variant="primary" onClick={() => setDialog(null)} />
         </Stack>
       </Dialog>
