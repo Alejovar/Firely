@@ -1,0 +1,37 @@
+# Dependencias y resultados de compilación
+node_modules/
+dist/
+build/
+.gradle/
+coverage/
+test-results/
+playwright-report/
+*.apk
+*.aab
+
+# Prueba inicial local; la app actual está en apps/mobile/
+/mobile-smoke/
+
+# Configuración local y credenciales
+/.aws/
+/.codex/
+/.agents/
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.template
+*.pem
+*.key
+*.jks
+*.keystore
+local.properties
+
+# Archivos temporales y del editor
+*.log
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+*.swo

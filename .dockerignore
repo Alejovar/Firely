@@ -1,0 +1,16 @@
+**
+!infra/
+!infra/docker/
+!infra/docker/mobile.Dockerfile
+!infra/docker/nginx.conf
+!apps/
+!apps/mobile/
+!apps/mobile/www/
+!apps/mobile/www/**
+!apps/mobile/package.json
+!apps/mobile/package-lock.json
+!apps/mobile/index.html
+!apps/mobile/vite.config.js
+!apps/mobile/astryx-themes.js
+!apps/mobile/src/
+!apps/mobile/src/**
