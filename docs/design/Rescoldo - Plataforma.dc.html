@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f11;--panel:#14171a;--panel2:#1a1e22;--line:#262b31;--line2:#323840;--text:#ebe8e3;--mute:#9aa1a9;--faint:#6b727a;--ember:#e8803f;--emberInk:#1a0d05;--code:#0a0c0e}
+html[data-theme="light"]{--bg:#efeee9;--panel:#ffffff;--panel2:#f6f5f1;--line:#e0ddd6;--line2:#cfcbc2;--text:#1a1c1e;--mute:#565c63;--faint:#878c92;--ember:#c9601f;--emberInk:#ffffff;--code:#f6f5f1}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--mute);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:2px}
+a:hover{color:var(--ember);text-decoration-color:var(--ember)}
+</style>
+</helmet>
+<div style="min-height:100vh;display:grid;grid-template-columns:76px 200px minmax(0,1fr);background:var(--bg);color:var(--text);font-variant-numeric:tabular-nums">
+  <nav style="display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:14px 6px;border-right:1px solid var(--line);background:var(--panel)">
+    <div style="align-self:center;width:26px;height:26px;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-bottom:16px">
+      <div style="background:var(--line2)"></div><div style="background:var(--line2);opacity:.6"></div><div style="background:var(--line2)"></div>
+      <div style="background:var(--line2);opacity:.6"></div><div style="background:var(--ember);box-shadow:0 0 10px var(--ember)"></div><div style="background:var(--line2);opacity:.6"></div>
+      <div style="background:var(--line2)"></div><div style="background:var(--line2);opacity:.6"></div><div style="background:var(--line2)"></div>
+    </div>
+    <a href="Rescoldo%20-%20App.dc.html" style="padding:9px 4px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Mapa</a>
+    <a href="Rescoldo%20-%20Asistente.dc.html" style="padding:9px 4px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Asistente</a>
+    <a href="Rescoldo%20-%20Como%20armonizamos.dc.html" style="padding:9px 4px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Método</a>
+    <a href="Rescoldo%20-%20Plataforma.dc.html" style="padding:9px 4px;border-radius:8px;background:var(--panel2);color:var(--text);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center;box-shadow:inset 2px 0 0 var(--ember)">Alertas y API</a>
+    <a href="Rescoldo%20-%20Experiencia.dc.html" style="padding:9px 4px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Historia</a>
+    <div style="height:1px;background:var(--line);margin:10px 6px"></div>
+    <a href="Rescoldo%20-%20Ficha%20PDF.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Ficha</a>
+    <a href="Rescoldo%20-%20Movil.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Móvil</a>
+    <a href="Rescoldo%20-%20Widget.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Widget</a>
+    <a href="Rescoldo%20-%20Identidad.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Identidad</a>
+  </nav>
+  <div style="position:sticky;top:0;height:100vh;padding:32px 16px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;box-sizing:border-box">
+    <span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em;padding:0 10px 10px">PLATAFORMA</span>
+    <a href="#alertas" style="padding:7px 10px;font-size:13.5px;color:var(--text);text-decoration:none">Alertas y CAP</a>
+    <a href="#vigia" style="padding:7px 10px;font-size:13.5px;color:var(--text);text-decoration:none">Agente vigía</a>
+    <a href="#reportes" style="padding:7px 10px;font-size:13.5px;color:var(--text);text-decoration:none">Reportes oficiales</a>
+    <a href="#api" style="padding:7px 10px;font-size:13.5px;color:var(--text);text-decoration:none">API · /docs</a>
+    <a href="#sql" style="padding:7px 10px;font-size:13.5px;color:var(--text);text-decoration:none">Consultas SQL</a>
+    <a href="#mcp" style="padding:7px 10px;font-size:13.5px;color:var(--text);text-decoration:none">Servidor MCP</a>
+    <a href="#export" style="padding:7px 10px;font-size:13.5px;color:var(--text);text-decoration:none">Exportar a SIG</a>
+    <a href="#simulacro" style="padding:7px 10px;font-size:13.5px;color:var(--text);text-decoration:none">Simulacros</a>
+  </div>
+
+  <main style="padding:36px 40px 80px;display:flex;flex-direction:column;gap:56px;max-width:1040px;min-width:0">
+
+    <section id="alertas" style="display:flex;flex-direction:column;gap:16px;scroll-margin-top:24px">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">ALERTAS</span><h2 style="margin:0;font-size:26px;font-weight:600">Avisar cuando un área sale de lo normal</h2><p style="margin:0;font-size:14.5px;color:var(--mute);line-height:1.5;max-width:640px">Suscríbete a un área y recibe aviso cuando la actividad supere el percentil 90. Los borradores públicos los redacta la IA; los publica una persona.</p></div>
+      <div style="display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:16px">
+        <div style="padding:18px;border:1px solid var(--line2);border-radius:12px;background:var(--panel);display:flex;flex-direction:column;gap:12px">
+          <span style="font-weight:600;font-size:15px">Mis suscripciones</span>
+          <sc-for list="{{ subs }}" as="s" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)">
+              <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13.5px;font-weight:500">{{ s.n }}</span><span style="font-size:11.5px;color:var(--mute)">{{ s.r }}</span></div>
+              <span style="font:500 10.5px 'IBM Plex Mono',monospace;padding:3px 7px;border-radius:4px;background:{{ s.bg }};color:{{ s.fg }}">{{ s.st }}</span>
+            </div>
+          </sc-for>
+          <span style="font-size:12px;color:var(--faint)">Canales: correo, Telegram, webhook, feed CAP</span>
+        </div>
+        <div style="padding:18px;border:1px solid var(--line2);border-radius:12px;background:var(--panel);display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-weight:600;font-size:15px">Borrador de alerta CAP 1.2</span><span style="font:500 10.5px 'IBM Plex Mono',monospace;padding:3px 7px;border-radius:4px;background:{{ capBg }};color:{{ capFg }}">{{ capState }}</span></div>
+          <div style="display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:13px">
+            <span style="color:var(--faint)">headline</span><span>Peligro extremo de incendio en Sierra de Arteaga</span>
+            <span style="color:var(--faint)">severity</span><span>Severe · urgency Expected · certainty Likely</span>
+            <span style="color:var(--faint)">area</span><span>San Antonio de las Alazanas, Los Lirios, Jamé (polígono INEGI)</span>
+            <span style="color:var(--faint)">onset</span><span>2026-03-21T10:00-06:00</span>
+            <span style="color:var(--faint)">instruction</span><span style="line-height:1.45">Evite quemas. Si ve humo, llame al 911. Tenga lista su ruta de salida hacia Arteaga.</span>
+          </div>
+          <div style="padding:10px 12px;border-radius:8px;background:var(--panel2);font-size:12.5px;line-height:1.5;color:var(--mute)"><b style="color:var(--text)">Texto para redes:</b> Sábado 21: peligro extremo de incendio en la sierra de Arteaga. Evita quemas y reporta humo al 911.</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button onClick="{{ approve }}" style="height:36px;padding:0 16px;border-radius:8px;border:0;background:var(--ember);color:var(--emberInk);font:600 13px 'IBM Plex Sans',sans-serif;cursor:pointer">{{ approveLabel }}</button>
+            <button style="height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 13px 'IBM Plex Sans',sans-serif;cursor:pointer">Editar</button>
+            <span style="font-size:11.5px;color:var(--faint);margin-left:auto">{{ capNote }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="vigia" style="display:flex;flex-direction:column;gap:16px;scroll-margin-top:24px">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">AGENTE VIGÍA · BOLETÍN SEMANAL</span><h2 style="margin:0;font-size:26px;font-weight:600">Cada noche revisa todas las regiones</h2></div>
+      <div style="padding:22px;border:1px solid var(--line2);border-radius:12px;background:var(--panel);display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:600;font-size:16px">Semana 11 · 9–15 marzo 2026 · Noreste de México</span><span style="font-size:12px;color:var(--faint)">4 áreas fuera de lo normal de 312 revisadas</span></div>
+        <sc-for list="{{ bulletin }}" as="b" hint-placeholder-count="4">
+          <div style="display:grid;grid-template-columns:56px minmax(0,1fr) 120px;gap:14px;align-items:center;padding:10px 0;border-top:1px solid var(--line)">
+            <span style="height:28px;border-radius:4px;background:{{ b.c }};display:grid;place-items:center;font:600 12px 'IBM Plex Mono',monospace;color:{{ b.fg }}">{{ b.r }}</span>
+            <div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:600;font-size:14px">{{ b.n }}</span><span style="font-size:13px;color:var(--mute);line-height:1.45">{{ b.t }}</span></div>
+            <a href="#" style="font-size:12px;justify-self:end">ver datos</a>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section id="reportes" style="display:flex;flex-direction:column;gap:16px;scroll-margin-top:24px">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">EXTRACCIÓN DE REPORTES OFICIALES</span><h2 style="margin:0;font-size:26px;font-weight:600">De PDF desordenado a tabla comparable</h2></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 40px minmax(0,1.3fr);gap:12px;align-items:center">
+        <div style="height:220px;border:1px solid var(--line2);border-radius:10px;background:repeating-linear-gradient(135deg,var(--panel) 0 8px,var(--panel2) 8px 9px);display:grid;place-items:center;font:500 11px 'IBM Plex Mono',monospace;color:var(--faint);text-align:center">reporte_semanal_CONAFOR_s11.pdf<br>(escaneo de tabla)</div>
+        <span style="font-size:22px;color:var(--faint);text-align:center">→</span>
+        <div style="border:1px solid var(--line2);border-radius:10px;overflow:hidden;background:var(--panel)">
+          <div style="display:grid;grid-template-columns:1.4fr .8fr .7fr .8fr 70px;padding:8px 12px;background:var(--panel2);font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint)"><span>MUNICIPIO</span><span>INICIO</span><span>HA</span><span>CAUSA</span><span>CONF.</span></div>
+          <sc-for list="{{ extracted }}" as="e" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:1.4fr .8fr .7fr .8fr 70px;padding:8px 12px;border-top:1px solid var(--line);font-size:12.5px"><span>{{ e.m }}</span><span style="font-family:'IBM Plex Mono',monospace">{{ e.d }}</span><span style="font-family:'IBM Plex Mono',monospace">{{ e.h }}</span><span>{{ e.c }}</span><span style="font:500 11px 'IBM Plex Mono',monospace;color:{{ e.cc }}">{{ e.k }}</span></div>
+          </sc-for>
+          <div style="padding:8px 12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint)">Valores con confianza baja quedan marcados para revisión humana antes de entrar a “detectados vs reportados”.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="api" style="display:flex;flex-direction:column;gap:16px;scroll-margin-top:24px">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">API · OPENAPI EN /docs · OGC API FEATURES</span><h2 style="margin:0;font-size:26px;font-weight:600">Los mismos datos, para cualquier sistema</h2></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px">
+        <div style="border:1px solid var(--line2);border-radius:12px;overflow:hidden;background:var(--panel)">
+          <sc-for list="{{ endpoints }}" as="e" hint-placeholder-count="5">
+            <div onClick="{{ e.on }}" style="display:grid;grid-template-columns:44px 1fr;gap:10px;padding:12px 14px;border-top:1px solid var(--line);cursor:pointer;background:{{ e.bg }}">
+              <span style="font:600 11px 'IBM Plex Mono',monospace;color:#67a9cf">GET</span>
+              <div style="display:flex;flex-direction:column;gap:2px"><span style="font:500 13px 'IBM Plex Mono',monospace">{{ e.p }}</span><span style="font-size:12.5px;color:var(--mute)">{{ e.d }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+        <pre style="margin:0;padding:16px 18px;border-radius:12px;background:var(--code);border:1px solid var(--line2);font:400 12px/1.6 'IBM Plex Mono',monospace;color:var(--mute);white-space:pre-wrap;overflow:auto">{{ sample }}</pre>
+      </div>
+    </section>
+
+    <section id="sql" style="display:flex;flex-direction:column;gap:16px;scroll-margin-top:24px">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">CONSULTAS AVANZADAS · PARA CIENTÍFICOS</span><h2 style="margin:0;font-size:26px;font-weight:600">Pregunta en español, revisa el SQL, ejecuta</h2></div>
+      <div style="border:1px solid var(--line2);border-radius:12px;background:var(--panel);overflow:hidden">
+        <div style="padding:14px 16px;font-size:14px;border-bottom:1px solid var(--line)">“Celdas de la sierra que ardieron 5 o más años desde 2000 y llevan 3 años sin fuego”</div>
+        <pre style="margin:0;padding:14px 16px;background:var(--code);font:400 12.5px/1.6 'IBM Plex Mono',monospace;color:var(--mute);white-space:pre-wrap">SELECT h3_cell, years_burned, last_fire_year
+FROM cell_stats
+WHERE area_id = 'INEGI:05004'
+  AND years_burned &gt;= 5
+  AND last_fire_year &lt;= 2023
+ORDER BY years_burned DESC;</pre>
+        <div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--mute)"><span>DuckDB · solo lectura · 37 filas en 41 ms</span><span style="display:flex;gap:8px"><button style="height:30px;padding:0 12px;border-radius:7px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 12.5px 'IBM Plex Sans',sans-serif">Editar SQL</button><button style="height:30px;padding:0 12px;border-radius:7px;border:0;background:var(--ember);color:var(--emberInk);font:600 12.5px 'IBM Plex Sans',sans-serif">Ejecutar</button></span></div>
+      </div>
+    </section>
+
+    <section id="mcp" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;scroll-margin-top:24px">
+      <div style="display:flex;flex-direction:column;gap:8px"><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">SERVIDOR MCP</span><h2 style="margin:0;font-size:26px;font-weight:600">Que otros asistentes de IA consulten el historial</h2><p style="margin:0;font-size:14.5px;color:var(--mute);line-height:1.5">Las mismas herramientas de la API, expuestas por Model Context Protocol. Cada respuesta incluye la atribución a NASA FIRMS y la incertidumbre.</p></div>
+      <pre style="margin:0;padding:16px 18px;border-radius:12px;background:var(--code);border:1px solid var(--line2);font:400 12px/1.65 'IBM Plex Mono',monospace;color:var(--mute);white-space:pre-wrap">{
+  "mcpServers": {
+    "rescoldo": { "url": "https://rescoldo.app/mcp" }
+  }
+}
+<span style="color:var(--text)">tools:</span> get_calendar · get_hotspots · get_events
+       get_analogs · get_season</pre>
+    </section>
+
+    <section id="export" style="display:flex;flex-direction:column;gap:14px;scroll-margin-top:24px">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">EXPORTAR A SIG</span><h2 style="margin:0;font-size:26px;font-weight:600">QGIS, ArcGIS y Google Earth</h2></div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px">
+        <sc-for list="{{ exports }}" as="x" hint-placeholder-count="4">
+          <div style="padding:16px;border:1px solid var(--line2);border-radius:10px;display:flex;flex-direction:column;gap:6px"><span style="font:600 14px 'IBM Plex Mono',monospace">{{ x.f }}</span><span style="font-size:12.5px;color:var(--mute);line-height:1.45">{{ x.d }}</span></div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section id="simulacro" style="display:flex;flex-direction:column;gap:14px;scroll-margin-top:24px">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="display:flex;gap:8px;align-items:center;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">ESCENARIOS DE SIMULACRO <span style="padding:2px 6px;border:1px solid var(--line2);border-radius:4px">VISIÓN</span></span><h2 style="margin:0;font-size:26px;font-weight:600">Entrenar con incendios que sí ocurrieron</h2></div>
+      <div style="padding:20px;border:1px dashed var(--line2);border-radius:12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:20px;align-items:center">
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font-weight:600;font-size:16px">Los Lirios – El Tunal · marzo 2021</span><span style="font-size:13.5px;color:var(--mute);line-height:1.5">Se reproduce el evento día por día sin revelar su evolución. El equipo decide dónde desplegar brigadas; al final se compara con lo que pasó.</span></div>
+        <button style="height:40px;padding:0 16px;border-radius:9px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 13.5px 'IBM Plex Sans',sans-serif">Iniciar ejercicio</button>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;oscuro&quot;,&quot;claro&quot;],&quot;default&quot;:&quot;oscuro&quot;,&quot;tsType&quot;:&quot;'oscuro'|'claro'&quot;}}">
+const SAMPLES={
+calendar:`GET /calendar?h3=8648a2c4fffffff&years=2000-2026
+
+{
+  "area": "h3:8648a2c4fffffff",
+  "metric": "count_harmonized",
+  "reference": "median_2000_2025",
+  "rows": [
+    { "year": 2026, "month": 3, "count": 57,
+      "ratio": 2.8, "partial_days": 18,
+      "cloud_flag": false }
+  ],
+  "methodology_version": "1.2",
+  "harmonization_uncertainty": { "pre_2012": 0.18 },
+  "attribution": "NASA FIRMS (MODIS, VIIRS)"
+}`,
+hotspots:`GET /hotspots.csv?bbox=-100.9,25.1,-100.3,25.5
+    &from=2026-03-01&to=2026-03-18
+
+latitude,longitude,acq_date,sensor,frp,
+  confidence,harmonized_weight,type,event_id
+25.3412,-100.5621,2026-03-17,VIIRS_NOAA21,
+  18.4,high,1.00,forestal,E-2026-012
+...
+# methodology_version=1.2 · NASA FIRMS`,
+events:`GET /events?area=INEGI:05004&rank=true
+
+{ "events": [
+  { "id": "E-2026-012", "rank": 4, "of": 212,
+    "start": "2026-03-12", "days": 7,
+    "points": 143, "frp_total": 19600,
+    "active": true }
+], "methodology_version": "1.2" }`,
+analogs:`GET /analogs?area=INEGI:05004&year=2026
+
+{ "analogs": [2011, 2012, 2024],
+  "projected_close": [342, 393],
+  "historical_p90": 318 }`,
+season:`GET /season?area=INEGI:05004
+
+{ "trend_start_days_per_decade": -7.0,
+  "mann_kendall_p": 0.01,
+  "years": [{ "year": 2025, "start": "03-02",
+     "peak": "04-09", "end": "06-03" }] }`};
+class Component extends DCLogic {
+  state={ep:'calendar',approved:false};
+  componentDidMount(){ document.documentElement.dataset.theme=(this.props.theme??'oscuro')==='claro'?'light':'dark'; }
+  renderVals(){
+    const st=this.state;
+    const eps=[['calendar','/calendar','Matriz años × meses con conteo, FRP y anomalía'],['hotspots','/hotspots.csv','Puntos de calor de un área y rango de fechas'],['events','/events','Incendios agrupados con su ranking'],['analogs','/analogs','Años análogos y proyección de cierre'],['season','/season','Inicio, pico, fin y tendencia']];
+    return {
+      subs:[{n:'Sierra de Arteaga',r:'> p90 mensual · correo + Telegram',st:'DISPARADA',bg:'rgba(178,24,43,.18)',fg:'#e5707e'},{n:'Sierra de Zapalinamé',r:'> p90 · webhook',st:'NORMAL',bg:'var(--panel2)',fg:'var(--mute)'},{n:'Cañón de San Lorenzo',r:'> p90 · feed CAP',st:'NORMAL',bg:'var(--panel2)',fg:'var(--mute)'}],
+      capState:st.approved?'APROBADA · PUBLICADA':'BORRADOR · REQUIERE APROBACIÓN',capBg:st.approved?'rgba(127,180,138,.18)':'rgba(232,128,63,.15)',capFg:st.approved?'#9fd1aa':'var(--ember)',
+      approveLabel:st.approved?'Retirar publicación':'Aprobar y publicar',approve:()=>this.setState({approved:!st.approved}),
+      capNote:st.approved?'Aprobó: J. Ramírez · 18 mar 09:12':'Redactado por IA con cifras de la API',
+      bulletin:[{r:'3.4×',n:'Sierra de Arteaga, Coah.',t:'Incendio activo, 4º mayor desde 2000. Temporada adelantada y peligro extremo el sábado.',c:'#b2182b',fg:'#fff'},{r:'2.6×',n:'Cumbres de Monterrey, N.L.',t:'Aumento sostenido en zonas altas; año análogo: 2012.',c:'#ef8a62',fg:'#111'},{r:'2.1×',n:'Sierra de San Carlos, Tamps.',t:'Quemas agrícolas tempranas en fin de semana.',c:'#fddbc7',fg:'#111'},{r:'0.3×',n:'Sierra del Carmen, Coah.',t:'Muy por debajo de lo normal; lluvias de febrero.',c:'#67a9cf',fg:'#111'}],
+      extracted:[{m:'Arteaga',d:'12/03/26',h:'1,250',c:'Agrícola',k:'0.97',cc:'#9fd1aa'},{m:'Arteaga',d:'15/03/26',h:'80',c:'Desconocida',k:'0.91',cc:'#9fd1aa'},{m:'Ramos Arizpe',d:'14/03/26',h:'3?',c:'Fogata',k:'0.58',cc:'var(--ember)'},{m:'Saltillo',d:'16/03/26',h:'22',c:'Intencional',k:'0.94',cc:'#9fd1aa'}],
+      endpoints:eps.map(([k,p,d])=>({p,d,on:()=>this.setState({ep:k}),bg:st.ep===k?'var(--panel2)':'transparent'})),sample:SAMPLES[st.ep],
+      exports:[{f:'GeoJSON',d:'Puntos y polígonos para QGIS y web'},{f:'KML',d:'Google Earth, con estilo por FRP'},{f:'CSV',d:'Con columna de sensor y valor armonizado'},{f:'OGC API',d:'Conecta QGIS/ArcGIS directo a /collections'}]
+    };
+  }
+}
+</script>
+</body>
+</html>

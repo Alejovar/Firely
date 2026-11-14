@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f11;--panel:#14171a;--panel2:#1a1e22;--line:#262b31;--line2:#323840;--text:#ebe8e3;--mute:#9aa1a9;--faint:#6b727a;--ember:#e8803f;--emberInk:#1a0d05}
+html[data-theme="light"]{--bg:#efeee9;--panel:#ffffff;--panel2:#f6f5f1;--line:#e0ddd6;--line2:#cfcbc2;--text:#1a1c1e;--mute:#565c63;--faint:#878c92;--ember:#c9601f;--emberInk:#ffffff}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--text);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:2px}
+a:hover{color:var(--ember);text-decoration-color:var(--ember)}
+</style>
+</helmet>
+<div style="min-height:100vh;display:grid;grid-template-columns:76px minmax(0,1fr);background:var(--bg);color:var(--text);font-variant-numeric:tabular-nums">
+  <nav style="display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:14px 6px;border-right:1px solid var(--line);background:var(--panel)">
+    <div style="align-self:center;width:26px;height:26px;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-bottom:16px">
+      <div style="background:var(--line2)"></div><div style="background:var(--line2);opacity:.6"></div><div style="background:var(--line2)"></div>
+      <div style="background:var(--line2);opacity:.6"></div><div style="background:var(--ember);box-shadow:0 0 10px var(--ember)"></div><div style="background:var(--line2);opacity:.6"></div>
+      <div style="background:var(--line2)"></div><div style="background:var(--line2);opacity:.6"></div><div style="background:var(--line2)"></div>
+    </div>
+    <a href="Rescoldo%20-%20App.dc.html" style="padding:9px 4px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Mapa</a>
+    <a href="Rescoldo%20-%20Asistente.dc.html" style="padding:9px 4px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Asistente</a>
+    <a href="Rescoldo%20-%20Como%20armonizamos.dc.html" style="padding:9px 4px;border-radius:8px;background:var(--panel2);color:var(--text);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center;box-shadow:inset 2px 0 0 var(--ember)">Método</a>
+    <a href="Rescoldo%20-%20Plataforma.dc.html" style="padding:9px 4px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Alertas y API</a>
+    <a href="Rescoldo%20-%20Experiencia.dc.html" style="padding:9px 4px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Historia</a>
+    <div style="height:1px;background:var(--line);margin:10px 6px"></div>
+    <a href="Rescoldo%20-%20Ficha%20PDF.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Ficha</a>
+    <a href="Rescoldo%20-%20Movil.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Móvil</a>
+    <a href="Rescoldo%20-%20Widget.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Widget</a>
+    <a href="Rescoldo%20-%20Identidad.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Identidad</a>
+  </nav>
+
+  <main style="padding:40px 40px 64px;display:flex;flex-direction:column;gap:48px;max-width:1180px;min-width:0">
+    <header style="display:flex;flex-direction:column;gap:12px;max-width:780px">
+      <span style="font:500 11px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">CÓMO ARMONIZAMOS · METODOLOGÍA v1.2</span>
+      <h1 style="margin:0;font-size:40px;line-height:1.1;font-weight:600;letter-spacing:-.02em;text-wrap:pretty">En 2012 el fuego no aumentó de golpe. Cambió el satélite.</h1>
+      <p style="margin:0;font-size:17px;line-height:1.55;color:var(--mute);text-wrap:pretty">Es como comparar fotos de una cámara vieja de 1 megapixel con las de un celular nuevo: el celular “ve” más incendios, pero no porque haya más fuego. Rescoldo traduce 12 años de MODIS al lenguaje de VIIRS para que 2003 y 2024 se puedan comparar.</p>
+    </header>
+
+    <section style="display:flex;flex-direction:column;gap:16px;padding:24px;border:1px solid var(--line2);border-radius:14px;background:var(--panel)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span style="font-weight:600;font-size:18px">El salto falso de 2012</span>
+          <span style="font-size:13px;color:var(--mute)">Puntos de calor por año en el noreste de México (miles)</span>
+        </div>
+        <div style="display:flex;padding:2px;border-radius:8px;background:var(--panel2);border:1px solid var(--line)">
+          <sc-for list="{{ viewOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.on }}" style="height:30px;padding:0 14px;border:0;border-radius:6px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};font:500 13px 'IBM Plex Sans',sans-serif;cursor:pointer">{{ o.label }}</button></sc-for>
+        </div>
+      </div>
+      <div style="position:relative">
+        <svg viewBox="0 0 1000 380" style="width:100%;display:block">
+          <path d="{{ grid }}" stroke="var(--line)" fill="none"></path>
+          <rect x="{{ x2012 }}" y="10" width="2" height="330" fill="var(--line2)"></rect>
+          <g style="transition:opacity .5s" opacity="{{ opRaw }}">
+            <path d="{{ rawModis }}" fill="none" stroke="var(--mute)" stroke-width="2.4"></path>
+            <path d="{{ rawViirs }}" fill="none" stroke="var(--mute)" stroke-width="2.4"></path>
+            <path d="{{ rawJump }}" fill="none" stroke="#ef8a62" stroke-width="2" stroke-dasharray="4 4"></path>
+            <path d="{{ rawDots }}" fill="var(--mute)"></path>
+          </g>
+          <g style="transition:opacity .5s" opacity="{{ opHar }}">
+            <path d="{{ band }}" fill="#67a9cf" opacity=".22"></path>
+            <path d="{{ har }}" fill="none" stroke="var(--text)" stroke-width="3"></path>
+            <path d="{{ harDots }}" fill="var(--text)"></path>
+          </g>
+        </svg>
+        <div style="position:absolute;left:{{ jumpX }}%;top:{{ jumpY }}%;opacity:{{ opRaw }};transition:opacity .5s;padding:6px 9px;border:1px solid #ef8a62;border-radius:6px;background:var(--panel);font-size:12.5px;max-width:200px;line-height:1.35">Salto de <b>+170%</b> en un año: llega VIIRS, no más fuego.</div>
+        <div style="position:absolute;left:4%;top:4%;opacity:{{ opHar }};transition:opacity .5s;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;background:var(--panel);font-size:12.5px;max-width:220px;line-height:1.35">Banda azul: incertidumbre de la estimación 2000–2011 (±18%).</div>
+        <div style="display:flex;justify-content:space-between;padding:0 10px 0 50px;font:400 11px 'IBM Plex Mono',monospace;color:var(--faint)"><span>2000</span><span>2004</span><span>2008</span><span>2012</span><span>2016</span><span>2020</span><span>2024</span></div>
+      </div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--mute)">
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:2px;background:var(--mute)"></span>Sin armonizar (MODIS → VIIRS)</span>
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:3px;background:var(--text)"></span>Armonizada Rescoldo</span>
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:10px;background:#67a9cf;opacity:.4"></span>Incertidumbre</span>
+        <a href="#" style="color:var(--mute)">ver datos</a>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px">
+      <div style="display:flex;flex-direction:column;gap:10px;padding:28px;border-radius:14px;background:var(--panel);border:1px solid var(--line2)">
+        <span style="font:500 11px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">CUÁNTO MEJORA</span>
+        <div style="display:flex;align-items:baseline;gap:14px"><span style="font-size:72px;font-weight:600;letter-spacing:-.03em;line-height:1">−46%</span><span style="font-size:15px;color:var(--mute)">de error</span></div>
+        <p style="margin:0;font-size:15.5px;line-height:1.5;text-wrap:pretty">Frente a la corrección simple (multiplicar MODIS por un factor fijo), nuestro método reduce el error mensual casi a la mitad.</p>
+        <div style="display:grid;grid-template-columns:150px 1fr 60px;gap:8px 12px;align-items:center;font-size:13px;margin-top:8px">
+          <span style="color:var(--mute)">Factor fijo (×2.7)</span><span style="height:12px;background:var(--line2);border-radius:2px"><span style="display:block;height:100%;width:100%;background:var(--mute);border-radius:2px"></span></span><span style="font-family:'IBM Plex Mono',monospace">0.41</span>
+          <span>Rescoldo</span><span style="height:12px;background:var(--line2);border-radius:2px"><span style="display:block;height:100%;width:54%;background:var(--text);border-radius:2px"></span></span><span style="font-family:'IBM Plex Mono',monospace">0.22</span>
+        </div>
+        <span style="font-size:12px;color:var(--faint)">Error absoluto medio relativo, conteos mensuales por celda H3 · validación cruzada dejando un año fuera, 2013–2025 · <a href="#" style="color:var(--faint)">ver datos</a></span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding:28px;border-radius:14px;background:var(--panel);border:1px solid var(--line2)">
+        <span style="font:500 11px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">CUÁNTO CONFIAR</span>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ trust }}" as="t" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:96px 1fr auto;gap:12px;align-items:baseline;padding:11px 0;border-bottom:1px solid var(--line)">
+              <span style="font:500 13px 'IBM Plex Mono',monospace">{{ t.p }}</span><span style="font-size:13.5px;color:var(--mute);line-height:1.4">{{ t.d }}</span><span style="font:600 13px 'IBM Plex Mono',monospace">{{ t.u }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font-size:12px;color:var(--faint)">Toda respuesta de la API incluye methodology_version y harmonization_uncertainty.</span>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font:500 11px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">EL MÉTODO EN 5 PASOS</span><span style="font-size:22px;font-weight:600">Para el brigadista, la idea. Para el científico, el detalle.</span></div>
+      <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:12px;background:var(--panel);border:1px solid var(--line2)">
+            <span style="font:600 28px 'IBM Plex Mono',monospace;color:var(--ember)">{{ s.n }}</span>
+            <span style="font-weight:600;font-size:15.5px;line-height:1.25">{{ s.t }}</span>
+            <span style="font-size:13.5px;line-height:1.5;text-wrap:pretty">{{ s.plain }}</span>
+            <span style="margin-top:auto;padding-top:10px;border-top:1px dashed var(--line2);font-size:12px;line-height:1.5;color:var(--mute);text-wrap:pretty">{{ s.tech }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+      <div style="display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:12px;border:1px solid var(--line2)">
+        <span style="font-weight:600;font-size:15px">Conteo y energía coinciden</span>
+        <span style="font-size:13.5px;line-height:1.5;color:var(--mute)">El FRP (poder radiativo) depende menos de la resolución. Ambas métricas armonizadas siguen la misma tendencia (r = 0.93): se validan entre sí.</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:12px;border:1px solid var(--line2)">
+        <span style="font-weight:600;font-size:15px">Meses nublados, marcados</span>
+        <span style="font-size:13.5px;line-height:1.5;color:var(--mute)">Contamos las observaciones válidas por celda y mes. Si las nubes taparon la vista, normalizamos y rayamos la celda en el calendario.</span>
+        <span style="width:60px;height:16px;border-radius:2px;background:repeating-linear-gradient(135deg,#7c7b78 0 2px,rgba(0,0,0,.55) 2px 3.5px)"></span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding:20px;border-radius:12px;border:1px dashed var(--line2)">
+        <span style="display:flex;gap:8px;align-items:center;font-weight:600;font-size:15px">“VIIRS virtual” <span style="font:500 10px 'IBM Plex Mono',monospace;padding:2px 6px;border:1px solid var(--line2);border-radius:4px;color:var(--mute)">EXPERIMENTAL · PILOTO</span></span>
+        <span style="font-size:13.5px;line-height:1.5;color:var(--mute)">Un modelo entrenado en el traslape estima dónde habría detectado VIIRS a 375 m en 2000–2011, a partir de MODIS, terreno y cobertura.</span>
+      </div>
+    </section>
+
+    <section style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;padding:24px 28px;border-radius:14px;background:var(--panel);border:1px solid var(--line2)">
+      <div style="display:flex;flex-direction:column;gap:4px;max-width:560px"><span style="font-weight:600;font-size:18px">Ciencia abierta</span><span style="font-size:14px;color:var(--mute);line-height:1.5">Dataset armonizado 2000–2026 y notebook reproducible, con DOI. Cualquiera puede repetir el método y medir el error.</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="#" style="height:40px;display:flex;align-items:center;padding:0 16px;border-radius:9px;background:var(--ember);color:var(--emberInk);text-decoration:none;font-weight:600;font-size:14px">Dataset · Zenodo DOI</a>
+        <a href="#" style="height:40px;display:flex;align-items:center;padding:0 16px;border-radius:9px;border:1px solid var(--line2);text-decoration:none;font-weight:500;font-size:14px">Notebook</a>
+        <a href="Rescoldo%20-%20Plataforma.dc.html" style="height:40px;display:flex;align-items:center;padding:0 16px;border-radius:9px;border:1px solid var(--line2);text-decoration:none;font-weight:500;font-size:14px">API /docs</a>
+      </div>
+    </section>
+    <footer style="font:400 11.5px 'IBM Plex Mono',monospace;color:var(--faint)">Datos: NASA FIRMS (MODIS C6.1, VIIRS 375 m S-NPP/NOAA-20/NOAA-21) · MODIS Land Cover (MCD12Q1) · H3</footer>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;oscuro&quot;,&quot;claro&quot;],&quot;default&quot;:&quot;oscuro&quot;,&quot;tsType&quot;:&quot;'oscuro'|'claro'&quot;}}">
+class Component extends DCLogic {
+  state={view:'antes'};
+  componentDidMount(){ document.documentElement.dataset.theme=(this.props.theme??'oscuro')==='claro'?'light':'dark'; }
+  componentDidUpdate(){ this.componentDidMount(); }
+  renderVals(){
+    const st=this.state, yrs=[];for(let y=2000;y<=2026;y++)yrs.push(y);
+    let s=17;const r=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};
+    const trueV=yrs.map(y=>14+Math.sin((y-2000)*.9)*3+(r()-.5)*5+(y===2011?7:0)+(y===2021?4:0)+(y===2024?5:0));
+    const raw=yrs.map((y,i)=>y<2012?trueV[i]/2.7:trueV[i]);
+    const X=y=>50+(y-2000)*(940/26), Y=v=>340-v/30*320;
+    const P=a=>a.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join('');
+    const D=(a,rr)=>a.map(p=>'M'+(p[0]-rr)+' '+p[1]+'a'+rr+' '+rr+' 0 1 0 '+2*rr+' 0a'+rr+' '+rr+' 0 1 0 '+(-2*rr)+' 0').join('');
+    const mPts=yrs.filter(y=>y<2012).map(y=>[X(y),Y(raw[y-2000])]), vPts=yrs.filter(y=>y>=2012).map(y=>[X(y),Y(raw[y-2000])]);
+    const hPts=yrs.map((y,i)=>[X(y),Y(trueV[i])]);
+    const up=yrs.filter(y=>y<=2012).map(y=>[X(y),Y(trueV[y-2000]*(y<2012?1.18:1))]), dn=yrs.filter(y=>y<=2012).reverse().map(y=>[X(y),Y(trueV[y-2000]*(y<2012?.82:1))]);
+    const v=st.view, seg=(val,label)=>({label,on:()=>this.setState({view:val}),bg:v===val?'var(--panel)':'transparent',fg:v===val?'var(--text)':'var(--mute)',sh:v===val?'0 1px 2px rgba(0,0,0,.25), inset 0 0 0 1px var(--line2)':'none'});
+    return {
+      viewOpts:[seg('antes','Sin armonizar'),seg('despues','Armonizada'),seg('ambas','Ambas')],
+      opRaw:v==='despues'?0:(v==='ambas'?.55:1), opHar:v==='antes'?0:1,
+      grid:[0,10,20,30].map(g=>'M50 '+Y(g)+'H990').join(''), x2012:X(2012)-1,
+      rawModis:P(mPts),rawViirs:P(vPts),rawJump:P([mPts[mPts.length-1],vPts[0]]),rawDots:D([...mPts,...vPts],3),
+      har:P(hPts),harDots:D(hPts,3),band:P(up)+P(dn).replace('M','L')+'Z',
+      jumpX:(X(2012)/1000*100+1.5).toFixed(1), jumpY:52,
+      trust:[{p:'2012–hoy',d:'MODIS y VIIRS observan a la vez. Dato directo.',u:'±5%'},{p:'2000–2011',d:'Estimación armonizada desde MODIS.',u:'±18%'},{p:'Nublado',d:'Pocas observaciones válidas: celda rayada.',u:'baja'},{p:'Últimas 48 h',d:'Casi tiempo real; puede cambiar al consolidarse.',u:'prelim.'}],
+      steps:[
+        {n:'01',t:'Limpiar',plain:'Quitamos volcanes, quema de gas industrial y señales en el mar. Solo queda fuego de vegetación.',tech:'Filtro por campo type de FIRMS; confianza MODIS 0–100 y VIIRS low/nominal/high homologadas.'},
+        {n:'02',t:'Aprender del traslape',plain:'Desde 2012 ambos satélites miran la misma tierra. Ahí aprendemos cómo “traducir” uno al otro.',tech:'Pares Aqua-MODIS / S-NPP VIIRS (~13:30 y ~01:30). Terra (~10:30) calibrado por separado.'},
+        {n:'03',t:'Traducir por paisaje y mes',plain:'Un bosque en abril no se ve igual que un cultivo en enero. Ajustamos cada caso por separado.',tech:'Quantile mapping por bioma (MODIS Land Cover) y mes sobre malla H3.'},
+        {n:'04',t:'Corregir por nubes',plain:'Un mes con pocos puntos puede ser tranquilo o nublado. Lo distinguimos y lo marcamos.',tech:'Normalización por observaciones válidas por celda y mes.'},
+        {n:'05',t:'Medir el error',plain:'Probamos el método escondiendo un año y viendo si lo adivina. Publicamos cuánto se equivoca.',tech:'Validación cruzada leave-one-year-out; comparación contra factor fijo; bandas de incertidumbre.'}]
+    };
+  }
+}
+</script>
+</body>
+</html>

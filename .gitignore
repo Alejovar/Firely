@@ -1,0 +1,31 @@
+# Datos (pesados y descargables de nuevo)
+data/raw/
+data/interim/
+data/processed/
+*.nc
+*.tif
+*.zip
+
+# Secretos
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+
+# Sistema
+.DS_Store
+
+# Datos externos locales y artefactos de build
+data/external/
+*.tsbuildinfo
+.duckdb_tmp/

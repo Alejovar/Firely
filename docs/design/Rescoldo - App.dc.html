@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="rescoldo-data.js"></script>
+<style>
+:root{--bg:#0d0f11;--panel:#14171a;--panel2:#1a1e22;--line:#262b31;--line2:#323840;--text:#ebe8e3;--mute:#9aa1a9;--faint:#6b727a;--ember:#e8803f;--emberInk:#1a0d05;--mapbg:#111518;--cell0:#1c2024;--field:#0f1214}
+html[data-theme="light"]{--bg:#efeee9;--panel:#ffffff;--panel2:#f6f5f1;--line:#e0ddd6;--line2:#cfcbc2;--text:#1a1c1e;--mute:#565c63;--faint:#878c92;--ember:#c9601f;--emberInk:#ffffff;--mapbg:#e4e2dc;--cell0:#ecebe6;--field:#ffffff}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--mute);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:2px}
+a:hover{color:var(--ember);text-decoration-color:var(--ember)}
+input::placeholder{color:var(--faint)}
+</style>
+</helmet>
+<div style="height:100vh;min-height:900px;min-width:1360px;display:grid;grid-template-columns:76px minmax(0,1fr);background:var(--bg);color:var(--text);font-variant-numeric:tabular-nums">
+
+  <nav style="display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:14px 6px;border-right:1px solid var(--line);background:var(--panel)">
+    <div style="align-self:center;width:26px;height:26px;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-bottom:16px">
+      <div style="background:var(--line2)"></div><div style="background:var(--line2);opacity:.6"></div><div style="background:var(--line2)"></div>
+      <div style="background:var(--line2);opacity:.6"></div><div style="background:var(--ember);box-shadow:0 0 10px var(--ember)"></div><div style="background:var(--line2);opacity:.6"></div>
+      <div style="background:var(--line2)"></div><div style="background:var(--line2);opacity:.6"></div><div style="background:var(--line2)"></div>
+    </div>
+    <a href="Rescoldo%20-%20App.dc.html" style="padding:9px 4px;border-radius:8px;background:var(--panel2);color:var(--text);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center;box-shadow:inset 2px 0 0 var(--ember)">Mapa</a>
+    <a href="Rescoldo%20-%20Asistente.dc.html" style="padding:9px 4px;border-radius:8px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Asistente</a>
+    <a href="Rescoldo%20-%20Como%20armonizamos.dc.html" style="padding:9px 4px;border-radius:8px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Método</a>
+    <a href="Rescoldo%20-%20Plataforma.dc.html" style="padding:9px 4px;border-radius:8px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Alertas y API</a>
+    <a href="Rescoldo%20-%20Experiencia.dc.html" style="padding:9px 4px;border-radius:8px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Historia</a>
+    <div style="height:1px;background:var(--line);margin:10px 6px"></div>
+    <a href="Rescoldo%20-%20Ficha%20PDF.dc.html" style="padding:9px 4px;border-radius:8px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Ficha</a>
+    <a href="Rescoldo%20-%20Movil.dc.html" style="padding:9px 4px;border-radius:8px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Móvil</a>
+    <a href="Rescoldo%20-%20Widget.dc.html" style="padding:9px 4px;border-radius:8px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Widget</a>
+    <a href="Rescoldo%20-%20Identidad.dc.html" style="padding:9px 4px;border-radius:8px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Identidad</a>
+  </nav>
+
+  <div style="display:grid;grid-template-rows:68px minmax(0,1fr);min-width:0;min-height:0">
+  <header style="display:flex;align-items:center;gap:14px;padding:0 18px;border-bottom:1px solid var(--line);background:var(--panel)">
+    <div style="display:flex;flex-direction:column;line-height:1.05;flex:none">
+      <span style="font-weight:600;font-size:17px;letter-spacing:-.01em">Rescoldo</span>
+      <span style="font:500 9.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em">MODIS + VIIRS · 2000–2026</span>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;gap:8px;min-width:0;max-width:900px">
+      <div style="flex:1;display:flex;align-items:center;gap:10px;height:44px;padding:0 6px 0 14px;border:1px solid var(--line2);border-radius:10px;background:var(--field)">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex:none;color:var(--mute)"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"></circle><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
+        <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Ej. incendios en la sierra de Arteaga en marzo de 2021" style="flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font:400 15px 'IBM Plex Sans',sans-serif"></input>
+        <span style="flex:none;display:flex;gap:5px;font:500 11px 'IBM Plex Mono',monospace;color:var(--mute)">
+          <span style="padding:3px 7px;border:1px solid var(--line2);border-radius:5px">lugar: Sierra de Arteaga, Coah.</span>
+          <span style="padding:3px 7px;border:1px solid var(--line2);border-radius:5px">fechas: mar 2021</span>
+        </span>
+        <button title="Dictar" style="flex:none;width:34px;height:34px;border-radius:8px;border:0;background:var(--ember);color:var(--emberInk);display:grid;place-items:center;cursor:pointer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" stroke="currentColor" stroke-width="1.5"></rect><path d="M3 8a5 5 0 0010 0M8 13v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
+        </button>
+      </div>
+      <button style="flex:none;height:44px;padding:0 11px;border:1px solid var(--line2);border-radius:10px;background:transparent;color:var(--text);font:500 12.5px 'IBM Plex Sans',sans-serif;cursor:pointer">Dibujar área</button>
+      <button style="flex:none;height:44px;padding:0 11px;border:1px solid var(--line2);border-radius:10px;background:transparent;color:var(--text);font:500 12.5px 'IBM Plex Sans',sans-serif;cursor:pointer">Lat / Lon + radio</button>
+      <button style="flex:none;height:44px;padding:0 11px;border:1px solid var(--line2);border-radius:10px;background:transparent;color:var(--text);font:500 12.5px 'IBM Plex Sans',sans-serif;cursor:pointer">Municipio</button>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex:none">
+      <a href="Rescoldo%20-%20Plataforma.dc.html#alertas" style="display:flex;align-items:center;gap:6px;height:32px;padding:0 10px;border:1px solid var(--line2);border-radius:8px;color:var(--text);text-decoration:none;font-size:12.5px">Alertas <span style="min-width:18px;height:18px;border-radius:9px;background:var(--ember);color:var(--emberInk);font:600 11px 'IBM Plex Mono',monospace;display:grid;place-items:center">2</span></a>
+      <span style="font:500 11px 'IBM Plex Mono',monospace;color:var(--mute);padding:4px 7px;border:1px solid var(--line2);border-radius:5px">ES · EN · PT</span>
+      <button onClick="{{ toggleTheme }}" title="Modo claro / oscuro" style="width:32px;height:32px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--text);display:grid;place-items:center;cursor:pointer">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.4"></circle><path d="M8 2.5a5.5 5.5 0 010 11z" fill="currentColor"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <main style="display:grid;grid-template-columns:minmax(0,1fr) 620px;min-height:0">
+
+    <section style="position:relative;overflow:hidden;background:var(--mapbg);border-right:1px solid var(--line)">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse 38% 30% at 48% 52%,rgba(130,140,120,.16),transparent 70%),radial-gradient(ellipse 25% 40% at 70% 30%,rgba(130,140,120,.10),transparent 70%),radial-gradient(ellipse 30% 20% at 25% 75%,rgba(130,140,120,.08),transparent 70%),repeating-linear-gradient(135deg,transparent 0 22px,rgba(127,127,127,.04) 22px 23px)"></div>
+      <div style="position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:25% 25%;opacity:.55"></div>
+      <div style="position:absolute;left:50%;top:14px;transform:translateX(-50%);font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">MAPA BASE · RELIEVE SOMBREADO (MapLibre + OSM)</div>
+      <div style="position:absolute;left:6px;top:25%;font:400 10px 'IBM Plex Mono',monospace;color:var(--faint)">25.45°N</div>
+      <div style="position:absolute;left:6px;top:50%;font:400 10px 'IBM Plex Mono',monospace;color:var(--faint)">25.30°N</div>
+      <div style="position:absolute;left:6px;top:75%;font:400 10px 'IBM Plex Mono',monospace;color:var(--faint)">25.15°N</div>
+      <div style="position:absolute;bottom:30px;left:25%;font:400 10px 'IBM Plex Mono',monospace;color:var(--faint)">100.80°O</div>
+      <div style="position:absolute;bottom:30px;left:50%;font:400 10px 'IBM Plex Mono',monospace;color:var(--faint)">100.55°O</div>
+
+      <sc-if value="{{ L.recurrencia }}" hint-placeholder-val="{{ false }}">
+        <sc-for list="{{ recur }}" as="q" hint-placeholder-count="0">
+          <div style="position:absolute;left:{{ q.x }}%;top:{{ q.y }}%;width:3.2%;height:3.2%;background:{{ q.c }};opacity:.62"></div>
+        </sc-for>
+      </sc-if>
+      <svg viewBox="0 0 1000 1000" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+        <sc-if value="{{ L.exposicion }}" hint-placeholder-val="{{ false }}"><path d="M170 560 L300 520 L330 700 L200 760 Z" fill="rgba(127,180,138,.10)" stroke="#7fb48a" stroke-width="1.5" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"></path></sc-if>
+        <polygon points="300,300 420,240 560,250 690,300 760,390 740,520 680,640 560,720 430,730 330,660 260,540 250,410" fill="rgba(232,128,63,.05)" stroke="var(--ember)" stroke-width="2" vector-effect="non-scaling-stroke" stroke-dasharray="6 4"></polygon>
+        <sc-if value="{{ L.cono }}" hint-placeholder-val="{{ false }}">
+          <path d="M600 420 L790 230 L880 330 Z" fill="rgba(235,232,227,.10)" stroke="var(--text)" stroke-width="1.2" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"></path>
+          <path d="M600 420 L690 330 L735 380 Z" fill="rgba(235,232,227,.12)" stroke="none"></path>
+        </sc-if>
+      </svg>
+      <sc-if value="{{ L.cono }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:69%;top:34%;font:500 10px 'IBM Plex Mono',monospace;color:var(--text)">6 h</div>
+        <div style="position:absolute;left:84%;top:25%;font:500 10px 'IBM Plex Mono',monospace;color:var(--text)">12 h · 0.9 km/h → NE</div>
+      </sc-if>
+      <sc-if value="{{ L.goes }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:57%;top:38%;width:5%;height:6%;border:1.5px dashed #67a9cf;background:rgba(103,169,207,.12)"></div>
+        <div style="position:absolute;left:62%;top:41%;width:5%;height:6%;border:1.5px dashed #67a9cf;background:rgba(103,169,207,.08)"></div>
+        <div style="position:absolute;left:57%;top:45%;font:500 10px 'IBM Plex Mono',monospace;color:#67a9cf">GOES-East · hace 5 min</div>
+      </sc-if>
+      <sc-if value="{{ L.puntos }}" hint-placeholder-val="{{ true }}">
+        <sc-for list="{{ points }}" as="p" hint-placeholder-count="0">
+          <div title="{{ p.title }}" style="position:absolute;left:{{ p.x }}%;top:{{ p.y }}%;width:{{ p.s }}px;height:{{ p.s }}px;margin:-{{ p.h }}px 0 0 -{{ p.h }}px;border-radius:50%;background:{{ p.c }};opacity:{{ p.o }};box-shadow:0 0 0 1px rgba(0,0,0,.35)"></div>
+        </sc-for>
+      </sc-if>
+      <sc-if value="{{ L.recientes }}" hint-placeholder-val="{{ true }}">
+        <sc-for list="{{ recent }}" as="r" hint-placeholder-count="0">
+          <div title="{{ r.title }}" style="position:absolute;left:{{ r.x }}%;top:{{ r.y }}%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:2px solid var(--text);background:rgba(255,255,255,.15);box-shadow:0 0 0 3px rgba(0,0,0,.35)"></div>
+        </sc-for>
+      </sc-if>
+      <sc-if value="{{ L.exposicion }}" hint-placeholder-val="{{ false }}">
+        <sc-for list="{{ locs }}" as="l" hint-placeholder-count="0">
+          <div style="position:absolute;left:{{ l.x }}%;top:{{ l.y }}%;display:flex;align-items:center;gap:5px;transform:translate(-5px,-5px)">
+            <span style="width:9px;height:9px;background:{{ l.c }};border:1.5px solid var(--bg)"></span>
+            <span style="font:500 11px 'IBM Plex Sans',sans-serif;color:var(--text);text-shadow:0 1px 3px var(--bg),0 0 2px var(--bg)">{{ l.n }}</span>
+          </div>
+        </sc-for>
+        <div style="position:absolute;left:19%;top:73%;font:500 10px 'IBM Plex Mono',monospace;color:#7fb48a">ANP Zapalinamé</div>
+      </sc-if>
+
+      <div style="position:absolute;left:16px;top:36px;width:296px;padding:14px 16px;border:1px solid var(--line2);border-radius:10px;background:var(--panel);box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:6px">
+        <div style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">ÁREA SELECCIONADA</div>
+        <div style="font-weight:600;font-size:17px;line-height:1.2">Sierra de Arteaga, Coahuila</div>
+        <div style="font-size:12.5px;color:var(--mute);line-height:1.45">1,742 km² · límite municipal INEGI · {{ dayLabel }}</div>
+        <div style="display:flex;gap:12px;margin-top:4px;font-size:12px"><a href="#">Editar polígono</a><a href="#">Cambiar fechas</a><a href="Rescoldo%20-%20Experiencia.dc.html">Modo historia ▸</a></div>
+      </div>
+
+      <div style="position:absolute;right:16px;bottom:40px;width:236px;border:1px solid var(--line2);border-radius:10px;background:var(--panel);box-shadow:0 8px 24px rgba(0,0,0,.25);overflow:hidden">
+        <div style="padding:10px 14px;font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em;border-bottom:1px solid var(--line)">CAPAS</div>
+        <sc-for list="{{ layerList }}" as="ly" hint-placeholder-count="7">
+          <div onClick="{{ ly.on }}" style="padding:6px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;cursor:pointer">
+            <span style="display:flex;flex-direction:column;gap:1px"><span>{{ ly.label }}</span><span style="font-size:10.5px;color:var(--faint)">{{ ly.sub }}</span></span>
+            <span style="flex:none;width:28px;height:16px;border-radius:8px;background:{{ ly.track }};position:relative"><span style="position:absolute;left:{{ ly.knob }}px;top:2px;width:12px;height:12px;border-radius:50%;background:#fff"></span></span>
+          </div>
+        </sc-for>
+        <div style="padding:4px 14px 12px;display:flex;gap:4px">
+          <button onClick="{{ set24 }}" style="flex:1;height:24px;border-radius:6px;border:1px solid var(--line2);background:{{ b24 }};color:var(--text);font:500 11.5px 'IBM Plex Sans',sans-serif;cursor:pointer">24 h</button>
+          <button onClick="{{ set48 }}" style="flex:1;height:24px;border-radius:6px;border:1px solid var(--line2);background:{{ b48 }};color:var(--text);font:500 11.5px 'IBM Plex Sans',sans-serif;cursor:pointer">48 h</button>
+        </div>
+      </div>
+
+      <div style="position:absolute;left:16px;bottom:52px;display:flex;align-items:flex-end;gap:16px">
+        <div style="padding:10px 12px;border:1px solid var(--line2);border-radius:8px;background:var(--panel);display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:var(--mute)">
+          <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">PODER RADIATIVO (FRP)</span>
+          <span style="display:flex;align-items:center;gap:8px"><span style="width:6px;height:6px;border-radius:50%;background:#7c7b78"></span>bajo<span style="width:9px;height:9px;border-radius:50%;background:#bcaf6f"></span><span style="width:12px;height:12px;border-radius:50%;background:#fde34a"></span>alto</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;font:400 10px 'IBM Plex Mono',monospace;color:var(--mute)"><span style="width:90px;height:5px;border:1px solid var(--mute);border-top:0"></span>10 km</div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;height:26px;display:flex;align-items:center;justify-content:flex-end;padding:0 14px;font:400 10.5px 'IBM Plex Mono',monospace;color:var(--faint);background:linear-gradient(transparent,var(--mapbg))">NASA FIRMS (MODIS C6.1 · VIIRS 375 m) armonizados · GOES · © OpenStreetMap · INEGI</div>
+
+      <sc-if value="{{ compare }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;background:var(--panel);display:flex;flex-direction:column;gap:12px;padding:22px 26px;overflow:auto">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">COMPARADOR · CALENDARIOS SINCRONIZADOS</span>
+              <span style="font-weight:600;font-size:17px">Sierra de Zapalinamé, Coahuila <span style="font-weight:400;color:var(--mute);font-size:14px">vs Sierra de Arteaga →</span></span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <span style="height:28px;display:flex;align-items:center;padding:0 10px;border-radius:14px;background:var(--text);color:var(--panel);font-size:12px;font-weight:500">Otra área</span>
+              <span style="height:28px;display:flex;align-items:center;padding:0 10px;border-radius:14px;border:1px solid var(--line2);color:var(--mute);font-size:12px">Otro periodo</span>
+              <button onClick="{{ toggleCompare }}" style="height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 12px 'IBM Plex Sans',sans-serif;cursor:pointer">Cerrar ✕</button>
+            </div>
+          </div>
+          <div style="font-size:14px;line-height:1.5;max-width:640px;text-wrap:pretty">Ambas sierras arden en <b>marzo–mayo</b>, pero Zapalinamé tiene <b>{{ cmpRatio }}</b> de actividad que Arteaga en el mismo mes. En {{ selLabel }} registró <b>{{ cmpSel }} puntos</b> ({{ cmpSelRatio }} su mediana). <a href="#">ver datos</a></div>
+          <div style="display:grid;grid-template-columns:52px repeat(12,minmax(0,1fr));column-gap:3px;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);text-align:center">
+            <span></span><sc-for list="{{ months }}" as="m" hint-placeholder-count="12"><span style="color:{{ m.c }}">{{ m.l }}</span></sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <sc-for list="{{ rows2 }}" as="row" hint-placeholder-count="27">
+              <div style="display:grid;grid-template-columns:52px repeat(12,minmax(0,1fr));column-gap:3px;height:17px">
+                <span style="font:400 10.5px 'IBM Plex Mono',monospace;color:{{ row.lc }};display:flex;align-items:center">{{ row.year }}</span>
+                <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="12">
+                  <div onClick="{{ c.on }}" title="{{ c.title }}" style="border-radius:2px;background:{{ c.bg }};box-shadow:{{ c.ring }};cursor:pointer;position:relative;z-index:{{ c.z }}"></div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+
+    <aside style="min-height:0;overflow:auto;background:var(--panel);display:flex;flex-direction:column">
+
+      <div style="padding:18px 22px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start">
+        <div style="display:flex;flex-direction:column;gap:5px;padding:7px;border-radius:12px;background:var(--panel2);border:1px solid var(--line)">
+          <span style="width:14px;height:14px;border-radius:50%;background:#b2182b;box-shadow:0 0 12px rgba(178,24,43,.8)"></span>
+          <span style="width:14px;height:14px;border-radius:50%;background:var(--line2)"></span>
+          <span style="width:14px;height:14px;border-radius:50%;background:var(--line2)"></span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">
+            <span>MES ACTUAL · MARZO 2026 · AL DÍA 18</span>
+            <span style="padding:2px 6px;border-radius:4px;background:rgba(178,24,43,.16);color:#e5707e;letter-spacing:.04em">MUY POR ENCIMA · &gt; P90</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+            <span style="font-size:40px;font-weight:600;letter-spacing:-.02em;line-height:1">2.8×</span>
+            <span style="font-size:16px;line-height:1.35;text-wrap:pretty;max-width:380px">Marzo va <b style="font-weight:600">2.8× sobre la mediana</b> histórica para estas fechas.</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;column-gap:16px;row-gap:4px;font-size:12.5px;color:var(--mute);line-height:1.5">
+            <span>{{ semCount }} puntos en 18 días; lo normal serían ~{{ semExpected }} · <a href="#">ver datos</a></span>
+            <span>Un marzo así ocurre <b style="color:var(--text);font-weight:600">1 vez cada 25 años</b> · <a href="#">ver datos</a></span>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:16px 22px 14px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <span style="font-weight:600;font-size:15px">Calendario de actividad</span>
+            <span style="font-size:12px;color:var(--mute)">Puntos de calor armonizados por mes · 2000–2026</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button onClick="{{ play }}" title="Sonificación: escucha el año seleccionado" style="height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line2);background:{{ playBg }};white-space:nowrap;color:var(--text);font:500 12px 'IBM Plex Sans',sans-serif;cursor:pointer">{{ playLabel }}</button>
+            <button onClick="{{ toggleCompare }}" style="height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line2);background:{{ cmpBg }};color:var(--text);font:500 12px 'IBM Plex Sans',sans-serif;cursor:pointer">Comparar</button>
+            <div style="display:flex;padding:2px;border-radius:8px;background:var(--panel2);border:1px solid var(--line)">
+              <sc-for list="{{ modeOpts }}" as="o" hint-placeholder-count="2">
+                <button onClick="{{ o.on }}" style="height:26px;padding:0 10px;border:0;border-radius:6px;background:{{ o.bg }};color:{{ o.fg }};font:500 12px 'IBM Plex Sans',sans-serif;cursor:pointer;box-shadow:{{ o.sh }}">{{ o.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute)">Tipo
+            <div style="display:flex;gap:2px"><sc-for list="{{ typeOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.on }}" style="height:26px;padding:0 10px;border-radius:13px;border:1px solid {{ o.bd }};background:{{ o.bg }};color:{{ o.fg }};font:500 12px 'IBM Plex Sans',sans-serif;cursor:pointer">{{ o.label }}</button></sc-for></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute)">Referencia
+            <div style="display:flex;gap:2px"><sc-for list="{{ refOpts }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.on }}" style="height:26px;padding:0 10px;border-radius:13px;border:1px solid {{ o.bd }};background:{{ o.bg }};color:{{ o.fg }};font:500 12px 'IBM Plex Sans',sans-serif;cursor:pointer">{{ o.label }}</button></sc-for></div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:58px repeat(12,minmax(0,1fr)) 40px;column-gap:3px;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);text-align:center">
+          <span></span><sc-for list="{{ months }}" as="m" hint-placeholder-count="12"><span style="color:{{ m.c }}">{{ m.l }}</span></sc-for><span title="Fase ENSO según índice ONI de NOAA">ONI</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px;margin-top:-6px">
+          <sc-for list="{{ rows }}" as="row" hint-placeholder-count="27">
+            <div style="display:grid;grid-template-columns:58px repeat(12,minmax(0,1fr)) 40px;column-gap:3px;height:15px">
+              <span style="display:flex;align-items:center;gap:5px;font:400 10.5px 'IBM Plex Mono',monospace;color:{{ row.lc }}"><span style="width:3px;height:15px;background:{{ row.mark }}"></span>{{ row.year }}<span style="font-size:9px;color:var(--faint)">{{ row.est }}</span></span>
+              <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="12">
+                <div onClick="{{ c.on }}" title="{{ c.title }}" style="position:relative;border-radius:2px;background:{{ c.bg }};box-shadow:{{ c.ring }};cursor:pointer;display:grid;place-items:center;font:500 9px 'IBM Plex Mono',monospace;color:{{ c.fg }};z-index:{{ c.z }};outline:{{ c.play }}">
+                  <sc-if value="{{ c.cloud }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;inset:0;border-radius:2px;background:repeating-linear-gradient(135deg,transparent 0 2px,rgba(0,0,0,.55) 2px 3.5px)"></span></sc-if>
+                  <span style="position:relative">{{ c.txt }}</span>
+                </div>
+              </sc-for>
+              <span style="display:grid;place-items:center;font:500 9.5px 'IBM Plex Mono',monospace;color:{{ row.oniC }}">{{ row.oni }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--mute)">
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'IBM Plex Mono',monospace">{{ legendLo }}</span><span style="width:130px;height:9px;border-radius:2px;background:{{ legendGrad }}"></span><span style="font-family:'IBM Plex Mono',monospace">{{ legendHi }}</span></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:3px;height:12px;background:var(--line2)"></span>2000–11 estimación</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:10px;border-radius:2px;background:repeating-linear-gradient(135deg,#7c7b78 0 2px,rgba(0,0,0,.55) 2px 3.5px)"></span>Nubes</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px">Niña · Niño</span>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid var(--line2);border-radius:10px;background:var(--panel2)">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center">
+            <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+              <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">CELDA SELECCIONADA · {{ selLabelUpper }}</span>
+              <span style="font-size:14.5px;line-height:1.4;text-wrap:pretty"><b style="font-weight:600">{{ selCount }} puntos</b>, {{ selRatio }} la {{ refWord }} de {{ selMonthName }}. {{ selRank }}</span>
+              <span style="font-size:12px;color:var(--mute)">{{ selNote }} · <a href="#">ver datos</a></span>
+            </div>
+            <div style="display:grid;place-items:center;width:64px;height:48px;border-radius:8px;background:{{ selBg }};color:{{ selFg }};font:600 15px 'IBM Plex Mono',monospace">{{ selRatio }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--faint)"><span>Desglose diario · clic en un día para verlo en el mapa</span><span onClick="{{ clearDay }}" style="cursor:pointer;text-decoration:underline">{{ dayClear }}</span></div>
+            <div style="display:flex;align-items:flex-end;gap:2px;height:44px">
+              <sc-for list="{{ days }}" as="d" hint-placeholder-count="31">
+                <div onClick="{{ d.on }}" title="{{ d.title }}" style="flex:1;height:{{ d.h }}%;min-height:2px;border-radius:1px;background:{{ d.c }};cursor:pointer;opacity:{{ d.o }}"></div>
+              </sc-for>
+            </div>
+            <div style="display:flex;justify-content:space-between;font:400 10px 'IBM Plex Mono',monospace;color:var(--faint)"><span>1</span><span>8</span><span>15</span><span>22</span><span>{{ lastDay }}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--line);padding:14px 22px 18px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-weight:600;font-size:15px">Análisis</span><span style="font-size:11.5px;color:var(--faint)">Cifras de la serie armonizada · redacción automática</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line);padding-bottom:10px">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="7">
+            <button onClick="{{ t.on }}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.fg }};font:500 12.5px 'IBM Plex Sans',sans-serif;cursor:pointer">{{ t.label }}</button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ tab.incendio }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <p style="margin:0;font-size:16px;line-height:1.45;text-wrap:pretty">El incendio activo en <b>San Antonio de las Alazanas</b> ya es el <b>4º más grande</b> de 212 registrados en la sierra desde 2000, y sigue creciendo. <a href="#" style="font-size:12px">ver datos</a></p>
+            <div style="display:grid;grid-template-columns:22px minmax(0,1.6fr) minmax(0,2fr) 64px 72px;gap:6px 10px;align-items:center;font-size:12.5px">
+              <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint)">#</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint)">EVENTO</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint)">PUNTOS ARMONIZADOS</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint)">DÍAS</span><span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint)">EXTENSIÓN</span>
+              <sc-for list="{{ events }}" as="e" hint-placeholder-count="6">
+                <span style="font-family:'IBM Plex Mono',monospace;color:var(--faint)">{{ e.rank }}</span>
+                <span style="display:flex;flex-direction:column;line-height:1.25;min-width:0"><span style="font-weight:{{ e.w }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }}</span><span style="font-size:11px;color:var(--faint)">{{ e.start }}{{ e.tag }}</span></span>
+                <span style="display:flex;align-items:center;gap:6px"><span style="height:10px;width:{{ e.pct }}%;background:{{ e.c }};border-radius:2px"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">{{ e.pts }}</span></span>
+                <span style="font-family:'IBM Plex Mono',monospace">{{ e.days }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">{{ e.ha }}</span>
+              </sc-for>
+            </div>
+            <div style="font-size:11.5px;color:var(--mute)">Eventos agrupados por cercanía en espacio (≤ 2 km) y tiempo (≤ 2 días). Extensión aproximada a partir de la huella de detecciones. <a href="#">ver datos</a></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tab.parecidos }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <p style="margin:0;font-size:16px;line-height:1.45;text-wrap:pretty">2026 va <b>por encima del percentil 90</b>. Los años con el arranque más parecido fueron <b>{{ analogNames }}</b>; cerraron con {{ analogTotals }} puntos. <a href="#" style="font-size:12px">ver datos</a></p>
+            <div style="position:relative">
+              <svg viewBox="0 0 576 210" style="width:100%;display:block">
+                <path d="{{ envBand }}" fill="var(--line2)" opacity=".7"></path>
+                <path d="{{ envMin }}" fill="none" stroke="var(--faint)" stroke-width="1" stroke-dasharray="2 3"></path>
+                <path d="{{ envMax }}" fill="none" stroke="var(--faint)" stroke-width="1" stroke-dasharray="2 3"></path>
+                <path d="{{ envMed }}" fill="none" stroke="var(--mute)" stroke-width="1.5" stroke-dasharray="5 3"></path>
+                <path d="{{ an0 }}" fill="none" stroke="#c8b866" stroke-width="1.4"></path>
+                <path d="{{ an1 }}" fill="none" stroke="#958f78" stroke-width="1.4"></path>
+                <path d="{{ an2 }}" fill="none" stroke="#67a9cf" stroke-width="1.4"></path>
+                <path d="{{ curLine }}" fill="none" stroke="var(--text)" stroke-width="2.6"></path>
+                <path d="{{ curDot }}" fill="var(--text)"></path>
+                <path d="{{ axis }}" fill="none" stroke="var(--line2)"></path>
+              </svg>
+              <div style="display:flex;justify-content:space-between;padding:0 4px 0 36px;font:400 10px 'IBM Plex Mono',monospace;color:var(--faint)"><sc-for list="{{ monthsShort }}" as="m" hint-placeholder-count="12"><span>{{ m }}</span></sc-for></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11.5px;color:var(--mute)">
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:3px;background:var(--text)"></span>2026</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:8px;background:var(--line2)"></span>Percentiles 10–90</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:0;border-top:1.5px dashed var(--mute)"></span>Mediana</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:0;border-top:1px dotted var(--faint)"></span>Mín / máx</span>
+              <sc-for list="{{ analogs }}" as="a" hint-placeholder-count="3"><span style="display:flex;align-items:center;gap:5px"><span style="width:16px;height:2px;background:{{ a.c }}"></span>{{ a.y }} · cerró en {{ a.total }}</span></sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tab.temporada }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <p style="margin:0;font-size:16px;line-height:1.45;text-wrap:pretty">La temporada ahora <b>empieza {{ seasonShift }} días antes</b> que a inicios de los 2000 y termina más tarde: dura casi un mes más. <a href="#" style="font-size:12px">ver datos</a></p>
+            <svg viewBox="0 0 576 200" style="width:100%;display:block">
+              <path d="{{ sGrid }}" stroke="var(--line)" fill="none"></path>
+              <path d="{{ sRanges }}" stroke="var(--line2)" stroke-width="5" stroke-linecap="round" fill="none"></path>
+              <path d="{{ sStart }}" fill="#67a9cf"></path>
+              <path d="{{ sPeak }}" fill="var(--text)"></path>
+              <path d="{{ sEnd }}" fill="#c8b866"></path>
+              <path d="{{ sTrend }}" stroke="#67a9cf" stroke-width="1.5" stroke-dasharray="5 3" fill="none"></path>
+              <path d="{{ sTrendEnd }}" stroke="#c8b866" stroke-width="1.5" stroke-dasharray="5 3" fill="none"></path>
+            </svg>
+            <div style="display:flex;justify-content:space-between;font:400 10px 'IBM Plex Mono',monospace;color:var(--faint);padding:0 6px 0 34px;margin-top:-6px"><span>2000</span><span>2005</span><span>2010</span><span>2015</span><span>2020</span><span>2025</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11.5px;color:var(--mute)">
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:#67a9cf"></span>Inicio (10% del año)</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--text)"></span>Pico</span>
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:#c8b866"></span>Fin (90%)</span>
+              <span>Inicio: pendiente de Sen <b style="color:var(--text)">{{ senStart }} días/década</b>, Mann-Kendall p = 0.01 · <a href="#">ver datos</a></span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tab.contexto }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <p style="margin:0;font-size:16px;line-height:1.45;text-wrap:pretty">El invierno 2025–26 fue el <b>más seco desde 2011</b> (−41% de lluvia) y <b>1.4 °C más cálido</b> de lo normal, tras un año de La Niña. Eso explica buena parte del marzo actual. <a href="#" style="font-size:12px">ver datos</a></p>
+            <div style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em">LLUVIA ENE–MAR · % VS NORMAL (NASA POWER)</div>
+            <svg viewBox="0 0 576 90" style="width:100%;display:block"><path d="M30 45H576" stroke="var(--line2)"></path><path d="{{ rainPos }}" fill="#67a9cf"></path><path d="{{ rainNeg }}" fill="#ef8a62"></path></svg>
+            <div style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em">TEMPERATURA ENE–MAR · °C VS NORMAL</div>
+            <svg viewBox="0 0 576 70" style="width:100%;display:block"><path d="M30 35H576" stroke="var(--line2)"></path><path d="{{ tempPos }}" fill="#ef8a62"></path><path d="{{ tempNeg }}" fill="#67a9cf"></path></svg>
+            <div style="display:grid;grid-template-columns:30px repeat(27,minmax(0,1fr));gap:1px;font:500 8.5px 'IBM Plex Mono',monospace;text-align:center">
+              <span style="color:var(--faint);text-align:left">ONI</span>
+              <sc-for list="{{ oniStrip }}" as="o" hint-placeholder-count="27"><span title="{{ o.t }}" style="height:14px;line-height:14px;background:{{ o.bg }};color:{{ o.fg }}">{{ o.l }}</span></sc-for>
+            </div>
+            <div style="display:flex;justify-content:space-between;font:400 10px 'IBM Plex Mono',monospace;color:var(--faint);padding-left:30px"><span>2000</span><span>2013</span><span>2026</span></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tab.riesgo }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <p style="margin:0;font-size:16px;line-height:1.45;text-wrap:pretty">El <b>sábado 21</b> el peligro meteorológico será <b>extremo</b>. Con viento del suroeste, <b>3 localidades (3,450 personas)</b> quedan en la dirección del humo del incendio activo. <a href="#" style="font-size:12px">ver datos</a></p>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+              <sc-for list="{{ fwi }}" as="f" hint-placeholder-count="7">
+                <div style="display:flex;flex-direction:column;align-items:stretch;gap:4px;font-size:11px;text-align:center">
+                  <div style="height:70px;display:flex;align-items:flex-end"><div style="width:100%;height:{{ f.h }}%;background:{{ f.c }};border-radius:3px 3px 0 0"></div></div>
+                  <span style="font:600 13px 'IBM Plex Mono',monospace">{{ f.v }}</span><span style="color:var(--mute)">{{ f.d }}</span><span style="font-size:10px;color:var(--faint)">{{ f.l }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font-size:11.5px;color:var(--mute)">Índice meteorológico de peligro (FWI · NASA GFWED), próximos 7 días · <a href="#">ver datos</a></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em">LOCALIDADES CERCANAS</span>
+                <sc-for list="{{ locs }}" as="l" hint-placeholder-count="5">
+                  <div style="display:flex;align-items:center;gap:8px;font-size:12.5px"><span style="width:8px;height:8px;background:{{ l.c }}"></span><span style="flex:1;min-width:0">{{ l.n }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mute)">{{ l.km }} km {{ l.dir }}</span></div>
+                </sc-for>
+                <span style="font-size:11px;color:var(--faint)">■ a favor del viento · ANP Zapalinamé a 6 km O</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em">ÍNDICE DE PRIORIDAD DE PREVENCIÓN</span>
+                <div style="display:flex;align-items:baseline;gap:8px"><span style="font:600 30px 'IBM Plex Sans',sans-serif">82</span><span style="color:var(--mute);font-size:13px">/ 100 · Alta</span></div>
+                <sc-for list="{{ prio }}" as="p" hint-placeholder-count="5">
+                  <div style="display:grid;grid-template-columns:96px 1fr 24px;gap:8px;align-items:center;font-size:11.5px;color:var(--mute)"><span>{{ p.l }}</span><span style="height:6px;background:var(--line);border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:{{ p.v }}%;background:var(--text)"></span></span><span style="font-family:'IBM Plex Mono',monospace;color:var(--text)">{{ p.v }}</span></div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line2);border-radius:8px;font-size:12.5px">
+              <span style="flex:1">Cono de propagación: avanza ~0.9 km/h hacia el NE; en 12 h podría alcanzar el camino a Jamé.</span>
+              <a href="Rescoldo%20-%20Plataforma.dc.html#alertas" style="flex:none;color:var(--text)">Preparar alerta CAP →</a>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tab.patrones }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <p style="margin:0;font-size:16px;line-height:1.45;text-wrap:pretty">Los fines de semana hay <b>48% más puntos</b> que entre semana: una firma de origen humano. Y el incendio activo sigue ardiendo de noche, <b>2.6× más</b> que lo típico. <a href="#" style="font-size:12px">ver datos</a></p>
+            <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:18px">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em">EFECTO DÍA DE LA SEMANA</span>
+                <div style="display:flex;align-items:flex-end;gap:6px;height:90px"><sc-for list="{{ week }}" as="w" hint-placeholder-count="7"><div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end"><div style="width:100%;height:{{ w.h }}%;background:{{ w.c }};border-radius:2px"></div><span style="font:400 10px 'IBM Plex Mono',monospace;color:var(--faint)">{{ w.l }}</span></div></sc-for></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em">FUEGO NOCTURNO</span>
+                <div style="display:flex;flex-direction:column;gap:5px;font-size:12px">
+                  <div style="display:grid;grid-template-columns:90px 1fr 34px;gap:8px;align-items:center"><span>Evento activo</span><span style="height:8px;background:var(--line)"><span style="display:block;height:100%;width:72%;background:var(--text)"></span></span><span style="font-family:'IBM Plex Mono',monospace">18%</span></div>
+                  <div style="display:grid;grid-template-columns:90px 1fr 34px;gap:8px;align-items:center;color:var(--mute)"><span>Típico</span><span style="height:8px;background:var(--line)"><span style="display:block;height:100%;width:28%;background:var(--mute)"></span></span><span style="font-family:'IBM Plex Mono',monospace">7%</span></div>
+                </div>
+                <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em;margin-top:6px">AGRÍCOLA VS FORESTAL · 2000–2025</span>
+                <div style="display:flex;height:12px;border-radius:2px;overflow:hidden"><span style="width:34%;background:#c8b866"></span><span style="width:66%;background:#31446b"></span></div>
+                <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--mute)"><span>Agrícola 34% · ene–feb</span><span>Forestal 66% · mar–may</span></div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ tab.territorio }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <p style="margin:0;font-size:16px;line-height:1.45;text-wrap:pretty">El <b>23%</b> de la sierra ha ardido 5 veces o más desde 2000. <b>14 zonas cambiaron de régimen</b>: pasaron de quemas agrícolas de invierno a incendios forestales de primavera. <a href="#" style="font-size:12px">ver datos</a></p>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+              <sc-for list="{{ regimes }}" as="r" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid var(--line2);border-radius:8px">
+                  <span style="font-size:12.5px;font-weight:600">{{ r.n }}</span>
+                  <div style="display:flex;align-items:flex-end;gap:1px;height:30px"><sc-for list="{{ r.bars }}" as="b" hint-placeholder-count="12"><span style="flex:1;height:{{ b }}%;background:var(--mute)"></span></sc-for></div>
+                  <span style="font-size:11px;color:var(--mute)">{{ r.s }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--mute)"><span>Mapa de recurrencia y años sin fuego</span><button onClick="{{ showRecur }}" style="height:26px;padding:0 10px;border-radius:7px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 12px 'IBM Plex Sans',sans-serif;cursor:pointer">Ver en el mapa</button></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em">DETECTADOS VS REPORTADOS (CONAFOR)</span>
+              <sc-for list="{{ report }}" as="r" hint-placeholder-count="7">
+                <div style="display:grid;grid-template-columns:38px 1fr 64px;gap:8px;align-items:center;font-size:11.5px">
+                  <span style="font-family:'IBM Plex Mono',monospace;color:var(--mute)">{{ r.y }}</span>
+                  <span style="display:flex;flex-direction:column;gap:2px"><span style="height:5px;width:{{ r.d }}%;background:var(--text)"></span><span style="height:5px;width:{{ r.r }}%;background:#67a9cf"></span></span>
+                  <span style="font-family:'IBM Plex Mono',monospace;color:var(--mute)">{{ r.dv }} / {{ r.rv }}</span>
+                </div>
+              </sc-for>
+              <span style="font-size:11px;color:var(--faint)">Blanco: eventos detectados · Azul: incendios reportados. Reportes extraídos de PDF oficiales con IA y revisados por una persona. <a href="#">ver datos</a></span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="margin-top:auto;padding:14px 22px;border-top:1px solid var(--line);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--mute);margin-right:auto">Descargar · {{ typeLabel }}</span>
+        <button style="height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 12px 'IBM Plex Sans',sans-serif;cursor:pointer">CSV puntos</button>
+        <button style="height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 12px 'IBM Plex Sans',sans-serif;cursor:pointer">CSV mensual</button>
+        <button style="height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 12px 'IBM Plex Sans',sans-serif;cursor:pointer">PNG / SVG</button>
+        <button style="height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 12px 'IBM Plex Sans',sans-serif;cursor:pointer">GeoJSON · KML</button>
+        <a href="Rescoldo%20-%20Ficha%20PDF.dc.html" style="height:32px;display:flex;align-items:center;padding:0 14px;border-radius:8px;background:var(--ember);color:var(--emberInk);font:600 12.5px 'IBM Plex Sans',sans-serif;text-decoration:none">Ficha PDF</a>
+      </div>
+    </aside>
+  </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;oscuro&quot;,&quot;claro&quot;],&quot;default&quot;:&quot;oscuro&quot;,&quot;tsType&quot;:&quot;'oscuro'|'claro'&quot;},&quot;showValues&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { mode:'conteo', ref:'mediana', type:'todas', sel:[2021,2], day:null, hrs:48, compare:false, tab:'incendio', playing:-1,
+    L:{puntos:true,recientes:true,goes:false,recurrencia:false,cono:true,exposicion:true}, query:'incendios en la sierra de Arteaga en marzo de 2021', themeLocal:null };
+  theme(){ return this.state.themeLocal ?? (this.props.theme ?? 'oscuro'); }
+  componentDidMount(){ this.applyTheme(); const w=()=>window.RD?this.forceUpdate():setTimeout(w,40); w(); }
+  componentDidUpdate(){ this.applyTheme(); }
+  componentWillUnmount(){ clearTimeout(this.pt); }
+  applyTheme(){ document.documentElement.dataset.theme = this.theme()==='claro'?'light':'dark'; }
+
+  play(){
+    if (this.state.playing>=0){ clearTimeout(this.pt); this.setState({playing:-1}); return; }
+    const R=window.RD, {out,refs,maxC}=R.calendar({type:this.state.type}), y=this.state.sel[0];
+    const ac=this.ac||(this.ac=new (window.AudioContext||window.webkitAudioContext)());
+    const step=i=>{
+      if(i>=12||out[y][i]==null){ this.setState({playing:-1}); return; }
+      const v=out[y][i], t=Math.sqrt(v/maxC), ratio=v/refs[i].med, now=ac.currentTime;
+      const tone=(f,g)=>{const o=ac.createOscillator(),gn=ac.createGain();o.type='sine';o.frequency.value=f;gn.gain.setValueAtTime(0,now);gn.gain.linearRampToValueAtTime(g,now+.03);gn.gain.exponentialRampToValueAtTime(.001,now+.32);o.connect(gn).connect(ac.destination);o.start(now);o.stop(now+.35);};
+      tone(220*Math.pow(2,t*2), .05+.2*t);
+      if (ratio>2) tone(220*Math.pow(2,t*2)*1.06, .08);
+      this.setState({playing:i}); this.pt=setTimeout(()=>step(i+1),330);
+    };
+    step(0);
+  }
+
+  renderVals(){
+    const R=window.RD; if(!R) return {};
+    const st=this.state, {out,refs,maxC}=R.calendar({type:st.type});
+    const refOf=m=>st.ref==='mediana'?refs[m].med:refs[m].avg;
+    const showVals=this.props.showValues??false;
+    const color=(v,m,y)=>R.cellColor(st.mode,(y===2026&&m===2)?v*31/18:v,refOf(m),maxC);
+    const [sy,sm]=st.sel;
+    const mkRows=(o,withMeta)=>{const rows=[];for(let y=2026;y>=2000;y--){const est=y<2012,oni=R.ONI[y];
+      rows.push({year:y,est:est?'≈':'',lc:y===sy?'var(--text)':'var(--mute)',mark:est?'var(--line2)':'transparent',
+        oni:oni==='LN'?'Niña':oni==='EN'?'Niño':'',oniC:oni==='LN'?'#67a9cf':'#ef8a62',
+        cells:o.out[y].map((v,m)=>{
+          if(v==null)return{bg:'transparent',ring:'inset 0 0 0 1px var(--line)',fg:'transparent',txt:'',cloud:false,title:R.MES[m]+' '+y+' · aún sin datos',on:()=>{},z:0,play:'none'};
+          const rf=st.ref==='mediana'?o.refs[m].med:o.refs[m].avg;
+          const c=R.cellColor(st.mode,(y===2026&&m===2)?v*31/18:v,rf,o.maxC),isSel=y===sy&&m===sm,cl=withMeta&&R.CLOUD.has(y+'-'+m);
+          return{bg:c.bg,cloud:cl,fg:c.dark?'rgba(255,255,255,.85)':'rgba(0,0,0,.75)',txt:showVals&&withMeta?String(v):'',
+            ring:isSel?'0 0 0 2px var(--text), 0 0 0 4px var(--panel)':'none',z:isSel?2:0,
+            play:(withMeta&&y===sy&&st.playing===m)?'2px solid var(--ember)':'none',
+            title:R.MES[m]+' '+y+': '+v+' puntos · '+(v/rf).toFixed(1)+'× la '+st.ref+(cl?' · poca visibilidad por nubes':'')+(y<2012?' · estimación armonizada':''),
+            on:()=>this.setState({sel:[y,m],day:null})};
+        })});}return rows;};
+    const rows=mkRows({out,refs,maxC},true);
+    const C2=R.calendar({type:st.type,seed:21,scale:.55});
+    const rows2=mkRows(C2,false);
+
+    const selV=out[sy][sm]??0, r=selV/refOf(sm);
+    const same=[];for(let y=2000;y<=2026;y++)if(out[y][sm]!=null)same.push(out[y][sm]);
+    const rank=same.filter(v=>v>selV).length+1, selC=color(selV,sm,sy);
+    const opt=(cur,val,label,key,pill)=>pill
+      ?{label,on:()=>this.setState({[key]:val}),bg:cur===val?'var(--text)':'transparent',fg:cur===val?'var(--panel)':'var(--mute)',bd:cur===val?'var(--text)':'var(--line2)'}
+      :{label,on:()=>this.setState({[key]:val}),bg:cur===val?'var(--panel)':'transparent',fg:cur===val?'var(--text)':'var(--mute)',sh:cur===val?'0 1px 2px rgba(0,0,0,.25), inset 0 0 0 1px var(--line2)':'none'};
+
+    // daily
+    const nd=[31,28,31,30,31,30,31,31,30,31,30,31][sm]; const lastD=(sy===2026&&sm===2)?18:nd;
+    const dr=R.rng(sy*31+sm), w=[]; for(let d=0;d<nd;d++){ w.push(d>=lastD?0:(.2+dr()*(sy===2021&&sm===2&&d>=18&&d<=31?6:1))); }
+    const ws=w.reduce((a,b)=>a+b,0)||1, dv=w.map(x=>Math.round(x/ws*selV)), dmax=Math.max(1,...dv);
+    const days=dv.map((v,d)=>({h:Math.max(3,v/dmax*100),c:st.day===d?'var(--ember)':(d>=lastD?'var(--line)':'var(--mute)'),o:st.day==null||st.day===d?1:.35,title:(d+1)+' '+R.MESC[sm]+' '+sy+': '+v+' puntos',on:()=>this.setState({day:st.day===d?null:d})}));
+
+    // map points
+    const pr=R.rng(sy*100+sm),pts=[];const n=Math.min(170,selV);
+    let dayOf=[];dv.forEach((v,d)=>{for(let i=0;i<v;i++)dayOf.push(d);});
+    for(let i=0;i<n;i++){let x,y,k=0;do{x=28+pr()*46;y=27+pr()*44;k++;}while(((x-50)/23)**2+((y-49)/23)**2>1&&k<20);
+      if(pr()<.55){x=x*.5+(44+pr()*8)*.5;y=y*.5+(40+pr()*10)*.5;}
+      const f=pr(),s=f>.85?11:f>.5?8:6,dd=dayOf[Math.floor(i*dayOf.length/n)]??0;
+      if(st.day!=null&&dd!==st.day)continue;
+      pts.push({x:x.toFixed(2),y:y.toFixed(2),s,h:s/2,c:f>.85?'#fde34a':f>.5?'#c8b866':'#7c7b78',o:.92,title:'Punto de calor · '+(dd+1)+' '+R.MESC[sm]+' · FRP '+Math.round(5+f*90)+' MW'});}
+    const rr=R.rng(99),recent=[];const rc=st.hrs===24?5:11;
+    for(let i=0;i<rc;i++)recent.push({x:(56+rr()*8).toFixed(2),y:(38+rr()*10).toFixed(2),title:'Detección VIIRS NRT · hace '+Math.round(rr()*st.hrs)+' h'});
+    const qr=R.rng(5),recur=[];for(let gx=0;gx<15;gx++)for(let gy=0;gy<15;gy++){const x=26+gx*3.3,y=24+gy*3.3;if(((x+1.6-50)/24)**2+((y+1.6-49)/24)**2>1)continue;const v=Math.min(1,Math.max(0,qr()*.6+(1-Math.hypot(x-55,y-44)/30)*.6));recur.push({x,y,c:R.ramp(R.CIV,v)});}
+
+    const L=st.L, tg=k=>()=>this.setState({L:{...L,[k]:!L[k]}});
+    const layerDefs=[['puntos','Puntos de calor',R.MESC[sm]+' '+sy+(st.day!=null?' · día '+(st.day+1):'')],['recientes','Detecciones recientes','FIRMS casi en tiempo real'],['goes','GOES geoestacionario','visión · cada 5 min'],['recurrencia','Recurrencia','veces que ha ardido'],['cono','Cono de propagación','evento activo + viento'],['exposicion','Exposición','localidades y ANP']];
+    const layerList=layerDefs.map(([k,l,s])=>({label:l,sub:s,on:tg(k),track:L[k]?'var(--ember)':'var(--line2)',knob:L[k]?14:2}));
+
+    // cumulative
+    const CU=R.cumulative(out), env=CU.env, ymax=Math.max(...env.map(e=>e.max),CU.cum[2026][3]*1.1);
+    const X=i=>36+i*(576-42)/12, Y=v=>196-v/ymax*186;
+    const band=R.path(env.map((e,i)=>[X(i),Y(e.p90)]))+R.path(env.map((e,i)=>[X(12-i),Y(env[12-i].p10)])).replace('M','L')+'Z';
+    const an=CU.analogs, anC=['#c8b866','#958f78','#67a9cf'];
+    const curPts=[[X(0),Y(0)],[X(1),Y(CU.cum[2026][1])],[X(2),Y(CU.cum[2026][2])],[X(CU.xNow),Y(CU.cum[2026][3])]];
+    // season
+    const S=R.season(), sx=y=>34+(y-2000)*(576-44)/25, sy2=d=>12+(d-40)/(200-40)*176;
+    const lr=(k)=>{const n=S.length,mx=S.reduce((a,s)=>a+s.y,0)/n,my=S.reduce((a,s)=>a+s[k],0)/n;let num=0,den=0;S.forEach(s=>{num+=(s.y-mx)*(s[k]-my);den+=(s.y-mx)**2;});const b=num/den;return{b,a:my-b*mx};};
+    const ls=lr('start'), le=lr('end');
+    // clima
+    const cx=y=>30+(y-2000)*(546/27), bw=546/27-3;
+    const bar=(v,scale,mid,pos)=>R.CLIMA.filter(c=>pos?c[v]>0:c[v]<0).map(c=>{const h=Math.abs(c[v])*scale;return 'M'+cx(c.y).toFixed(1)+' '+(pos?mid-h:mid).toFixed(1)+'h'+bw.toFixed(1)+'v'+h.toFixed(1)+'h-'+bw.toFixed(1)+'z';}).join('');
+
+    const tabDefs=[['incendio','Este incendio'],['parecidos','Años parecidos'],['temporada','Temporada'],['contexto','Contexto'],['riesgo','Riesgo'],['patrones','Patrones'],['territorio','Territorio']];
+    const tab={};tabDefs.forEach(([k])=>tab[k]=st.tab===k);
+    const evs=[...R.EVENTS].sort((a,b)=>b.pts-a.pts);
+    const isAnom=st.mode==='anomalia';
+    const cmpRef=C2.refs[sm].med;
+    return {
+      query:st.query,onQuery:e=>this.setState({query:e.target.value}),
+      toggleTheme:()=>this.setState({themeLocal:this.theme()==='claro'?'oscuro':'claro'}),
+      modeOpts:[opt(st.mode,'conteo','Conteo','mode'),opt(st.mode,'anomalia','Anomalía','mode')],
+      typeOpts:[opt(st.type,'todas','Todas','type',1),opt(st.type,'agricola','Agrícola','type',1),opt(st.type,'forestal','Forestal','type',1)],
+      refOpts:[opt(st.ref,'mediana','Mediana','ref',1),opt(st.ref,'promedio','Promedio','ref',1)],
+      months:R.ML.map((l,i)=>({l,c:i===sm?'var(--text)':'var(--faint)'})), monthsShort:R.MESC,
+      rows,rows2,compare:st.compare,toggleCompare:()=>this.setState({compare:!st.compare}),cmpBg:st.compare?'var(--panel2)':'transparent',
+      cmpRatio:Math.round(C2.refs[3].med/refs[3].med*100)+'%',cmpSel:C2.out[sy][sm]??0,cmpSelRatio:((C2.out[sy][sm]??0)/cmpRef).toFixed(1)+'×',selLabel:R.MES[sm]+' '+sy,
+      legendLo:isAnom?'¼×':'0',legendHi:isAnom?'4×':String(maxC),legendGrad:'linear-gradient(90deg,'+(isAnom?R.DIV:R.CIV).join(',')+')',
+      semCount:out[2026][2],semExpected:Math.round(refs[2].med*18/31),
+      selLabelUpper:(R.MES[sm]+' '+sy).toUpperCase(),selMonthName:R.MES[sm],
+      selCount:selV,selRatio:r.toFixed(1)+'×',refWord:st.ref==='mediana'?'mediana':'media',
+      selRank:rank<=3?(rank===1?'El':'El '+rank+'º')+' '+R.MES[sm]+' más activo desde 2000.':'Puesto '+rank+' de '+same.length+'.',
+      selNote:(sy<2012?'Estimación armonizada desde MODIS (±18%)':'MODIS + VIIRS')+(R.CLOUD.has(sy+'-'+sm)?' · poca visibilidad por nubes':''),
+      selBg:selC.bg,selFg:selC.dark?'#fff':'#111',
+      days,lastDay:nd,clearDay:()=>this.setState({day:null}),dayClear:st.day!=null?'Ver mes completo':'',
+      dayLabel:st.day!=null?'día '+(st.day+1)+' '+R.MESC[sm]+' '+sy:R.MES[sm]+' '+sy,
+      play:()=>this.play(),playLabel:st.playing>=0?'■ Detener':'♪ Escuchar '+sy,playBg:st.playing>=0?'var(--panel2)':'transparent',
+      points:pts,recent,recur,L,layerList,
+      locs:R.LOCS.map(l=>({...l,c:l.down?'#ef8a62':'var(--mute)'})),
+      set24:()=>this.setState({hrs:24,L:{...L,recientes:true}}),set48:()=>this.setState({hrs:48,L:{...L,recientes:true}}),
+      b24:st.hrs===24?'var(--panel2)':'transparent',b48:st.hrs===48?'var(--panel2)':'transparent',
+      tabs:tabDefs.map(([k,l])=>({label:l,on:()=>this.setState({tab:k}),bg:st.tab===k?'var(--text)':'transparent',fg:st.tab===k?'var(--panel)':'var(--mute)',bd:st.tab===k?'var(--text)':'var(--line2)'})),tab,
+      events:evs.map((e,i)=>({...e,rank:i+1,pct:e.pts/evs[0].pts*78,c:e.active?'var(--text)':'var(--line2)',w:e.active?600:400,tag:e.active?' · ACTIVO':''})),
+      envBand:band,envMed:R.path(env.map((e,i)=>[X(i),Y(e.p50)])),envMin:R.path(env.map((e,i)=>[X(i),Y(e.min)])),envMax:R.path(env.map((e,i)=>[X(i),Y(e.max)])),
+      an0:R.path(CU.cum[an[0].y].map((v,i)=>[X(i),Y(v)])),an1:R.path(CU.cum[an[1].y].map((v,i)=>[X(i),Y(v)])),an2:R.path(CU.cum[an[2].y].map((v,i)=>[X(i),Y(v)])),
+      analogs:an.map((a,i)=>({y:a.y,total:a.total,c:anC[i]})),analogNames:an.map(a=>a.y).join(', '),analogTotals:an.map(a=>a.total).join(', '),
+      curLine:R.path(curPts),curDot:R.dots([curPts[3]],4),axis:'M36 196H576',
+      sGrid:[60,90,120,150,180].map(d=>'M34 '+sy2(d).toFixed(1)+'H576').join(''),
+      sRanges:S.map(s=>'M'+sx(s.y).toFixed(1)+' '+sy2(s.start).toFixed(1)+'V'+sy2(s.end).toFixed(1)).join(''),
+      sStart:R.dots(S.map(s=>[sx(s.y),sy2(s.start)]),3.2),sPeak:R.dots(S.map(s=>[sx(s.y),sy2(s.peak)]),3.2),sEnd:R.dots(S.map(s=>[sx(s.y),sy2(s.end)]),3.2),
+      sTrend:R.path([[sx(2000),sy2(ls.a+ls.b*2000)],[sx(2025),sy2(ls.a+ls.b*2025)]]),sTrendEnd:R.path([[sx(2000),sy2(le.a+le.b*2000)],[sx(2025),sy2(le.a+le.b*2025)]]),
+      seasonShift:Math.round(-ls.b*25),senStart:(ls.b*10).toFixed(1).replace('-','−'),
+      rainPos:bar('rain',.85,45,true),rainNeg:bar('rain',.85,45,false),tempPos:bar('temp',20,35,true),tempNeg:bar('temp',20,35,false),
+      oniStrip:Object.keys(R.ONI).map(y=>{const o=R.ONI[y];return{l:o==='N'?'':o==='LN'?'N':'E',t:y+' · '+(o==='LN'?'La Niña':o==='EN'?'El Niño':'Neutro'),bg:o==='LN'?'#67a9cf':o==='EN'?'#ef8a62':'var(--line)',fg:'#111'};}),
+      fwi:R.FWI.map(f=>{const c=R.fwiCat(f.v);return{...f,h:f.v/45*100,c:c.c,l:c.l};}),
+      prio:[{l:'Recurrencia',v:88},{l:'Temporada',v:91},{l:'Riesgo próximo',v:84},{l:'Exposición',v:72},{l:'Tendencia',v:69}],
+      week:R.WEEK.vals.map((v,i)=>({h:v/170*100,l:R.WEEK.labels[i],c:i>=5?'var(--text)':'var(--line2)'})),
+      regimes:[{n:'Primavera forestal',bars:[5,10,55,100,70,20,5,3,2,3,5,4],s:'62% de las celdas'},{n:'Invierno agrícola',bars:[80,100,45,20,15,10,5,5,5,10,40,70],s:'24% de las celdas'},{n:'Mixto bimodal',bars:[40,30,70,90,40,10,5,5,5,10,30,45],s:'14% · 14 cambiaron'}],
+      showRecur:()=>this.setState({L:{...L,recurrencia:true}}),
+      report:R.REPORT.map(([y,d,rp])=>({y,dv:d,rv:rp,d:d/25*100,r:rp/25*100})),
+      typeLabel:{todas:'todas las quemas',agricola:'agrícolas',forestal:'forestales'}[st.type]
+    };
+  }
+}
+</script>
+</body>
+</html>

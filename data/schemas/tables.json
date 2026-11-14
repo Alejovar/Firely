@@ -1,0 +1,191 @@
+{
+  "format": "parquet",
+  "methodology_version_example": "1.0.0-qm-biome-month",
+  "h3_resolutions": {
+    "main": 6,
+    "detail": 7,
+    "continental": 5
+  },
+  "enums": {
+    "sensor": [
+      "MODIS",
+      "VIIRS"
+    ],
+    "platform": [
+      "Terra",
+      "Aqua",
+      "SNPP",
+      "NOAA20",
+      "NOAA21"
+    ],
+    "confidence_h": [
+      "baja",
+      "nominal",
+      "alta"
+    ],
+    "daynight": [
+      "D",
+      "N"
+    ],
+    "burn_type": [
+      "agricola",
+      "forestal",
+      "otro"
+    ],
+    "source": [
+      "SP",
+      "NRT"
+    ]
+  },
+  "tables": {
+    "hotspots": {
+      "partition": [
+        "year"
+      ],
+      "cols": {
+        "id": "string",
+        "ts_utc": "timestamp",
+        "date_local": "date",
+        "lat": "double",
+        "lon": "double",
+        "h3_r6": "string",
+        "h3_r7": "string",
+        "sensor": "string",
+        "platform": "string",
+        "confidence_h": "string",
+        "frp_mw": "double",
+        "daynight": "string",
+        "burn_type": "string",
+        "event_id": "string",
+        "harm_weight": "double",
+        "source": "string"
+      }
+    },
+    "cell_month": {
+      "partition": [
+        "year"
+      ],
+      "cols": {
+        "h3_r6": "string",
+        "year": "int32",
+        "month": "int8",
+        "count_raw_modis": "int32",
+        "count_raw_viirs": "int32",
+        "count_harm": "double",
+        "count_harm_lo": "double",
+        "count_harm_hi": "double",
+        "frp_harm": "double",
+        "clear_frac": "double",
+        "is_estimated": "bool",
+        "count_agricola": "double",
+        "count_forestal": "double"
+      }
+    },
+    "cell_day": {
+      "partition": [
+        "year"
+      ],
+      "cols": {
+        "h3_r6": "string",
+        "date": "date",
+        "count_raw_modis": "int32",
+        "count_raw_viirs": "int32",
+        "count_harm": "double",
+        "count_harm_lo": "double",
+        "count_harm_hi": "double",
+        "frp_harm": "double",
+        "clear_frac": "double",
+        "is_estimated": "bool",
+        "count_agricola": "double",
+        "count_forestal": "double"
+      }
+    },
+    "events": {
+      "partition": [
+        "year"
+      ],
+      "cols": {
+        "event_id": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "duration_days": "int32",
+        "n_hotspots_harm": "double",
+        "frp_total": "double",
+        "area_approx_km2": "double",
+        "night_ratio": "double",
+        "burn_type": "string",
+        "centroid_lat": "double",
+        "centroid_lon": "double",
+        "geometry": "binary(WKB)",
+        "cells": "list<string>"
+      }
+    },
+    "cell_stats": {
+      "partition": [],
+      "cols": {
+        "h3_r6": "string",
+        "years_with_fire": "int32",
+        "last_fire_year": "int32",
+        "trend_sen_slope": "double",
+        "trend_p_value": "double",
+        "season_onset_trend_days": "double",
+        "regime_early": "int8",
+        "regime_late": "int8",
+        "dist_locality_km": "double",
+        "pop_10km": "double",
+        "in_protected_area": "bool",
+        "dominant_landcover": "string"
+      }
+    },
+    "climatology": {
+      "partition": [],
+      "cols": {
+        "h3_r6": "string",
+        "month": "int8",
+        "median": "double",
+        "mean": "double",
+        "p10": "double",
+        "p25": "double",
+        "p75": "double",
+        "p90": "double"
+      }
+    },
+    "static_sources": {
+      "partition": [],
+      "cols": {
+        "h3_r7": "string",
+        "n_detections": "int32"
+      }
+    },
+    "oni": {
+      "partition": [],
+      "cols": {
+        "year": "int32",
+        "month": "int8",
+        "oni": "double",
+        "phase": "string"
+      }
+    },
+    "reported_fires": {
+      "partition": [],
+      "cols": {
+        "cve_ent": "string",
+        "cve_mun": "string",
+        "year": "int32",
+        "month": "int8",
+        "n_fires": "int32",
+        "area_ha": "double"
+      }
+    },
+    "metadata": {
+      "partition": [],
+      "cols": {
+        "methodology_version": "string",
+        "data_cutoff": "date",
+        "metric": "string",
+        "value": "double",
+        "detail": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="rescoldo-data.js"></script>
+<style>
+:root{--bg:#0d0f11;--panel:#14171a;--panel2:#1a1e22;--line:#262b31;--line2:#323840;--text:#ebe8e3;--mute:#9aa1a9;--faint:#6b727a;--ember:#e8803f;--emberInk:#1a0d05;--cell0:#1c2024}
+html[data-theme="light"]{--bg:#efeee9;--panel:#ffffff;--panel2:#f6f5f1;--line:#e0ddd6;--line2:#cfcbc2;--text:#1a1c1e;--mute:#565c63;--faint:#878c92;--ember:#c9601f;--emberInk:#ffffff;--cell0:#ecebe6}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--mute);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:2px}
+a:hover{color:var(--ember);text-decoration-color:var(--ember)}
+</style>
+</helmet>
+<div style="min-height:100vh;display:grid;grid-template-columns:76px minmax(0,1fr);background:var(--bg);color:var(--text);font-variant-numeric:tabular-nums">
+  <nav style="display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:14px 6px;border-right:1px solid var(--line);background:var(--panel)">
+    <div style="align-self:center;width:26px;height:26px;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-bottom:16px">
+      <div style="background:var(--line2)"></div><div style="background:var(--line2);opacity:.6"></div><div style="background:var(--line2)"></div>
+      <div style="background:var(--line2);opacity:.6"></div><div style="background:var(--ember);box-shadow:0 0 10px var(--ember)"></div><div style="background:var(--line2);opacity:.6"></div>
+      <div style="background:var(--line2)"></div><div style="background:var(--line2);opacity:.6"></div><div style="background:var(--line2)"></div>
+    </div>
+    <a href="Rescoldo%20-%20App.dc.html" style="padding:9px 4px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Mapa</a>
+    <a href="Rescoldo%20-%20Asistente.dc.html" style="padding:9px 4px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Asistente</a>
+    <a href="Rescoldo%20-%20Como%20armonizamos.dc.html" style="padding:9px 4px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Método</a>
+    <a href="Rescoldo%20-%20Plataforma.dc.html" style="padding:9px 4px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Alertas y API</a>
+    <a href="Rescoldo%20-%20Experiencia.dc.html" style="padding:9px 4px;border-radius:8px;background:var(--panel2);color:var(--text);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center;box-shadow:inset 2px 0 0 var(--ember)">Historia</a>
+    <div style="height:1px;background:var(--line);margin:10px 6px"></div>
+    <a href="Rescoldo%20-%20Ficha%20PDF.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Ficha</a>
+    <a href="Rescoldo%20-%20Movil.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Móvil</a>
+    <a href="Rescoldo%20-%20Widget.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Widget</a>
+    <a href="Rescoldo%20-%20Identidad.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Identidad</a>
+  </nav>
+
+  <main style="padding:32px 36px 64px;display:flex;flex-direction:column;gap:48px;max-width:1240px;min-width:0">
+
+    <section style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">MODO HISTORIA · SIERRA DE ARTEAGA</span><h1 style="margin:0;font-size:28px;font-weight:600">Un recorrido narrado por 26 años de fuego</h1></div>
+        <div style="display:flex;gap:6px">
+          <button onClick="{{ prev }}" style="width:38px;height:38px;border-radius:9px;border:1px solid var(--line2);background:transparent;color:var(--text);cursor:pointer">‹</button>
+          <button onClick="{{ toggleStory }}" style="height:38px;padding:0 16px;border-radius:9px;border:0;background:var(--ember);color:var(--emberInk);font:600 13.5px 'IBM Plex Sans',sans-serif;cursor:pointer">{{ storyLabel }}</button>
+          <button onClick="{{ next }}" style="width:38px;height:38px;border-radius:9px;border:1px solid var(--line2);background:transparent;color:var(--text);cursor:pointer">›</button>
+          <button onClick="{{ toggleVoice }}" style="height:38px;padding:0 12px;border-radius:9px;border:1px solid var(--line2);background:{{ voiceBg }};color:var(--text);font:500 12.5px 'IBM Plex Sans',sans-serif;cursor:pointer">{{ voiceLabel }}</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:24px;padding:24px;border:1px solid var(--line2);border-radius:14px;background:var(--panel)">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div style="display:grid;grid-template-columns:44px repeat(12,minmax(0,1fr));gap:3px;font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);text-align:center;margin-bottom:4px"><span></span><sc-for list="{{ ml }}" as="m" hint-placeholder-count="12"><span>{{ m }}</span></sc-for></div>
+          <sc-for list="{{ storyRows }}" as="r" hint-placeholder-count="27">
+            <div style="display:grid;grid-template-columns:44px repeat(12,minmax(0,1fr));gap:3px;height:16px">
+              <span style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--faint);line-height:16px">{{ r.y }}</span>
+              <sc-for list="{{ r.c }}" as="c" hint-placeholder-count="12"><span style="border-radius:2px;background:{{ c.bg }};opacity:{{ c.o }};box-shadow:{{ c.ring }};transition:opacity .5s"></span></sc-for>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;gap:4px"><sc-for list="{{ progress }}" as="p" hint-placeholder-count="5"><span onClick="{{ p.on }}" style="flex:1;height:4px;border-radius:2px;background:var(--line2);overflow:hidden;cursor:pointer"><span style="display:block;height:100%;width:{{ p.w }}%;background:var(--text)"></span></span></sc-for></div>
+          <span style="font:500 11px 'IBM Plex Mono',monospace;color:var(--faint)">{{ stepNum }}</span>
+          <p style="margin:0;font-size:28px;line-height:1.3;font-weight:500;letter-spacing:-.01em;text-wrap:pretty">{{ stepText }}</p>
+          <p style="margin:0;font-size:14.5px;line-height:1.55;color:var(--mute);text-wrap:pretty">{{ stepSub }} <a href="#">ver datos</a></p>
+          <span style="margin-top:auto;font-size:11.5px;color:var(--faint);line-height:1.5">Texto redactado automáticamente a partir de cifras calculadas. Si la IA no está disponible, se usa una plantilla.</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">ANIMACIÓN · 26 AÑOS EN 30 SEGUNDOS</span><h2 style="margin:0;font-size:24px;font-weight:600">El fuego del planeta, mes a mes</h2></div>
+        <button onClick="{{ toggleAnim }}" style="height:38px;padding:0 16px;border-radius:9px;border:1px solid var(--line2);background:transparent;color:var(--text);font:500 13.5px 'IBM Plex Sans',sans-serif;cursor:pointer">{{ animLabel }}</button>
+      </div>
+      <div style="position:relative;border-radius:14px;overflow:hidden;background:#07090b;border:1px solid var(--line2)">
+        <svg viewBox="0 0 1000 480" style="width:100%;display:block">
+          <path d="{{ graticule }}" stroke="#1a1f24" fill="none"></path>
+          <path d="{{ w1 }}" fill="#31446b"></path>
+          <path d="{{ w2 }}" fill="#958f78"></path>
+          <path d="{{ w3 }}" fill="#fde34a"></path>
+        </svg>
+        <div style="position:absolute;left:20px;top:16px;display:flex;flex-direction:column;gap:2px;color:#ebe8e3"><span style="font:600 34px 'IBM Plex Mono',monospace;letter-spacing:-.02em">{{ animYear }}</span><span style="font:500 14px 'IBM Plex Mono',monospace;color:#9aa1a9">{{ animMonth }}</span></div>
+        <div style="position:absolute;right:16px;top:16px;font:500 10px 'IBM Plex Mono',monospace;color:#6b727a">mapa base: continentes (placeholder) · serie armonizada global</div>
+        <div style="position:absolute;left:20px;right:20px;bottom:14px;display:flex;align-items:center;gap:10px">
+          <span style="font:400 10px 'IBM Plex Mono',monospace;color:#6b727a">2000</span>
+          <div onClick="{{ seek }}" style="flex:1;height:6px;border-radius:3px;background:#1a1f24;cursor:pointer;position:relative"><span style="position:absolute;left:0;top:0;bottom:0;width:{{ animPct }}%;background:#ebe8e3;border-radius:3px"></span></div>
+          <span style="font:400 10px 'IBM Plex Mono',monospace;color:#6b727a">2026</span>
+        </div>
+      </div>
+    </section>
+
+    <section style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">SONIFICACIÓN · ACCESIBILIDAD</span>
+        <h2 style="margin:0;font-size:24px;font-weight:600">Escucha el calendario</h2>
+        <p style="margin:0;font-size:14.5px;line-height:1.55;color:var(--mute);text-wrap:pretty">Cada mes es una nota. Más fuego, nota más aguda y fuerte. Si el mes está muy por encima de lo normal, suena una segunda nota disonante. Pensado para personas con baja visión y para presentaciones.</p>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button onClick="{{ toggleSound }}" style="height:40px;padding:0 16px;border-radius:9px;border:0;background:var(--ember);color:var(--emberInk);font:600 13.5px 'IBM Plex Sans',sans-serif;cursor:pointer">{{ soundLabel }}</button>
+          <span style="align-self:center;font:500 12px 'IBM Plex Mono',monospace;color:var(--mute)">{{ soundPos }}</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px;padding:16px;border:1px solid var(--line2);border-radius:12px;background:var(--panel)">
+        <sc-for list="{{ soundRows }}" as="r" hint-placeholder-count="27">
+          <div style="display:grid;grid-template-columns:34px repeat(12,minmax(0,1fr));gap:2px;height:9px">
+            <span style="font:400 8.5px 'IBM Plex Mono',monospace;color:var(--faint);line-height:9px">{{ r.y }}</span>
+            <sc-for list="{{ r.c }}" as="c" hint-placeholder-count="12"><span style="background:{{ c.bg }};box-shadow:{{ c.ring }}"></span></sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;oscuro&quot;,&quot;claro&quot;],&quot;default&quot;:&quot;oscuro&quot;,&quot;tsType&quot;:&quot;'oscuro'|'claro'&quot;}}">
+const STEPS=[
+ {t:'La sierra de Arteaga arde sobre todo en abril.',s:'Más de la tercera parte de los puntos de calor del año caen entre el 1 y el 30 de abril.',f:(y,m)=>m===3},
+ {t:'Su peor mes fue marzo de 2021: 312 puntos.',s:'El incendio de Los Lirios – El Tunal duró 14 días y quemó cerca de 8,600 hectáreas.',f:(y,m)=>y===2021&&m===2},
+ {t:'Los años de La Niña suelen arder más.',s:'La Niña trae inviernos más secos al noreste de México. 2011 y 2021 fueron años de La Niña.',f:(y,m,o)=>o==='LN'&&m>=1&&m<=4},
+ {t:'La temporada empieza cada vez antes.',s:'Hoy arranca unos 18 días antes que a inicios de los 2000. Marzo pesa cada vez más.',f:(y,m)=>y>=2016&&(m===1||m===2)},
+ {t:'Hoy, marzo va 2.8 veces sobre lo normal.',s:'Un marzo así ocurre una vez cada 25 años. El incendio de San Antonio de las Alazanas sigue activo.',f:(y,m)=>y===2026&&m===2}];
+const REG=[[-100,22,6,4,[0,0,.6,1,.7,.1,0,0,0,0,0,0]],[-120,40,5,4,[0,0,0,0,0,.3,.9,1,.7,.2,0,0]],[-55,-10,10,8,[0,0,0,0,0,.2,.5,.9,1,.6,.2,0]],[-62,-20,6,5,[0,0,0,0,0,.2,.6,1,.8,.4,0,0]],[10,9,16,4,[1,.9,.5,.1,0,0,0,0,0,.1,.5,.9]],[22,-10,12,5,[0,0,0,0,.3,.8,1,.9,.6,.2,0,0]],[100,18,8,5,[.3,.8,1,.7,.2,0,0,0,0,0,0,.1]],[135,-15,12,4,[0,0,0,0,.3,.6,.8,.9,1,.8,.5,.2]],[110,58,20,5,[0,0,0,.3,.7,1,.9,.6,.2,0,0,0]],[78,24,6,4,[0,.2,.6,1,.6,.1,0,0,0,0,.4,.6]],[112,0,6,3,[0,0,0,0,0,0,.3,.8,1,.6,.1,0]],[145,-34,5,2,[1,.7,.3,0,0,0,0,0,0,.2,.6,.9]]];
+class Component extends DCLogic {
+  state={step:0,storyOn:false,t:0,voice:false,anim:false,frame:+(localStorage.getItem('rescoldo-anim-frame')||0),snd:-1};
+  componentDidMount(){ document.documentElement.dataset.theme=(this.props.theme??'oscuro')==='claro'?'light':'dark'; const w=()=>window.RD?this.forceUpdate():setTimeout(w,40); w();
+    const r=window.RD?window.RD.rng(9):null; this.pts=REG.map(([lon,lat,w,h],k)=>{const rr=(s=>()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;})(k*97+3);const a=[];for(let i=0;i<70;i++){const x=(lon+(rr()-.5)*w*2+180)/360*1000,y=(90-(lat+(rr()-.5)*h*2))/180*480;a.push([x,y,rr()]);}return a;}); this.forceUpdate(); }
+  componentWillUnmount(){ clearInterval(this.si); clearInterval(this.ai); clearTimeout(this.st); window.speechSynthesis&&speechSynthesis.cancel(); }
+  say(i){ if(!this.state.voice||!window.speechSynthesis)return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(STEPS[i].t+' '+STEPS[i].s); u.lang='es-MX'; speechSynthesis.speak(u); }
+  go(i){ i=(i+STEPS.length)%STEPS.length; this.setState({step:i,t:0}); this.say(i); }
+  toggleStory(){ if(this.state.storyOn){clearInterval(this.si);this.setState({storyOn:false});return;} this.setState({storyOn:true}); this.say(this.state.step);
+    this.si=setInterval(()=>{const t=this.state.t+100; if(t>=6000){ if(this.state.step===STEPS.length-1){clearInterval(this.si);this.setState({storyOn:false,t:6000});} else this.go(this.state.step+1);} else this.setState({t});},100); }
+  toggleAnim(){ if(this.state.anim){clearInterval(this.ai);this.setState({anim:false});return;} this.setState({anim:true});
+    this.ai=setInterval(()=>{const f=(this.state.frame+1)%315; localStorage.setItem('rescoldo-anim-frame',f); this.setState({frame:f});},95); }
+  toggleSound(){ if(this.state.snd>=0){clearTimeout(this.st);this.setState({snd:-1});return;}
+    const R=window.RD,{out,refs,maxC}=R.calendar(),ac=this.ac||(this.ac=new (window.AudioContext||window.webkitAudioContext)());
+    const step=i=>{const y=2000+Math.floor(i/12),m=i%12; if(y>2026||out[y][m]==null){this.setState({snd:-1});return;}
+      const v=out[y][m],t=Math.sqrt(v/maxC),now=ac.currentTime;
+      const tone=(f,g)=>{const o=ac.createOscillator(),gn=ac.createGain();o.frequency.value=f;gn.gain.setValueAtTime(0,now);gn.gain.linearRampToValueAtTime(g,now+.02);gn.gain.exponentialRampToValueAtTime(.001,now+.14);o.connect(gn).connect(ac.destination);o.start(now);o.stop(now+.15);};
+      tone(196*Math.pow(2,t*2.5),.04+.18*t); if(v/refs[m].med>2)tone(196*Math.pow(2,t*2.5)*1.059,.07);
+      this.setState({snd:i}); this.st=setTimeout(()=>step(i+1),110);};
+    step(0); }
+  renderVals(){
+    const R=window.RD, st=this.state;
+    const base={prev:()=>this.go(st.step-1),next:()=>this.go(st.step+1),toggleStory:()=>this.toggleStory(),storyLabel:st.storyOn?'Pausar':'▶ Reproducir historia',
+      toggleVoice:()=>{if(st.voice)speechSynthesis.cancel();this.setState({voice:!st.voice});},voiceLabel:st.voice?'Voz: sí':'Voz: no',voiceBg:st.voice?'var(--panel2)':'transparent',
+      stepNum:(st.step+1)+' / '+STEPS.length,stepText:STEPS[st.step].t,stepSub:STEPS[st.step].s,
+      progress:STEPS.map((s,i)=>({w:i<st.step?100:i===st.step?(st.storyOn||st.t?st.t/60:100):0,on:()=>this.go(i)})),
+      toggleAnim:()=>this.toggleAnim(),animLabel:st.anim?'Pausar':'▶ Reproducir',toggleSound:()=>this.toggleSound(),soundLabel:st.snd>=0?'■ Detener':'♪ Escuchar 2000–2026'};
+    if(!R) return base;
+    const {out,refs,maxC}=R.calendar(), f=STEPS[st.step].f;
+    const storyRows=[];for(let y=2026;y>=2000;y--)storyRows.push({y,c:out[y].map((v,m)=>{if(v==null)return{bg:'transparent',o:1,ring:'inset 0 0 0 1px var(--line)'};const on=f(y,m,R.ONI[y]);return{bg:R.cellColor('conteo',v,0,maxC).bg,o:on?1:.18,ring:on&&STEPS[st.step].f.length<3&&st.step!==0&&st.step!==3?'0 0 0 2px var(--text)':'none'};})});
+    const yr=2000+Math.floor(st.frame/12),mo=st.frame%12, w=[[],[],[]];
+    (this.pts||[]).forEach((a,k)=>{const inten=REG[k][4][mo]*(0.75+0.5*Math.sin(yr*1.7+k));a.forEach(([x,y,r])=>{if(r<inten){const b=r<inten*.35?2:r<inten*.7?1:0;w[b].push([x,y]);}});});
+    const grat=[];for(let lon=-150;lon<=180;lon+=30)grat.push('M'+((lon+180)/360*1000)+' 0V480');for(let lat=-60;lat<=60;lat+=30)grat.push('M0 '+((90-lat)/180*480)+'H1000');
+    const soundRows=[];for(let y=2000;y<=2026;y++)soundRows.push({y,c:out[y].map((v,m)=>({bg:v==null?'transparent':R.cellColor('conteo',v,0,maxC).bg,ring:st.snd===(y-2000)*12+m?'0 0 0 2px var(--ember)':(v==null?'inset 0 0 0 1px var(--line)':'none')}))});
+    return {...base,ml:R.ML,storyRows,graticule:grat.join(''),w1:R.dots(w[0],2.2),w2:R.dots(w[1],2.6),w3:R.dots(w[2],3),
+      animYear:yr,animMonth:R.MES[mo],animPct:(st.frame/314*100).toFixed(1),seek:e=>{const r=e.currentTarget.getBoundingClientRect();const f=Math.round((e.clientX-r.left)/r.width*314);localStorage.setItem('rescoldo-anim-frame',f);this.setState({frame:f});},
+      soundRows,soundPos:st.snd>=0?R.MESC[st.snd%12]+' '+(2000+Math.floor(st.snd/12)):''};
+  }
+}
+</script>
+</body>
+</html>

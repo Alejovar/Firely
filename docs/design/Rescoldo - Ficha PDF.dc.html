@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="rescoldo-data.js"></script>
+<script src="./doc-page.js"></script>
+<style>doc-page:not(:defined){visibility:hidden}
+html,body{margin:0;font-family:"IBM Plex Sans",system-ui,sans-serif;color:#1a1c1e;-webkit-font-smoothing:antialiased}
+a{color:#1a1c1e}a:hover{color:#c9601f}</style>
+</helmet>
+<doc-page>
+<section class="page" data-screen-label="Ficha de situación">
+  <div style="box-sizing:border-box;height:100%;padding:0.45in 0.5in 0.4in;display:flex;flex-direction:column;gap:0.16in;background:#fff;color:#1a1c1e;font-family:'IBM Plex Sans',sans-serif;font-variant-numeric:tabular-nums">
+
+    <header style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:0.12in;border-bottom:2px solid #1a1c1e">
+      <div style="display:flex;gap:12px;align-items:center">
+        <div style="width:30px;height:30px;display:grid;grid-template-columns:repeat(3,1fr);gap:2px">
+          <div style="background:#cfcbc2"></div><div style="background:#e0ddd6"></div><div style="background:#cfcbc2"></div>
+          <div style="background:#e0ddd6"></div><div style="background:#c9601f"></div><div style="background:#e0ddd6"></div>
+          <div style="background:#cfcbc2"></div><div style="background:#e0ddd6"></div><div style="background:#cfcbc2"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <span style="font:500 8.5pt 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#565c63">RESCOLDO · FICHA DE SITUACIÓN</span>
+          <span style="font-size:20pt;font-weight:600;line-height:1.1;letter-spacing:-.01em">Sierra de Arteaga, Coahuila</span>
+          <span style="font-size:10pt;color:#565c63">1,742 km² · límite municipal INEGI 05004 · corte: 18 de marzo de 2026, 08:00 h</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;padding:8px 12px;border:2px solid #b2182b;border-radius:6px">
+        <span style="font:500 8pt 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#b2182b">PRIORIDAD</span>
+        <span style="font-size:20pt;font-weight:700;line-height:1;color:#b2182b">ALTA</span>
+        <span style="font:500 9pt 'IBM Plex Mono',monospace;color:#565c63">índice 82 / 100</span>
+      </div>
+    </header>
+
+    <div style="display:grid;grid-template-columns:2.7in 1fr;gap:0.22in">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="position:relative;height:2.15in;border:1px solid #cfcbc2;background:#ecebe6 repeating-linear-gradient(135deg,transparent 0 8px,rgba(0,0,0,.04) 8px 9px);overflow:hidden">
+          <svg viewBox="0 0 1000 1000" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+            <polygon points="300,300 420,240 560,250 690,300 760,390 740,520 680,640 560,720 430,730 330,660 260,540 250,410" fill="rgba(201,96,31,.06)" stroke="#c9601f" stroke-width="2" vector-effect="non-scaling-stroke" stroke-dasharray="5 3"></polygon>
+            <path d="M600 420 L790 230 L880 330 Z" fill="rgba(0,0,0,.06)" stroke="#1a1c1e" stroke-width="1" stroke-dasharray="3 2" vector-effect="non-scaling-stroke"></path>
+            <path d="{{ mapDots }}" fill="#31446b"></path>
+            <path d="{{ mapHot }}" fill="#c8b866" stroke="#1a1c1e" stroke-width="2"></path>
+          </svg>
+          <span style="position:absolute;left:6px;bottom:4px;font:400 7pt 'IBM Plex Mono',monospace;color:#878c92">mapa base OSM · 10 km</span>
+        </div>
+        <span style="font-size:8.5pt;color:#565c63;line-height:1.35">Puntos de marzo 2026 · triángulo: cono de propagación 12 h hacia el NE.</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:0.12in">
+        <div style="display:flex;align-items:baseline;gap:12px">
+          <span style="font-size:40pt;font-weight:600;line-height:.9;letter-spacing:-.02em">2.8×</span>
+          <span style="font-size:12.5pt;line-height:1.3">Marzo va <b>2.8 veces sobre la mediana</b> 2000–2025. Un marzo así ocurre <b>1 vez cada 25 años</b>.</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <span style="font:500 8.5pt 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#565c63">HALLAZGOS CLAVE</span>
+          <div style="display:grid;grid-template-columns:20px 1fr;gap:4px 8px;font-size:11.5pt;line-height:1.38">
+            <span style="font:600 11pt 'IBM Plex Mono',monospace;color:#c9601f">1</span><span>El incendio de <b>San Antonio de las Alazanas</b> ya es el <b>4º más grande desde 2000</b> (143 puntos, 7 días) y sigue activo de noche.</span>
+            <span style="font:600 11pt 'IBM Plex Mono',monospace;color:#c9601f">2</span><span>Peligro meteorológico <b>extremo el sábado 21</b>. Con viento del SO, <b>3 localidades (3,450 personas)</b> quedan a favor del humo.</span>
+            <span style="font:600 11pt 'IBM Plex Mono',monospace;color:#c9601f">3</span><span>Invierno <b>más seco desde 2011</b> (−41% de lluvia). Los años parecidos (2011, 2012, 2024) cerraron muy por encima de lo normal.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:3.3in 1fr;gap:0.22in;flex:1;min-height:0">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font:500 8.5pt 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#565c63">CALENDARIO DE ACTIVIDAD · ANOMALÍA VS MEDIANA</span>
+        <div style="display:grid;grid-template-columns:30px repeat(12,minmax(0,1fr));gap:1.5px;font:500 7pt 'IBM Plex Mono',monospace;color:#878c92;text-align:center"><span></span><sc-for list="{{ ml }}" as="m" hint-placeholder-count="12"><span>{{ m }}</span></sc-for></div>
+        <sc-for list="{{ rows }}" as="row" hint-placeholder-count="27">
+          <div style="display:grid;grid-template-columns:30px repeat(12,minmax(0,1fr));gap:1.5px;height:9px">
+            <span style="font:400 6.5pt 'IBM Plex Mono',monospace;color:{{ row.lc }};line-height:9px">{{ row.y }}</span>
+            <sc-for list="{{ row.c }}" as="c" hint-placeholder-count="12"><span style="background:{{ c.bg }};box-shadow:{{ c.ring }}"></span></sc-for>
+          </div>
+        </sc-for>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;font:400 7.5pt 'IBM Plex Mono',monospace;color:#565c63"><span>¼×</span><span style="width:90px;height:7px;background:linear-gradient(90deg,#2166ac,#67a9cf,#d1e5f0,#f2f0ec,#fddbc7,#ef8a62,#b2182b)"></span><span>4×</span><span style="margin-left:6px">2000–11: estimación ±18%</span></div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:0.14in;min-width:0">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span style="font:500 8.5pt 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#565c63">RITMO DE TEMPORADA · ACUMULADO DEL AÑO</span>
+          <svg viewBox="0 0 400 170" style="width:100%;display:block">
+            <path d="{{ band }}" fill="#e0ddd6"></path>
+            <path d="{{ medL }}" fill="none" stroke="#878c92" stroke-dasharray="4 3" stroke-width="1.2"></path>
+            <path d="{{ curL }}" fill="none" stroke="#1a1c1e" stroke-width="2.4"></path>
+            <path d="{{ curD }}" fill="#1a1c1e"></path>
+            <path d="M24 162H400" stroke="#cfcbc2"></path>
+          </svg>
+          <div style="display:flex;justify-content:space-between;padding-left:24px;font:400 7pt 'IBM Plex Mono',monospace;color:#878c92"><span>ene</span><span>mar</span><span>may</span><span>jul</span><span>sep</span><span>nov</span><span>dic</span></div>
+          <span style="font-size:9pt;color:#565c63">— 2026 (línea gruesa) · ▮ percentiles 10–90 · - - mediana</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span style="font:500 8.5pt 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#565c63">PELIGRO METEOROLÓGICO · 7 DÍAS (GFWED)</span>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">
+            <sc-for list="{{ fwi }}" as="f" hint-placeholder-count="7">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;background:{{ f.c }};color:{{ f.fg }};font-size:8pt"><b style="font:600 10pt 'IBM Plex Mono',monospace">{{ f.v }}</b><span>{{ f.d }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;margin-top:auto;padding:8px 10px;border:1px solid #cfcbc2">
+          <span style="font:500 8.5pt 'IBM Plex Mono',monospace;letter-spacing:.08em;color:#565c63">LOCALIDADES A FAVOR DEL VIENTO</span>
+          <span style="font-size:10pt;line-height:1.45">San Antonio de las Alazanas (4.2 km NE, 1,850 hab.) · Los Lirios (7.8 km E, 960) · Jamé (11.3 km ENE, 640)</span>
+        </div>
+      </div>
+    </div>
+
+    <footer style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;padding-top:0.1in;border-top:1px solid #cfcbc2;font-size:8pt;color:#565c63;line-height:1.45">
+      <span style="max-width:4.6in">Puntos de calor: <b>NASA FIRMS</b> (MODIS C6.1 y VIIRS 375 m), armonizados por Rescoldo, metodología v1.2. Clima: NASA POWER, GFWED, NOAA ONI. Límites: INEGI. Cifras calculadas; textos redactados automáticamente. Datos: rescoldo.app/a/arteaga-coah</span>
+      <span style="display:flex;flex-direction:column;gap:6px;min-width:1.8in">Revisó: <span style="border-bottom:1px solid #878c92;height:14px"></span></span>
+    </footer>
+  </div>
+</section>
+</doc-page>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount(){ document.documentElement.dataset.theme='light'; const w=()=>window.RD?this.forceUpdate():setTimeout(w,40); w(); }
+  renderVals(){
+    const R=window.RD; if(!R) return {};
+    const {out,refs,maxC}=R.calendar();
+    const rows=[];for(let y=2026;y>=2000;y--)rows.push({y,lc:y===2026?'#1a1c1e':'#878c92',c:out[y].map((v,m)=>v==null?{bg:'transparent',ring:'inset 0 0 0 1px #e0ddd6'}:{bg:R.cellColor('anomalia',(y===2026&&m===2)?v*31/18:v,refs[m].med,maxC).bg,ring:(y===2026&&m===2)?'0 0 0 1.5px #1a1c1e':'none'})});
+    const CU=R.cumulative(out),env=CU.env,ym=Math.max(...env.map(e=>e.p90))*1.1;
+    const X=i=>24+i*376/12,Y=v=>162-v/ym*156;
+    const cur=[[X(0),Y(0)],[X(1),Y(CU.cum[2026][1])],[X(2),Y(CU.cum[2026][2])],[X(CU.xNow),Y(CU.cum[2026][3])]];
+    const pr=R.rng(26),pts=[];for(let i=0;i<60;i++){pts.push([520+(pr()-.5)*260,450+(pr()-.5)*260]);}
+    return {ml:R.ML,rows,
+      band:R.path(env.map((e,i)=>[X(i),Y(e.p90)]))+R.path(env.map((e,i)=>[X(12-i),Y(env[12-i].p10)])).replace('M','L')+'Z',
+      medL:R.path(env.map((e,i)=>[X(i),Y(e.p50)])),curL:R.path(cur),curD:R.dots([cur[3]],3.5),
+      mapDots:R.dots(pts,7),mapHot:R.dots([[600,420],[630,400],[585,445]],12),
+      fwi:R.FWI.map(f=>({v:f.v,d:f.d.split(' ')[0],c:R.fwiCat(f.v).c,fg:f.v>=38?'#fff':'#1a1c1e'}))};
+  }
+}
+</script>
+</body>
+</html>

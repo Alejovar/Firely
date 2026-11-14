@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="rescoldo-data.js"></script>
+<style>
+:root{--bg:#0d0f11;--panel:#14171a;--panel2:#1a1e22;--line:#262b31;--line2:#323840;--text:#ebe8e3;--mute:#9aa1a9;--faint:#6b727a;--ember:#e8803f;--emberInk:#1a0d05;--cell0:#1c2024;--field:#0f1214}
+html[data-theme="light"]{--bg:#efeee9;--panel:#ffffff;--panel2:#f6f5f1;--line:#e0ddd6;--line2:#cfcbc2;--text:#1a1c1e;--mute:#565c63;--faint:#878c92;--ember:#c9601f;--emberInk:#ffffff;--cell0:#ecebe6;--field:#ffffff}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"IBM Plex Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--mute);text-decoration:underline;text-decoration-color:var(--line2);text-underline-offset:2px}
+a:hover{color:var(--ember);text-decoration-color:var(--ember)}
+input::placeholder{color:var(--faint)}
+</style>
+</helmet>
+<div style="min-height:100vh;display:grid;grid-template-columns:76px minmax(0,1fr);background:var(--bg);color:var(--text);font-variant-numeric:tabular-nums">
+  <nav style="display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:14px 6px;border-right:1px solid var(--line);background:var(--panel)">
+    <div style="align-self:center;width:26px;height:26px;display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-bottom:16px">
+      <div style="background:var(--line2)"></div><div style="background:var(--line2);opacity:.6"></div><div style="background:var(--line2)"></div>
+      <div style="background:var(--line2);opacity:.6"></div><div style="background:var(--ember);box-shadow:0 0 10px var(--ember)"></div><div style="background:var(--line2);opacity:.6"></div>
+      <div style="background:var(--line2)"></div><div style="background:var(--line2);opacity:.6"></div><div style="background:var(--line2)"></div>
+    </div>
+    <a href="Rescoldo%20-%20App.dc.html" style="padding:9px 4px;border-radius:8px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Mapa</a>
+    <a href="Rescoldo%20-%20Asistente.dc.html" style="padding:9px 4px;border-radius:8px;background:var(--panel2);color:var(--text);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center;box-shadow:inset 2px 0 0 var(--ember)">Asistente</a>
+    <a href="Rescoldo%20-%20Como%20armonizamos.dc.html" style="padding:9px 4px;border-radius:8px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Método</a>
+    <a href="Rescoldo%20-%20Plataforma.dc.html" style="padding:9px 4px;border-radius:8px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Alertas y API</a>
+    <a href="Rescoldo%20-%20Experiencia.dc.html" style="padding:9px 4px;border-radius:8px;color:var(--mute);text-decoration:none;font:500 11px 'IBM Plex Sans',sans-serif;text-align:center">Historia</a>
+    <div style="height:1px;background:var(--line);margin:10px 6px"></div>
+    <a href="Rescoldo%20-%20Ficha%20PDF.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Ficha</a>
+    <a href="Rescoldo%20-%20Movil.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Móvil</a>
+    <a href="Rescoldo%20-%20Widget.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Widget</a>
+    <a href="Rescoldo%20-%20Identidad.dc.html" style="padding:9px 4px;color:var(--faint);text-decoration:none;font:500 10.5px 'IBM Plex Sans',sans-serif;text-align:center">Identidad</a>
+  </nav>
+
+  <main style="padding:28px 32px 40px;display:flex;flex-direction:column;gap:22px;min-width:0">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:6px;max-width:640px">
+        <span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">ASISTENTE ANALISTA · PANEL LATERAL</span>
+        <h1 style="margin:0;font-size:28px;font-weight:600;letter-spacing:-.01em">Pregunta en tus palabras. Las cifras salen de los datos.</h1>
+        <p style="margin:0;font-size:14px;color:var(--mute);line-height:1.5;text-wrap:pretty">El asistente decide qué consultar y qué mostrar; nunca calcula ni inventa números ni coordenadas. Cada cifra lleva su enlace a la consulta exacta.</p>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+
+      <section style="width:540px;max-width:100%;height:860px;display:flex;flex-direction:column;border:1px solid var(--line2);border-radius:14px;background:var(--panel);overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.25)">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:600;font-size:15px">{{ T.title }}</span><span style="font-size:11.5px;color:var(--mute)">Sierra de Arteaga, Coahuila · 2000–2026</span></div>
+            <span style="font-size:18px;color:var(--faint);cursor:pointer">✕</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:10px">
+            <div style="display:flex;padding:2px;border-radius:8px;background:var(--panel2);border:1px solid var(--line)">
+              <sc-for list="{{ profOpts }}" as="o" hint-placeholder-count="2"><button onClick="{{ o.on }}" style="height:26px;padding:0 12px;border:0;border-radius:6px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};font:500 12px 'IBM Plex Sans',sans-serif;cursor:pointer">{{ o.label }}</button></sc-for>
+            </div>
+            <div style="display:flex;padding:2px;border-radius:8px;background:var(--panel2);border:1px solid var(--line)">
+              <sc-for list="{{ langOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.on }}" style="height:26px;padding:0 10px;border:0;border-radius:6px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};font:500 11.5px 'IBM Plex Mono',monospace;cursor:pointer">{{ o.label }}</button></sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:16px">
+          <div style="align-self:flex-end;max-width:80%;padding:10px 13px;border-radius:12px 12px 3px 12px;background:var(--panel2);border:1px solid var(--line);font-size:14px;line-height:1.45">{{ T.q1 }}</div>
+
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <p style="margin:0;font-size:14.5px;line-height:1.55;text-wrap:pretty">{{ T.a1a }} <a href="#" style="font-size:11.5px">{{ T.see }}</a></p>
+            <div style="padding:12px;border:1px solid var(--line2);border-radius:10px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em"><span>{{ T.miniCal }}</span><span>{{ T.anom }}</span></div>
+              <div style="display:grid;grid-template-columns:34px repeat(12,minmax(0,1fr));gap:2px;font:400 9.5px 'IBM Plex Mono',monospace;color:var(--faint);text-align:center">
+                <span></span><sc-for list="{{ ml }}" as="m" hint-placeholder-count="12"><span>{{ m }}</span></sc-for>
+              </div>
+              <sc-for list="{{ mini }}" as="row" hint-placeholder-count="6">
+                <div style="display:grid;grid-template-columns:34px repeat(12,minmax(0,1fr));gap:2px;height:14px;margin-top:-6px">
+                  <span style="font:400 10px 'IBM Plex Mono',monospace;color:var(--mute)">{{ row.y }}</span>
+                  <sc-for list="{{ row.c }}" as="c" hint-placeholder-count="12"><span style="border-radius:2px;background:{{ c.bg }};box-shadow:{{ c.ring }}"></span></sc-for>
+                </div>
+              </sc-for>
+            </div>
+            <p style="margin:0;font-size:14.5px;line-height:1.55;text-wrap:pretty">{{ T.a1b }} <a href="#" style="font-size:11.5px">{{ T.see }}</a></p>
+            <div style="padding:10px 12px;border:1px solid var(--line2);border-radius:10px;display:flex;flex-direction:column;gap:6px">
+              <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em">{{ T.rank }}</span>
+              <sc-for list="{{ events }}" as="e" hint-placeholder-count="4">
+                <div style="display:grid;grid-template-columns:16px minmax(0,1fr) 120px 34px;gap:8px;align-items:center;font-size:12.5px">
+                  <span style="font-family:'IBM Plex Mono',monospace;color:var(--faint)">{{ e.rank }}</span><span style="font-weight:{{ e.w }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ e.name }} <span style="color:var(--faint);font-weight:400">{{ e.yr }}</span></span>
+                  <span style="height:8px;background:var(--line);border-radius:2px"><span style="display:block;height:100%;width:{{ e.pct }}%;background:{{ e.c }};border-radius:2px"></span></span><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px">{{ e.pts }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ sci }}" hint-placeholder-val="{{ false }}">
+              <div style="border:1px solid var(--line2);border-radius:10px;overflow:hidden">
+                <div style="display:flex;justify-content:space-between;padding:7px 12px;background:var(--panel2);font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em"><span>{{ T.sqlLabel }}</span><span>DuckDB · read-only</span></div>
+                <pre style="margin:0;padding:10px 12px;font:400 11.5px/1.55 'IBM Plex Mono',monospace;color:var(--mute);white-space:pre-wrap">SELECT month, count_h, count_h / median(count_h)
+  OVER (PARTITION BY month) AS ratio
+FROM cell_month
+WHERE area_id = 'INEGI:05004' AND month = 3
+  AND year BETWEEN 2000 AND 2026;</pre>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="align-self:flex-end;max-width:80%;padding:10px 13px;border-radius:12px 12px 3px 12px;background:var(--panel2);border:1px solid var(--line);font-size:14px;line-height:1.45">{{ T.q2 }}</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <p style="margin:0;font-size:14.5px;line-height:1.55;text-wrap:pretty">{{ T.a2 }} <a href="#" style="font-size:11.5px">{{ T.see }}</a></p>
+            <div style="padding:12px;border:1px solid var(--line2);border-radius:10px;display:flex;flex-direction:column;gap:6px">
+              <span style="font:500 10px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.06em">{{ T.curve }}</span>
+              <svg viewBox="0 0 480 130" style="width:100%;display:block">
+                <path d="{{ band }}" fill="var(--line2)" opacity=".8"></path>
+                <path d="{{ medL }}" fill="none" stroke="var(--mute)" stroke-dasharray="4 3" stroke-width="1.3"></path>
+                <path d="{{ anL }}" fill="none" stroke="#c8b866" stroke-width="1.2" opacity=".9"></path>
+                <path d="{{ curL }}" fill="none" stroke="var(--text)" stroke-width="2.4"></path>
+                <path d="M20 124H480" stroke="var(--line2)"></path>
+              </svg>
+              <div style="display:flex;gap:12px;font-size:11px;color:var(--mute)"><span>— 2026</span><span style="color:#c8b866">— {{ T.analogs }}</span><span>▮ p10–p90</span></div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--faint);line-height:1.5;padding-top:4px;border-top:1px dashed var(--line)">{{ T.foot }}</div>
+        </div>
+
+        <div style="padding:12px 14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ T.chips }}" as="c" hint-placeholder-count="3"><span style="padding:4px 9px;border-radius:12px;border:1px solid var(--line2);font-size:12px;color:var(--mute);cursor:pointer">{{ c }}</span></sc-for></div>
+          <div style="display:flex;align-items:center;gap:8px;height:42px;padding:0 5px 0 13px;border:1px solid var(--line2);border-radius:10px;background:var(--field)">
+            <input placeholder="{{ T.ph }}" style="flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--text);font:400 14px 'IBM Plex Sans',sans-serif"></input>
+            <button style="width:32px;height:32px;border-radius:8px;border:0;background:var(--ember);color:var(--emberInk);display:grid;place-items:center;cursor:pointer"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" stroke="currentColor" stroke-width="1.5"></rect><path d="M3 8a5 5 0 0010 0M8 13v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></button>
+          </div>
+        </div>
+      </section>
+
+      <section style="width:440px;max-width:100%;display:flex;flex-direction:column;gap:12px">
+        <span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em">CASO DE AMBIGÜEDAD</span>
+        <div style="display:flex;flex-direction:column;border:1px solid var(--line2);border-radius:14px;background:var(--panel);overflow:hidden">
+          <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+            <div style="align-self:flex-end;padding:10px 13px;border-radius:12px 12px 3px 12px;background:var(--panel2);border:1px solid var(--line);font-size:14px">Arteaga</div>
+            <p style="margin:0;font-size:14.5px;line-height:1.5">Hay dos municipios llamados Arteaga. ¿Cuál quieres ver?</p>
+            <sc-for list="{{ places }}" as="p" hint-placeholder-count="2">
+              <div onClick="{{ p.on }}" style="display:grid;grid-template-columns:84px 1fr;gap:12px;padding:10px;border:1.5px solid {{ p.bd }};border-radius:10px;cursor:pointer;background:{{ p.bg }}">
+                <div style="height:64px;border-radius:6px;background:repeating-linear-gradient(135deg,var(--panel2) 0 6px,var(--line) 6px 7px);display:grid;place-items:center;font:500 9px 'IBM Plex Mono',monospace;color:var(--faint);text-align:center">silueta<br>INEGI</div>
+                <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+                  <span style="font-weight:600;font-size:14.5px">{{ p.n }}</span>
+                  <span style="font-size:12px;color:var(--mute);line-height:1.4">{{ p.d }}</span>
+                  <span style="font:400 10.5px 'IBM Plex Mono',monospace;color:var(--faint)">{{ p.code }}</span>
+                </div>
+              </div>
+            </sc-for>
+            <div style="display:flex;gap:12px;font-size:12.5px"><a href="#">Otro lugar…</a><a href="#">Dibujar en el mapa</a></div>
+            <sc-if value="{{ picked }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px dashed var(--line)">
+                <p style="margin:0;font-size:14.5px;line-height:1.5">Listo: <b>{{ pickedName }}</b>. Ajusté el polígono en el mapa; puedes editarlo. ¿Qué periodo te interesa?</p>
+                <div style="display:flex;gap:6px;flex-wrap:wrap"><span style="padding:4px 9px;border-radius:12px;border:1px solid var(--line2);font-size:12px">Este mes</span><span style="padding:4px 9px;border-radius:12px;border:1px solid var(--line2);font-size:12px">Temporada 2026</span><span style="padding:4px 9px;border-radius:12px;border:1px solid var(--line2);font-size:12px">2000–hoy</span></div>
+              </div>
+            </sc-if>
+          </div>
+          <div style="padding:10px 16px;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint);line-height:1.5">La geometría viene del Marco Geoestadístico de INEGI (GADM fuera de México) y de OpenStreetMap. El asistente nunca genera coordenadas.</div>
+        </div>
+
+        <span style="font:500 10.5px 'IBM Plex Mono',monospace;color:var(--faint);letter-spacing:.08em;margin-top:12px">SI EL SERVICIO DE IA FALLA</span>
+        <div style="padding:14px 16px;border:1px dashed var(--line2);border-radius:12px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:13px;font-weight:600">Modo plantilla</span>
+          <span style="font-size:13px;color:var(--mute);line-height:1.5">“Marzo 2026: 2.8× la mediana 2000–2025. Periodo de retorno: 25 años.” Las fichas, el modo historia y las descripciones accesibles siguen funcionando con texto de plantilla.</span>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;oscuro&quot;,&quot;claro&quot;],&quot;default&quot;:&quot;oscuro&quot;,&quot;tsType&quot;:&quot;'oscuro'|'claro'&quot;}}">
+const TX = {
+  es:{title:'Asistente analista',q1:'¿Es normal lo que está pasando en Arteaga este marzo?',q2:'¿Cómo podría cerrar la temporada?',see:'ver datos',miniCal:'MARZO, ÚLTIMOS 6 AÑOS',anom:'ANOMALÍA',rank:'INCENDIOS MÁS GRANDES DEL ÁREA',curve:'ACUMULADO DEL AÑO VS HISTÓRICO',analogs:'2011 · 2012 · 2024',sqlLabel:'CONSULTA EJECUTADA',ph:'Pregunta o dicta…',chips:['¿A quién afecta?','¿Por qué este año?','Generar ficha PDF'],
+    b:{a1a:'No. Marzo va 2.8 veces por encima de lo normal para estas fechas. Un marzo así pasa 1 vez cada 25 años.',a1b:'El incendio de San Antonio de las Alazanas ya es el 4º más grande en la sierra desde 2000.',a2:'Los 3 años que empezaron parecido terminaron con entre 342 y 393 puntos de calor: una temporada muy por encima de lo normal. Conviene reforzar brigadas desde ya.',foot:'Cifras de la serie armonizada MODIS + VIIRS · NASA FIRMS. Redacción automática.'},
+    s:{a1a:'Anomalía de marzo 2026 (normalizada al día 18): 2.8× la mediana 2000–2025, por encima del p96. Periodo de retorno empírico ≈ 25 años (GEV: 21–31).',a1b:'Evento E-2026-012: rango 4 de 212 por puntos armonizados; FRP acumulado 19,600 MW·h. Incertidumbre de armonización en años pre-2012: ±18%.',a2:'Análogos por distancia euclidiana sobre el acumulado ene–mar: 2011, 2012 y 2024. Cierre proyectado: 342–393 puntos (p90 histórico: 318). Tendencia de inicio de temporada: −7 días/década (Mann-Kendall p = 0.01).',foot:'methodology_version 1.2 · harmonization_uncertainty incluida · Fuente: NASA FIRMS.'}},
+  en:{title:'Analyst assistant',q1:'Is what is happening in Arteaga this March normal?',q2:'How might the season end?',see:'see data',miniCal:'MARCH, LAST 6 YEARS',anom:'ANOMALY',rank:'LARGEST FIRES IN THE AREA',curve:'YEAR-TO-DATE VS HISTORY',analogs:'2011 · 2012 · 2024',sqlLabel:'QUERY EXECUTED',ph:'Ask or dictate…',chips:['Who is affected?','Why this year?','Create PDF sheet'],
+    b:{a1a:'No. March is running 2.8 times above normal for these dates. A March like this happens once every 25 years.',a1b:'The San Antonio de las Alazanas fire is already the 4th largest in the sierra since 2000.',a2:'The 3 years that started similarly ended with 342 to 393 hotspots — far above normal. Reinforce crews now.',foot:'Figures from the harmonized MODIS + VIIRS series · NASA FIRMS. Auto-written.'},
+    s:{a1a:'March 2026 anomaly (normalized to day 18): 2.8× the 2000–2025 median, above p96. Empirical return period ≈ 25 years (GEV: 21–31).',a1b:'Event E-2026-012: rank 4 of 212 by harmonized count; cumulative FRP 19,600 MW·h. Pre-2012 harmonization uncertainty: ±18%.',a2:'Analogs by Euclidean distance on Jan–Mar cumulative: 2011, 2012, 2024. Projected close: 342–393 hotspots (historical p90: 318). Season-onset trend: −7 days/decade (Mann-Kendall p = 0.01).',foot:'methodology_version 1.2 · harmonization_uncertainty included · Source: NASA FIRMS.'}},
+  pt:{title:'Assistente analista',q1:'O que está acontecendo em Arteaga neste março é normal?',q2:'Como a temporada pode terminar?',see:'ver dados',miniCal:'MARÇO, ÚLTIMOS 6 ANOS',anom:'ANOMALIA',rank:'MAIORES INCÊNDIOS DA ÁREA',curve:'ACUMULADO DO ANO VS HISTÓRICO',analogs:'2011 · 2012 · 2024',sqlLabel:'CONSULTA EXECUTADA',ph:'Pergunte ou dite…',chips:['Quem é afetado?','Por que este ano?','Gerar ficha PDF'],
+    b:{a1a:'Não. Março está 2,8 vezes acima do normal para estas datas. Um março assim acontece 1 vez a cada 25 anos.',a1b:'O incêndio de San Antonio de las Alazanas já é o 4º maior da serra desde 2000.',a2:'Os 3 anos que começaram parecido terminaram com 342 a 393 focos: muito acima do normal. Reforce as brigadas desde já.',foot:'Números da série harmonizada MODIS + VIIRS · NASA FIRMS. Redação automática.'},
+    s:{a1a:'Anomalia de março 2026 (normalizada ao dia 18): 2,8× a mediana 2000–2025, acima do p96. Período de retorno empírico ≈ 25 anos (GEV: 21–31).',a1b:'Evento E-2026-012: posição 4 de 212 por focos harmonizados; FRP acumulado 19.600 MW·h. Incerteza pré-2012: ±18%.',a2:'Análogos por distância euclidiana no acumulado jan–mar: 2011, 2012 e 2024. Fechamento projetado: 342–393 focos (p90 histórico: 318). Tendência de início: −7 dias/década (Mann-Kendall p = 0,01).',foot:'methodology_version 1.2 · harmonization_uncertainty incluída · Fonte: NASA FIRMS.'}}
+};
+class Component extends DCLogic {
+  state={prof:'b',lang:'es',pick:null,themeLocal:null};
+  componentDidMount(){ this.applyTheme(); const w=()=>window.RD?this.forceUpdate():setTimeout(w,40); w(); }
+  componentDidUpdate(){ this.applyTheme(); }
+  applyTheme(){ document.documentElement.dataset.theme=(this.props.theme??'oscuro')==='claro'?'light':'dark'; }
+  renderVals(){
+    const R=window.RD, st=this.state, L=TX[st.lang], P=L[st.prof];
+    const seg=(cur,val,label,key)=>({label,on:()=>this.setState({[key]:val}),bg:cur===val?'var(--panel)':'transparent',fg:cur===val?'var(--text)':'var(--mute)',sh:cur===val?'0 1px 2px rgba(0,0,0,.25), inset 0 0 0 1px var(--line2)':'none'});
+    const places=[{k:'c',n:'Arteaga, Coahuila',d:'Municipio · 1,742 km² · Sierra de Arteaga, al sureste de Saltillo',code:'INEGI 05004'},{k:'m',n:'Arteaga, Michoacán',d:'Municipio · 3,4 mil km² · Sierra Madre del Sur, cerca de la costa',code:'INEGI 16010'}]
+      .map(p=>({...p,on:()=>this.setState({pick:p.k}),bd:st.pick===p.k?'var(--ember)':'var(--line2)',bg:st.pick===p.k?'var(--panel2)':'transparent'}));
+    const base={T:{...L,...P},sci:st.prof==='s',profOpts:[seg(st.prof,'b','Brigadista','prof'),seg(st.prof,'s','Científico','prof')],
+      langOpts:[seg(st.lang,'es','ES','lang'),seg(st.lang,'en','EN','lang'),seg(st.lang,'pt','PT','lang')],places,picked:!!st.pick,pickedName:st.pick==='m'?'Arteaga, Michoacán':'Arteaga, Coahuila'};
+    if(!R) return base;
+    const {out,refs,maxC}=R.calendar();
+    const mini=[2026,2025,2024,2023,2022,2021].map(y=>({y,c:out[y].map((v,m)=>v==null?{bg:'transparent',ring:'inset 0 0 0 1px var(--line)'}:{bg:R.cellColor('anomalia',(y===2026&&m===2)?v*31/18:v,refs[m].med,maxC).bg,ring:(y===2026&&m===2)?'0 0 0 2px var(--text)':'none'})}));
+    const ev=[...R.EVENTS].sort((a,b)=>b.pts-a.pts).slice(0,4);
+    const CU=R.cumulative(out),env=CU.env,ym=Math.max(...env.map(e=>e.p90))*1.15;
+    const X=i=>20+i*460/12,Y=v=>124-v/ym*118;
+    const band=R.path(env.map((e,i)=>[X(i),Y(e.p90)]))+R.path(env.map((e,i)=>[X(12-i),Y(env[12-i].p10)])).replace('M','L')+'Z';
+    return {...base,ml:R.ML,mini,events:ev.map((e,i)=>({rank:i+1,name:e.name,yr:e.start.slice(-4),pts:e.pts,pct:e.pts/ev[0].pts*100,c:e.active?'var(--text)':'var(--mute)',w:e.active?600:400})),
+      band,medL:R.path(env.map((e,i)=>[X(i),Y(e.p50)])),anL:[2011,2012,2024].map(y=>R.path(CU.cum[y].map((v,i)=>[X(i),Y(Math.min(v,ym))]))).join(''),
+      curL:R.path([[X(0),Y(0)],[X(1),Y(CU.cum[2026][1])],[X(2),Y(CU.cum[2026][2])],[X(CU.xNow),Y(CU.cum[2026][3])]])};
+  }
+}
+</script>
+</body>
+</html>
