@@ -1,0 +1,1474 @@
+{
+  "methodology_version": "1.2.0-hybrid-biome",
+  "data_cutoff": "2026-08-31",
+  "viirs_cutoff": "2026-07-31",
+  "attribution": "NASA FIRMS",
+  "countries": {
+    "Mexico": {
+      "label": "México",
+      "quality": {
+        "level": "alta",
+        "reasons": [],
+        "loyo_error_reduction_pct": 31.9
+      },
+      "model": "regimes",
+      "model_label": "regímenes de fuego + vecindad",
+      "annual_error_pct": 2.82,
+      "baseline_error_pct": 4.14,
+      "error_reduction_pct": 31.9,
+      "median_annual_error_pct": 1.98,
+      "band_pct": 6.3,
+      "peak_month_pm1_pct": 100.0,
+      "spearman": 0.9922,
+      "terra_only_annual_error_pct": 2.45,
+      "terra_only_baseline_pct": 3.62,
+      "n_cells": 36339,
+      "models": [
+        {
+          "model": "plain",
+          "label": "simple (factor mensual por país)",
+          "annual_mape_pct": 4.18,
+          "cell_rmse_improvement_pct": 5.1,
+          "spearman": 0.9916,
+          "chosen": false
+        },
+        {
+          "model": "regimes",
+          "label": "regímenes de fuego + vecindad",
+          "annual_mape_pct": 2.82,
+          "cell_rmse_improvement_pct": 10.7,
+          "spearman": 0.9922,
+          "chosen": true
+        },
+        {
+          "model": "biome",
+          "label": "bioma IGBP + vecindad",
+          "annual_mape_pct": 4.02,
+          "cell_rmse_improvement_pct": 6.5,
+          "spearman": 0.9918,
+          "chosen": false
+        },
+        {
+          "model": "biome_regime",
+          "label": "bioma × régimen + vecindad",
+          "annual_mape_pct": 2.85,
+          "cell_rmse_improvement_pct": 11.5,
+          "spearman": 0.9925,
+          "chosen": false
+        }
+      ],
+      "backcast": {
+        "train": "2018-2025",
+        "test": "2012-2017",
+        "annual_error_pct": 2.28,
+        "baseline_error_pct": 4.75
+      },
+      "drift": {
+        "ratio_terra_aqua": {
+          "mk_p": 0.913,
+          "sen_pct_per_year": 0.08
+        },
+        "ratio_terra": {
+          "mk_p": 0.228,
+          "sen_pct_per_year": 0.34
+        },
+        "ratio_aqua": {
+          "mk_p": 0.661,
+          "sen_pct_per_year": -0.25
+        }
+      },
+      "series": [
+        {
+          "year": 2001,
+          "modis_raw": 23454,
+          "viirs_raw": null,
+          "harmonized": 195266.9
+        },
+        {
+          "year": 2002,
+          "modis_raw": 33920,
+          "viirs_raw": null,
+          "harmonized": 265257.0
+        },
+        {
+          "year": 2003,
+          "modis_raw": 78844,
+          "viirs_raw": null,
+          "harmonized": 305986.8
+        },
+        {
+          "year": 2004,
+          "modis_raw": 44113,
+          "viirs_raw": null,
+          "harmonized": 166507.6
+        },
+        {
+          "year": 2005,
+          "modis_raw": 82709,
+          "viirs_raw": null,
+          "harmonized": 330125.9
+        },
+        {
+          "year": 2006,
+          "modis_raw": 58077,
+          "viirs_raw": null,
+          "harmonized": 224330.3
+        },
+        {
+          "year": 2007,
+          "modis_raw": 58225,
+          "viirs_raw": null,
+          "harmonized": 228037.4
+        },
+        {
+          "year": 2008,
+          "modis_raw": 64169,
+          "viirs_raw": null,
+          "harmonized": 251060.3
+        },
+        {
+          "year": 2009,
+          "modis_raw": 68310,
+          "viirs_raw": null,
+          "harmonized": 266250.2
+        },
+        {
+          "year": 2010,
+          "modis_raw": 49648,
+          "viirs_raw": null,
+          "harmonized": 195124.3
+        },
+        {
+          "year": 2011,
+          "modis_raw": 100015,
+          "viirs_raw": null,
+          "harmonized": 414939.7
+        },
+        {
+          "year": 2012,
+          "modis_raw": 59660,
+          "viirs_raw": 243707,
+          "harmonized": 246676.7
+        },
+        {
+          "year": 2013,
+          "modis_raw": 74380,
+          "viirs_raw": 283675,
+          "harmonized": 283675.0
+        },
+        {
+          "year": 2014,
+          "modis_raw": 35740,
+          "viirs_raw": 132635,
+          "harmonized": 132635.0
+        },
+        {
+          "year": 2015,
+          "modis_raw": 49169,
+          "viirs_raw": 173458,
+          "harmonized": 173458.0
+        },
+        {
+          "year": 2016,
+          "modis_raw": 58051,
+          "viirs_raw": 225965,
+          "harmonized": 225965.0
+        },
+        {
+          "year": 2017,
+          "modis_raw": 75599,
+          "viirs_raw": 304858,
+          "harmonized": 304858.0
+        },
+        {
+          "year": 2018,
+          "modis_raw": 53374,
+          "viirs_raw": 402420,
+          "harmonized": 224232.0
+        },
+        {
+          "year": 2019,
+          "modis_raw": 77037,
+          "viirs_raw": 598552,
+          "harmonized": 301665.0
+        },
+        {
+          "year": 2020,
+          "modis_raw": 58345,
+          "viirs_raw": 429607,
+          "harmonized": 216739.0
+        },
+        {
+          "year": 2021,
+          "modis_raw": 55511,
+          "viirs_raw": 439793,
+          "harmonized": 221723.0
+        },
+        {
+          "year": 2022,
+          "modis_raw": 50107,
+          "viirs_raw": 408675,
+          "harmonized": 205175.0
+        },
+        {
+          "year": 2023,
+          "modis_raw": 62671,
+          "viirs_raw": 695950,
+          "harmonized": 245294.0
+        },
+        {
+          "year": 2024,
+          "modis_raw": 68611,
+          "viirs_raw": 765764,
+          "harmonized": 251103.0
+        },
+        {
+          "year": 2025,
+          "modis_raw": 51972,
+          "viirs_raw": 602321,
+          "harmonized": 205913.0
+        }
+      ]
+    },
+    "Argentina": {
+      "label": "Argentina",
+      "quality": {
+        "level": "alta",
+        "reasons": [],
+        "loyo_error_reduction_pct": 30.1
+      },
+      "model": "biome",
+      "model_label": "bioma IGBP + vecindad",
+      "annual_error_pct": 4.1,
+      "baseline_error_pct": 5.87,
+      "error_reduction_pct": 30.1,
+      "median_annual_error_pct": 3.3,
+      "band_pct": 8.6,
+      "peak_month_pm1_pct": 100.0,
+      "spearman": 0.9793,
+      "terra_only_annual_error_pct": 7.83,
+      "terra_only_baseline_pct": 8.99,
+      "n_cells": 63196,
+      "models": [
+        {
+          "model": "plain",
+          "label": "simple (factor mensual por país)",
+          "annual_mape_pct": 5.61,
+          "cell_rmse_improvement_pct": 0.3,
+          "spearman": 0.9789,
+          "chosen": false
+        },
+        {
+          "model": "regimes",
+          "label": "regímenes de fuego + vecindad",
+          "annual_mape_pct": 6.09,
+          "cell_rmse_improvement_pct": 3.3,
+          "spearman": 0.9796,
+          "chosen": false
+        },
+        {
+          "model": "biome",
+          "label": "bioma IGBP + vecindad",
+          "annual_mape_pct": 4.1,
+          "cell_rmse_improvement_pct": 1.8,
+          "spearman": 0.9793,
+          "chosen": true
+        },
+        {
+          "model": "biome_regime",
+          "label": "bioma × régimen + vecindad",
+          "annual_mape_pct": 4.38,
+          "cell_rmse_improvement_pct": 5.3,
+          "spearman": 0.9803,
+          "chosen": false
+        }
+      ],
+      "backcast": {
+        "train": "2018-2025",
+        "test": "2012-2017",
+        "annual_error_pct": 4.68,
+        "baseline_error_pct": 7.21
+      },
+      "drift": {
+        "ratio_terra_aqua": {
+          "mk_p": 0.189,
+          "sen_pct_per_year": 0.6
+        },
+        "ratio_terra": {
+          "mk_p": 0.012,
+          "sen_pct_per_year": 1.35
+        },
+        "ratio_aqua": {
+          "mk_p": 0.913,
+          "sen_pct_per_year": 0.03
+        }
+      },
+      "series": [
+        {
+          "year": 2001,
+          "modis_raw": 29997,
+          "viirs_raw": null,
+          "harmonized": 269233.4
+        },
+        {
+          "year": 2002,
+          "modis_raw": 57490,
+          "viirs_raw": null,
+          "harmonized": 225335.7
+        },
+        {
+          "year": 2003,
+          "modis_raw": 110974,
+          "viirs_raw": null,
+          "harmonized": 353059.1
+        },
+        {
+          "year": 2004,
+          "modis_raw": 94954,
+          "viirs_raw": null,
+          "harmonized": 307827.1
+        },
+        {
+          "year": 2005,
+          "modis_raw": 67113,
+          "viirs_raw": null,
+          "harmonized": 214478.8
+        },
+        {
+          "year": 2006,
+          "modis_raw": 79817,
+          "viirs_raw": null,
+          "harmonized": 259882.9
+        },
+        {
+          "year": 2007,
+          "modis_raw": 73973,
+          "viirs_raw": null,
+          "harmonized": 231348.3
+        },
+        {
+          "year": 2008,
+          "modis_raw": 98975,
+          "viirs_raw": null,
+          "harmonized": 329632.3
+        },
+        {
+          "year": 2009,
+          "modis_raw": 78036,
+          "viirs_raw": null,
+          "harmonized": 253445.9
+        },
+        {
+          "year": 2010,
+          "modis_raw": 59426,
+          "viirs_raw": null,
+          "harmonized": 189252.7
+        },
+        {
+          "year": 2011,
+          "modis_raw": 72937,
+          "viirs_raw": null,
+          "harmonized": 228614.5
+        },
+        {
+          "year": 2012,
+          "modis_raw": 58280,
+          "viirs_raw": 169182,
+          "harmonized": 183682.3
+        },
+        {
+          "year": 2013,
+          "modis_raw": 63105,
+          "viirs_raw": 210337,
+          "harmonized": 210337.0
+        },
+        {
+          "year": 2014,
+          "modis_raw": 34534,
+          "viirs_raw": 108470,
+          "harmonized": 108470.0
+        },
+        {
+          "year": 2015,
+          "modis_raw": 42502,
+          "viirs_raw": 136392,
+          "harmonized": 136392.0
+        },
+        {
+          "year": 2016,
+          "modis_raw": 52905,
+          "viirs_raw": 162933,
+          "harmonized": 162933.0
+        },
+        {
+          "year": 2017,
+          "modis_raw": 57134,
+          "viirs_raw": 180476,
+          "harmonized": 180476.0
+        },
+        {
+          "year": 2018,
+          "modis_raw": 49994,
+          "viirs_raw": 282038,
+          "harmonized": 165584.0
+        },
+        {
+          "year": 2019,
+          "modis_raw": 45684,
+          "viirs_raw": 284378,
+          "harmonized": 143367.0
+        },
+        {
+          "year": 2020,
+          "modis_raw": 113723,
+          "viirs_raw": 791911,
+          "harmonized": 400953.0
+        },
+        {
+          "year": 2021,
+          "modis_raw": 51683,
+          "viirs_raw": 341974,
+          "harmonized": 170504.0
+        },
+        {
+          "year": 2022,
+          "modis_raw": 70938,
+          "viirs_raw": 539650,
+          "harmonized": 271393.0
+        },
+        {
+          "year": 2023,
+          "modis_raw": 44098,
+          "viirs_raw": 394156,
+          "harmonized": 147159.0
+        },
+        {
+          "year": 2024,
+          "modis_raw": 45451,
+          "viirs_raw": 408170,
+          "harmonized": 134624.0
+        },
+        {
+          "year": 2025,
+          "modis_raw": 43867,
+          "viirs_raw": 439794,
+          "harmonized": 149091.0
+        }
+      ]
+    },
+    "Uruguay": {
+      "label": "Uruguay",
+      "quality": {
+        "level": "baja",
+        "reasons": [
+          "la validación hacia atrás es peor que la línea base",
+          "la razón VIIRS/MODIS cambia con el tiempo (p=0.00)",
+          "banda de incertidumbre ancha (±16%)"
+        ],
+        "loyo_error_reduction_pct": 63.4
+      },
+      "model": "regimes",
+      "model_label": "regímenes de fuego + vecindad",
+      "annual_error_pct": 6.15,
+      "baseline_error_pct": 16.82,
+      "error_reduction_pct": 63.4,
+      "median_annual_error_pct": 4.2,
+      "band_pct": 15.9,
+      "peak_month_pm1_pct": 85.7,
+      "spearman": 0.9491,
+      "terra_only_annual_error_pct": 21.28,
+      "terra_only_baseline_pct": 32.07,
+      "n_cells": 5662,
+      "models": [
+        {
+          "model": "plain",
+          "label": "simple (factor mensual por país)",
+          "annual_mape_pct": 14.67,
+          "cell_rmse_improvement_pct": 24.8,
+          "spearman": 0.8211,
+          "chosen": false
+        },
+        {
+          "model": "regimes",
+          "label": "regímenes de fuego + vecindad",
+          "annual_mape_pct": 6.15,
+          "cell_rmse_improvement_pct": 32.2,
+          "spearman": 0.9491,
+          "chosen": true
+        }
+      ],
+      "backcast": {
+        "train": "2018-2025",
+        "test": "2012-2017",
+        "annual_error_pct": 51.38,
+        "baseline_error_pct": 35.04
+      },
+      "drift": {
+        "ratio_terra_aqua": {
+          "mk_p": 0.002,
+          "sen_pct_per_year": 3.32
+        },
+        "ratio_terra": {
+          "mk_p": 0.001,
+          "sen_pct_per_year": 6.23
+        },
+        "ratio_aqua": {
+          "mk_p": 0.063,
+          "sen_pct_per_year": 2.6
+        }
+      },
+      "series": [
+        {
+          "year": 2001,
+          "modis_raw": 250,
+          "viirs_raw": null,
+          "harmonized": 1713.7
+        },
+        {
+          "year": 2002,
+          "modis_raw": 1284,
+          "viirs_raw": null,
+          "harmonized": 3502.8
+        },
+        {
+          "year": 2003,
+          "modis_raw": 1774,
+          "viirs_raw": null,
+          "harmonized": 5572.6
+        },
+        {
+          "year": 2004,
+          "modis_raw": 1994,
+          "viirs_raw": null,
+          "harmonized": 6917.7
+        },
+        {
+          "year": 2005,
+          "modis_raw": 1119,
+          "viirs_raw": null,
+          "harmonized": 3871.5
+        },
+        {
+          "year": 2006,
+          "modis_raw": 1055,
+          "viirs_raw": null,
+          "harmonized": 3190.1
+        },
+        {
+          "year": 2007,
+          "modis_raw": 1050,
+          "viirs_raw": null,
+          "harmonized": 3031.5
+        },
+        {
+          "year": 2008,
+          "modis_raw": 1831,
+          "viirs_raw": null,
+          "harmonized": 5694.0
+        },
+        {
+          "year": 2009,
+          "modis_raw": 1359,
+          "viirs_raw": null,
+          "harmonized": 4008.2
+        },
+        {
+          "year": 2010,
+          "modis_raw": 1560,
+          "viirs_raw": null,
+          "harmonized": 4625.8
+        },
+        {
+          "year": 2011,
+          "modis_raw": 1315,
+          "viirs_raw": null,
+          "harmonized": 4019.6
+        },
+        {
+          "year": 2012,
+          "modis_raw": 1190,
+          "viirs_raw": 2996,
+          "harmonized": 3152.4
+        },
+        {
+          "year": 2013,
+          "modis_raw": 1123,
+          "viirs_raw": 2973,
+          "harmonized": 2973.0
+        },
+        {
+          "year": 2014,
+          "modis_raw": 808,
+          "viirs_raw": 1831,
+          "harmonized": 1831.0
+        },
+        {
+          "year": 2015,
+          "modis_raw": 1914,
+          "viirs_raw": 5274,
+          "harmonized": 5274.0
+        },
+        {
+          "year": 2016,
+          "modis_raw": 820,
+          "viirs_raw": 2215,
+          "harmonized": 2215.0
+        },
+        {
+          "year": 2017,
+          "modis_raw": 730,
+          "viirs_raw": 2037,
+          "harmonized": 2037.0
+        },
+        {
+          "year": 2018,
+          "modis_raw": 604,
+          "viirs_raw": 3949,
+          "harmonized": 2402.0
+        },
+        {
+          "year": 2019,
+          "modis_raw": 873,
+          "viirs_raw": 5661,
+          "harmonized": 2854.0
+        },
+        {
+          "year": 2020,
+          "modis_raw": 1502,
+          "viirs_raw": 10520,
+          "harmonized": 5202.0
+        },
+        {
+          "year": 2021,
+          "modis_raw": 871,
+          "viirs_raw": 6347,
+          "harmonized": 3056.0
+        },
+        {
+          "year": 2022,
+          "modis_raw": 849,
+          "viirs_raw": 6050,
+          "harmonized": 2945.0
+        },
+        {
+          "year": 2023,
+          "modis_raw": 667,
+          "viirs_raw": 5082,
+          "harmonized": 2560.0
+        },
+        {
+          "year": 2024,
+          "modis_raw": 342,
+          "viirs_raw": 2678,
+          "harmonized": 1301.0
+        },
+        {
+          "year": 2025,
+          "modis_raw": 842,
+          "viirs_raw": 5676,
+          "harmonized": 2791.0
+        }
+      ]
+    },
+    "Chile": {
+      "label": "Chile",
+      "quality": {
+        "level": "baja",
+        "reasons": [
+          "mejora de 3% frente a la línea base (menos de 20%)",
+          "la razón VIIRS/MODIS cambia con el tiempo (p=0.00)",
+          "banda de incertidumbre ancha (±17%)"
+        ],
+        "loyo_error_reduction_pct": 3.0
+      },
+      "model": "regimes",
+      "model_label": "regímenes de fuego + vecindad",
+      "annual_error_pct": 9.49,
+      "baseline_error_pct": 9.79,
+      "error_reduction_pct": 3.0,
+      "median_annual_error_pct": 6.35,
+      "band_pct": 17.4,
+      "peak_month_pm1_pct": 85.7,
+      "spearman": 0.9175,
+      "terra_only_annual_error_pct": 9.58,
+      "terra_only_baseline_pct": 18.22,
+      "n_cells": 8795,
+      "models": [
+        {
+          "model": "plain",
+          "label": "simple (factor mensual por país)",
+          "annual_mape_pct": 10.62,
+          "cell_rmse_improvement_pct": 4.6,
+          "spearman": 0.8964,
+          "chosen": false
+        },
+        {
+          "model": "regimes",
+          "label": "regímenes de fuego + vecindad",
+          "annual_mape_pct": 9.49,
+          "cell_rmse_improvement_pct": 6.5,
+          "spearman": 0.9175,
+          "chosen": true
+        }
+      ],
+      "backcast": {
+        "train": "2018-2025",
+        "test": "2012-2017",
+        "annual_error_pct": 14.85,
+        "baseline_error_pct": 15.24
+      },
+      "drift": {
+        "ratio_terra_aqua": {
+          "mk_p": 0.001,
+          "sen_pct_per_year": 1.83
+        },
+        "ratio_terra": {
+          "mk_p": 0.584,
+          "sen_pct_per_year": 0.85
+        },
+        "ratio_aqua": {
+          "mk_p": 0.001,
+          "sen_pct_per_year": 2.4
+        }
+      },
+      "series": [
+        {
+          "year": 2001,
+          "modis_raw": 982,
+          "viirs_raw": null,
+          "harmonized": 14212.3
+        },
+        {
+          "year": 2002,
+          "modis_raw": 1458,
+          "viirs_raw": null,
+          "harmonized": 15258.8
+        },
+        {
+          "year": 2003,
+          "modis_raw": 4646,
+          "viirs_raw": null,
+          "harmonized": 16387.4
+        },
+        {
+          "year": 2004,
+          "modis_raw": 5416,
+          "viirs_raw": null,
+          "harmonized": 18428.1
+        },
+        {
+          "year": 2005,
+          "modis_raw": 5868,
+          "viirs_raw": null,
+          "harmonized": 21146.8
+        },
+        {
+          "year": 2006,
+          "modis_raw": 4876,
+          "viirs_raw": null,
+          "harmonized": 16294.9
+        },
+        {
+          "year": 2007,
+          "modis_raw": 5460,
+          "viirs_raw": null,
+          "harmonized": 18722.4
+        },
+        {
+          "year": 2008,
+          "modis_raw": 6090,
+          "viirs_raw": null,
+          "harmonized": 21148.6
+        },
+        {
+          "year": 2009,
+          "modis_raw": 6375,
+          "viirs_raw": null,
+          "harmonized": 22005.4
+        },
+        {
+          "year": 2010,
+          "modis_raw": 5405,
+          "viirs_raw": null,
+          "harmonized": 18354.2
+        },
+        {
+          "year": 2011,
+          "modis_raw": 5248,
+          "viirs_raw": null,
+          "harmonized": 17674.3
+        },
+        {
+          "year": 2012,
+          "modis_raw": 5483,
+          "viirs_raw": 13723,
+          "harmonized": 17205.0
+        },
+        {
+          "year": 2013,
+          "modis_raw": 5112,
+          "viirs_raw": 15783,
+          "harmonized": 15783.0
+        },
+        {
+          "year": 2014,
+          "modis_raw": 5494,
+          "viirs_raw": 17663,
+          "harmonized": 17663.0
+        },
+        {
+          "year": 2015,
+          "modis_raw": 7765,
+          "viirs_raw": 26848,
+          "harmonized": 26848.0
+        },
+        {
+          "year": 2016,
+          "modis_raw": 5441,
+          "viirs_raw": 17148,
+          "harmonized": 17148.0
+        },
+        {
+          "year": 2017,
+          "modis_raw": 14552,
+          "viirs_raw": 45522,
+          "harmonized": 45522.0
+        },
+        {
+          "year": 2018,
+          "modis_raw": 4463,
+          "viirs_raw": 24405,
+          "harmonized": 15780.0
+        },
+        {
+          "year": 2019,
+          "modis_raw": 5158,
+          "viirs_raw": 35430,
+          "harmonized": 17858.0
+        },
+        {
+          "year": 2020,
+          "modis_raw": 5572,
+          "viirs_raw": 39167,
+          "harmonized": 19894.0
+        },
+        {
+          "year": 2021,
+          "modis_raw": 4593,
+          "viirs_raw": 32193,
+          "harmonized": 16035.0
+        },
+        {
+          "year": 2022,
+          "modis_raw": 5025,
+          "viirs_raw": 40857,
+          "harmonized": 20984.0
+        },
+        {
+          "year": 2023,
+          "modis_raw": 13144,
+          "viirs_raw": 87736,
+          "harmonized": 45448.0
+        },
+        {
+          "year": 2024,
+          "modis_raw": 3810,
+          "viirs_raw": 28916,
+          "harmonized": 14403.0
+        },
+        {
+          "year": 2025,
+          "modis_raw": 4498,
+          "viirs_raw": 37042,
+          "harmonized": 18799.0
+        }
+      ]
+    },
+    "Paraguay": {
+      "label": "Paraguay",
+      "quality": {
+        "level": "alta",
+        "reasons": [],
+        "loyo_error_reduction_pct": 32.1
+      },
+      "model": "regimes",
+      "model_label": "regímenes de fuego + vecindad",
+      "annual_error_pct": 2.43,
+      "baseline_error_pct": 3.58,
+      "error_reduction_pct": 32.1,
+      "median_annual_error_pct": 2.1,
+      "band_pct": 4.3,
+      "peak_month_pm1_pct": 100.0,
+      "spearman": 0.982,
+      "terra_only_annual_error_pct": 4.89,
+      "terra_only_baseline_pct": 7.88,
+      "n_cells": 11954,
+      "models": [
+        {
+          "model": "plain",
+          "label": "simple (factor mensual por país)",
+          "annual_mape_pct": 3.42,
+          "cell_rmse_improvement_pct": 6.0,
+          "spearman": 0.9807,
+          "chosen": false
+        },
+        {
+          "model": "regimes",
+          "label": "regímenes de fuego + vecindad",
+          "annual_mape_pct": 2.43,
+          "cell_rmse_improvement_pct": 6.6,
+          "spearman": 0.982,
+          "chosen": true
+        }
+      ],
+      "backcast": {
+        "train": "2018-2025",
+        "test": "2012-2017",
+        "annual_error_pct": 3.03,
+        "baseline_error_pct": 4.6
+      },
+      "drift": {
+        "ratio_terra_aqua": {
+          "mk_p": 0.063,
+          "sen_pct_per_year": 0.57
+        },
+        "ratio_terra": {
+          "mk_p": 0.037,
+          "sen_pct_per_year": 1.07
+        },
+        "ratio_aqua": {
+          "mk_p": 0.661,
+          "sen_pct_per_year": -0.12
+        }
+      },
+      "series": [
+        {
+          "year": 2001,
+          "modis_raw": 17753,
+          "viirs_raw": null,
+          "harmonized": 157188.3
+        },
+        {
+          "year": 2002,
+          "modis_raw": 45686,
+          "viirs_raw": null,
+          "harmonized": 164981.2
+        },
+        {
+          "year": 2003,
+          "modis_raw": 63683,
+          "viirs_raw": null,
+          "harmonized": 208540.0
+        },
+        {
+          "year": 2004,
+          "modis_raw": 43312,
+          "viirs_raw": null,
+          "harmonized": 144555.8
+        },
+        {
+          "year": 2005,
+          "modis_raw": 48104,
+          "viirs_raw": null,
+          "harmonized": 156990.8
+        },
+        {
+          "year": 2006,
+          "modis_raw": 45745,
+          "viirs_raw": null,
+          "harmonized": 146762.4
+        },
+        {
+          "year": 2007,
+          "modis_raw": 61375,
+          "viirs_raw": null,
+          "harmonized": 195568.2
+        },
+        {
+          "year": 2008,
+          "modis_raw": 40913,
+          "viirs_raw": null,
+          "harmonized": 131986.7
+        },
+        {
+          "year": 2009,
+          "modis_raw": 32578,
+          "viirs_raw": null,
+          "harmonized": 105830.1
+        },
+        {
+          "year": 2010,
+          "modis_raw": 40524,
+          "viirs_raw": null,
+          "harmonized": 129031.9
+        },
+        {
+          "year": 2011,
+          "modis_raw": 41791,
+          "viirs_raw": null,
+          "harmonized": 132706.1
+        },
+        {
+          "year": 2012,
+          "modis_raw": 35377,
+          "viirs_raw": 109304,
+          "harmonized": 117479.5
+        },
+        {
+          "year": 2013,
+          "modis_raw": 47797,
+          "viirs_raw": 152174,
+          "harmonized": 152174.0
+        },
+        {
+          "year": 2014,
+          "modis_raw": 28778,
+          "viirs_raw": 92354,
+          "harmonized": 92354.0
+        },
+        {
+          "year": 2015,
+          "modis_raw": 27818,
+          "viirs_raw": 84970,
+          "harmonized": 84970.0
+        },
+        {
+          "year": 2016,
+          "modis_raw": 38910,
+          "viirs_raw": 118544,
+          "harmonized": 118544.0
+        },
+        {
+          "year": 2017,
+          "modis_raw": 44720,
+          "viirs_raw": 138874,
+          "harmonized": 138874.0
+        },
+        {
+          "year": 2018,
+          "modis_raw": 28871,
+          "viirs_raw": 177167,
+          "harmonized": 92026.0
+        },
+        {
+          "year": 2019,
+          "modis_raw": 40702,
+          "viirs_raw": 264844,
+          "harmonized": 134850.0
+        },
+        {
+          "year": 2020,
+          "modis_raw": 67022,
+          "viirs_raw": 433567,
+          "harmonized": 222012.0
+        },
+        {
+          "year": 2021,
+          "modis_raw": 43197,
+          "viirs_raw": 286505,
+          "harmonized": 141623.0
+        },
+        {
+          "year": 2022,
+          "modis_raw": 32551,
+          "viirs_raw": 218900,
+          "harmonized": 110961.0
+        },
+        {
+          "year": 2023,
+          "modis_raw": 33700,
+          "viirs_raw": 216649,
+          "harmonized": 111749.0
+        },
+        {
+          "year": 2024,
+          "modis_raw": 39534,
+          "viirs_raw": 247962,
+          "harmonized": 123636.0
+        },
+        {
+          "year": 2025,
+          "modis_raw": 19405,
+          "viirs_raw": 132462,
+          "harmonized": 66553.0
+        }
+      ]
+    },
+    "Bolivia": {
+      "label": "Bolivia",
+      "quality": {
+        "level": "baja",
+        "reasons": [
+          "mejora de 13% frente a la línea base (menos de 20%)",
+          "persiste un quiebre en 2012 en la serie armonizada (-66%, p=0.007)"
+        ],
+        "loyo_error_reduction_pct": 13.4
+      },
+      "model": "regimes",
+      "model_label": "regímenes de fuego + vecindad",
+      "annual_error_pct": 6.17,
+      "baseline_error_pct": 7.13,
+      "error_reduction_pct": 13.4,
+      "median_annual_error_pct": 6.71,
+      "band_pct": 10.7,
+      "peak_month_pm1_pct": 100.0,
+      "spearman": 0.9943,
+      "terra_only_annual_error_pct": 6.53,
+      "terra_only_baseline_pct": 7.97,
+      "n_cells": 24960,
+      "models": [
+        {
+          "model": "plain",
+          "label": "simple (factor mensual por país)",
+          "annual_mape_pct": 7.1,
+          "cell_rmse_improvement_pct": 1.5,
+          "spearman": 0.994,
+          "chosen": false
+        },
+        {
+          "model": "regimes",
+          "label": "regímenes de fuego + vecindad",
+          "annual_mape_pct": 6.17,
+          "cell_rmse_improvement_pct": 3.4,
+          "spearman": 0.9943,
+          "chosen": true
+        }
+      ],
+      "backcast": {
+        "train": "2018-2025",
+        "test": "2012-2017",
+        "annual_error_pct": 8.12,
+        "baseline_error_pct": 9.47
+      },
+      "drift": {
+        "ratio_terra_aqua": {
+          "mk_p": 0.274,
+          "sen_pct_per_year": 0.48
+        },
+        "ratio_terra": {
+          "mk_p": 0.381,
+          "sen_pct_per_year": -0.94
+        },
+        "ratio_aqua": {
+          "mk_p": 0.063,
+          "sen_pct_per_year": 1.16
+        }
+      },
+      "series": [
+        {
+          "year": 2001,
+          "modis_raw": 13434,
+          "viirs_raw": null,
+          "harmonized": 131095.9
+        },
+        {
+          "year": 2002,
+          "modis_raw": 62514,
+          "viirs_raw": null,
+          "harmonized": 242560.4
+        },
+        {
+          "year": 2003,
+          "modis_raw": 51423,
+          "viirs_raw": null,
+          "harmonized": 194840.3
+        },
+        {
+          "year": 2004,
+          "modis_raw": 97610,
+          "viirs_raw": null,
+          "harmonized": 367185.8
+        },
+        {
+          "year": 2005,
+          "modis_raw": 84600,
+          "viirs_raw": null,
+          "harmonized": 318438.6
+        },
+        {
+          "year": 2006,
+          "modis_raw": 67624,
+          "viirs_raw": null,
+          "harmonized": 253434.2
+        },
+        {
+          "year": 2007,
+          "modis_raw": 99869,
+          "viirs_raw": null,
+          "harmonized": 375782.2
+        },
+        {
+          "year": 2008,
+          "modis_raw": 67752,
+          "viirs_raw": null,
+          "harmonized": 254503.4
+        },
+        {
+          "year": 2009,
+          "modis_raw": 41447,
+          "viirs_raw": null,
+          "harmonized": 155754.6
+        },
+        {
+          "year": 2010,
+          "modis_raw": 143027,
+          "viirs_raw": null,
+          "harmonized": 545096.9
+        },
+        {
+          "year": 2011,
+          "modis_raw": 59680,
+          "viirs_raw": null,
+          "harmonized": 224979.5
+        },
+        {
+          "year": 2012,
+          "modis_raw": 39699,
+          "viirs_raw": 148122,
+          "harmonized": 149684.9
+        },
+        {
+          "year": 2013,
+          "modis_raw": 28487,
+          "viirs_raw": 108282,
+          "harmonized": 108282.0
+        },
+        {
+          "year": 2014,
+          "modis_raw": 27569,
+          "viirs_raw": 94256,
+          "harmonized": 94256.0
+        },
+        {
+          "year": 2015,
+          "modis_raw": 39141,
+          "viirs_raw": 136262,
+          "harmonized": 136262.0
+        },
+        {
+          "year": 2016,
+          "modis_raw": 65190,
+          "viirs_raw": 232645,
+          "harmonized": 232645.0
+        },
+        {
+          "year": 2017,
+          "modis_raw": 55180,
+          "viirs_raw": 185967,
+          "harmonized": 185967.0
+        },
+        {
+          "year": 2018,
+          "modis_raw": 47391,
+          "viirs_raw": 316428,
+          "harmonized": 163682.0
+        },
+        {
+          "year": 2019,
+          "modis_raw": 85403,
+          "viirs_raw": 709468,
+          "harmonized": 354828.0
+        },
+        {
+          "year": 2020,
+          "modis_raw": 74607,
+          "viirs_raw": 572766,
+          "harmonized": 284861.0
+        },
+        {
+          "year": 2021,
+          "modis_raw": 72394,
+          "viirs_raw": 560173,
+          "harmonized": 285409.0
+        },
+        {
+          "year": 2022,
+          "modis_raw": 85494,
+          "viirs_raw": 621161,
+          "harmonized": 308301.0
+        },
+        {
+          "year": 2023,
+          "modis_raw": 93833,
+          "viirs_raw": 665260,
+          "harmonized": 332559.0
+        },
+        {
+          "year": 2024,
+          "modis_raw": 198690,
+          "viirs_raw": 1733481,
+          "harmonized": 843014.0
+        },
+        {
+          "year": 2025,
+          "modis_raw": 35886,
+          "viirs_raw": 263822,
+          "harmonized": 131366.0
+        }
+      ]
+    }
+  },
+  "independent": {
+    "breaks": {
+      "Mexico": {
+        "raw_jump_pct": 218.1,
+        "raw_p": 0.0,
+        "harmonized_jump_pct": -19.7,
+        "harmonized_p": 0.281,
+        "break_removed": true,
+        "years": "2003-2025"
+      },
+      "Argentina": {
+        "raw_jump_pct": 121.4,
+        "raw_p": 0.0028,
+        "harmonized_jump_pct": -29.0,
+        "harmonized_p": 0.161,
+        "break_removed": true,
+        "years": "2003-2025"
+      },
+      "Uruguay": {
+        "raw_jump_pct": 127.2,
+        "raw_p": 0.0055,
+        "harmonized_jump_pct": -23.1,
+        "harmonized_p": 0.342,
+        "break_removed": true,
+        "years": "2003-2025"
+      },
+      "Chile": {
+        "raw_jump_pct": 209.2,
+        "raw_p": 0.0002,
+        "harmonized_jump_pct": -2.3,
+        "harmonized_p": 0.926,
+        "break_removed": true,
+        "years": "2003-2025"
+      },
+      "Paraguay": {
+        "raw_jump_pct": 200.6,
+        "raw_p": 0.0,
+        "harmonized_jump_pct": -3.8,
+        "harmonized_p": 0.857,
+        "break_removed": true,
+        "years": "2003-2025"
+      },
+      "Bolivia": {
+        "raw_jump_pct": 26.0,
+        "raw_p": 0.5295,
+        "harmonized_jump_pct": -66.5,
+        "harmonized_p": 0.007,
+        "break_removed": false,
+        "years": "2003-2025"
+      }
+    },
+    "conafor_mexico": {
+      "source": "country_factors.zip/conafor (official CONAFOR yearly totals)",
+      "years": "2001-2025",
+      "national": {
+        "conafor_n_fires": {
+          "harmonized": {
+            "n_years": 25,
+            "pearson_log": 0.8,
+            "pearson_p": 0.0,
+            "spearman": 0.817,
+            "spearman_p": 0.0
+          },
+          "raw_concat": {
+            "n_years": 25,
+            "pearson_log": -0.0,
+            "pearson_p": 0.9999,
+            "spearman": 0.165,
+            "spearman_p": 0.4317
+          },
+          "harmonized_2001_2011": {
+            "n_years": 11,
+            "pearson_log": 0.836,
+            "pearson_p": 0.0013,
+            "spearman": 0.709,
+            "spearman_p": 0.0146
+          },
+          "raw_concat_2001_2011": {
+            "n_years": 11,
+            "pearson_log": 0.659,
+            "pearson_p": 0.0275,
+            "spearman": 0.618,
+            "spearman_p": 0.0426
+          }
+        },
+        "conafor_area_ha": {
+          "harmonized": {
+            "n_years": 25,
+            "pearson_log": 0.498,
+            "pearson_p": 0.0114,
+            "spearman": 0.423,
+            "spearman_p": 0.0351
+          },
+          "raw_concat": {
+            "n_years": 25,
+            "pearson_log": 0.656,
+            "pearson_p": 0.0004,
+            "spearman": 0.714,
+            "spearman_p": 0.0001
+          },
+          "harmonized_2001_2011": {
+            "n_years": 11,
+            "pearson_log": 0.937,
+            "pearson_p": 0.0,
+            "spearman": 0.909,
+            "spearman_p": 0.0001
+          },
+          "raw_concat_2001_2011": {
+            "n_years": 11,
+            "pearson_log": 0.687,
+            "pearson_p": 0.0196,
+            "spearman": 0.836,
+            "spearman_p": 0.0013
+          }
+        }
+      },
+      "by_state": {
+        "states_matched": 30,
+        "states_tested": 30,
+        "median_spearman_harmonized": 0.524,
+        "median_spearman_raw": 0.18,
+        "share_states_better_harmonized": 0.867
+      }
+    },
+    "country_model_crosscheck": {
+      "Mexico": {
+        "pearson_log": 0.996,
+        "pearson_log_2001_2011": 0.994,
+        "median_ratio_ours_over_theirs": 1.0,
+        "median_ratio_2001_2011": 0.994
+      },
+      "Argentina": {
+        "pearson_log": 0.999,
+        "pearson_log_2001_2011": 0.993,
+        "median_ratio_ours_over_theirs": 1.0,
+        "median_ratio_2001_2011": 0.999
+      },
+      "Uruguay": {
+        "pearson_log": 0.994,
+        "pearson_log_2001_2011": 0.985,
+        "median_ratio_ours_over_theirs": 1.0,
+        "median_ratio_2001_2011": 1.069
+      },
+      "Chile": {
+        "pearson_log": 0.996,
+        "pearson_log_2001_2011": 0.968,
+        "median_ratio_ours_over_theirs": 1.0,
+        "median_ratio_2001_2011": 1.015
+      },
+      "Paraguay": {
+        "pearson_log": 0.992,
+        "pearson_log_2001_2011": 0.974,
+        "median_ratio_ours_over_theirs": 0.99,
+        "median_ratio_2001_2011": 0.951
+      },
+      "Bolivia": {
+        "pearson_log": 0.992,
+        "pearson_log_2001_2011": 0.991,
+        "median_ratio_ours_over_theirs": 1.0,
+        "median_ratio_2001_2011": 0.866
+      }
+    }
+  }
+}
