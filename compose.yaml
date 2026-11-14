@@ -1,6 +1,26 @@
-# docker compose up --build        ->  http://localhost:8080
-# Data: the API reads Parquet from FIRELY_DATA_PROCESSED (default ./data/processed), mounted read-only.
+name: firely-dev
+
 services:
+  mobile:
+    build:
+      context: .
+      dockerfile: infra/docker/mobile.Dockerfile
+    ports:
+      - "${FIRELY_BIND_ADDRESS:-0.0.0.0}:${FIRELY_MOBILE_PORT:-5173}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
   api:
     build:
       context: .

@@ -1,0 +1,17 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+themes/**/preview.html
+themes/**/preview.png
+themes/**/sheet*.html
+themes/**/sheet*.png
+themes/**/*.pictures.json
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/capacitor-cordova-android-plugins/
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
