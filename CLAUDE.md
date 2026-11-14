@@ -79,6 +79,7 @@ Orden de ejecución (todo en `.venv`, ver `docs/metodologia-armonizacion.md` §7
 - Otras tablas (`data/processed/`): `events/` (clustering, §6.3; ~55% son de un solo punto: filtrar con n≥3), `geo/<País>/` (admin, localidades, ANP, `cell_geo`), `context/` (ONI, `clear_frac` y FWI de Coahuila; FWI solo en años completos: GFWED 2014/2019/2020/2021/2023 faltan o están incompletos), `reported/` (CONAFOR), `cell_class/`, `cell_biome/`.
 - Análisis (`pipeline/analysis.py` + `api/app/analysis_routes.py`): temporada, años análogos, periodo de retorno, día de la semana (sobre EVENTOS, no puntos: los puntos están agrupados e inflan el chi-cuadrado) y proporción nocturna. La conclusión de tendencia usa solo años observados (VIIRS).
 - Frontend: `web/` usa **Astryx** (`@astryxdesign/core`, tema 'firely' extiende neutral). Reglas en `web/AGENTS.md`: sin `<div>`/`<span>` crudos, sin CSS propio, colores de datos solo en `web/src/dataviz.ts`. Páginas: `#mapa` y `#metodo`.
+- Despliegue: `docker compose up --build` (API + nginx, ver `infra/README.md`); las imágenes no incluyen el pipeline de datos.
 - Codex: usar `codex exec` directo (ver memoria); su sandbox no tiene red.
 
 ## Ubicación real de los datos
