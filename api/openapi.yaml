@@ -1,0 +1,179 @@
+openapi: 3.1.0
+info:
+  title: Firely API
+  version: 0.1.0
+  description: Serie armonizada MODIS+VIIRS de puntos de calor. Atribución NASA FIRMS.
+components:
+  parameters:
+    h3: {name: h3, in: query, schema: {type: string}, description: "Celdas H3 r6 separadas por coma"}
+    bbox: {name: bbox, in: query, schema: {type: string}, description: "min_lon,min_lat,max_lon,max_lat"}
+    lat: {name: lat, in: query, schema: {type: number}}
+    lon: {name: lon, in: query, schema: {type: number}}
+    radius_km: {name: radius_km, in: query, schema: {type: number}}
+    admin: {name: admin, in: query, schema: {type: string}, description: "Código de estado o municipio"}
+    from: {name: from, in: query, schema: {type: string, format: date}}
+    to: {name: to, in: query, schema: {type: string, format: date}}
+    burn_type: {name: burn_type, in: query, schema: {type: string, enum: [agricola, forestal, otro]}}
+  schemas:
+    Envelope:
+      type: object
+      required: [methodology_version, data_cutoff, attribution]
+      properties:
+        area: {type: object}
+        methodology_version: {type: string, example: 1.0.0-qm-biome-month}
+        data_cutoff: {type: string, format: date}
+        attribution: {type: string, example: NASA FIRMS}
+        harmonization_uncertainty:
+          type: object
+          properties:
+            years_estimated: {type: array, items: {type: integer}}
+            median_rel_error: {type: number}
+    CalendarRow:
+      type: object
+      properties:
+        year: {type: integer}
+        month: {type: integer}
+        count_harm: {type: number}
+        frp_harm: {type: number}
+        count_harm_lo: {type: number}
+        count_harm_hi: {type: number}
+        anomaly_ratio: {type: number}
+        percentile: {type: number}
+        return_period_years: {type: number}
+        clear_frac: {type: number}
+        is_estimated: {type: boolean}
+        enso_phase: {type: string}
+paths:
+  /calendar:
+    get:
+      summary: Matriz años x meses
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/lat'}
+        - {$ref: '#/components/parameters/lon'}
+        - {$ref: '#/components/parameters/radius_km'}
+        - {$ref: '#/components/parameters/admin'}
+        - {$ref: '#/components/parameters/from'}
+        - {$ref: '#/components/parameters/to'}
+        - {$ref: '#/components/parameters/burn_type'}
+        - {name: metric, in: query, schema: {type: string, enum: [count, frp], default: count}}
+        - {name: reference, in: query, schema: {type: string, enum: [median, mean], default: median}}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - {$ref: '#/components/schemas/Envelope'}
+                  - type: object
+                    properties:
+                      reference: {type: string}
+                      rows: {type: array, items: {$ref: '#/components/schemas/CalendarRow'}}
+  /calendar/daily:
+    get:
+      summary: Valores diarios de un mes
+      parameters:
+        - {name: year, in: query, required: true, schema: {type: integer}}
+        - {name: month, in: query, required: true, schema: {type: integer}}
+      responses: {'200': {description: OK}}
+  /hotspots.csv:
+    get:
+      summary: Puntos de calor en CSV (con metadatos y atribución)
+      parameters:
+        - {$ref: '#/components/parameters/from'}
+        - {$ref: '#/components/parameters/to'}
+        - {$ref: '#/components/parameters/burn_type'}
+        - {name: min_confidence, in: query, schema: {type: string, enum: [baja, nominal, alta]}}
+      responses: {'200': {description: text/csv}}
+  /events:
+    get:
+      summary: Eventos con ranking
+      parameters:
+        - {$ref: '#/components/parameters/from'}
+        - {$ref: '#/components/parameters/to'}
+        - {name: active_only, in: query, schema: {type: boolean}}
+        - {name: min_hotspots, in: query, schema: {type: integer, default: 3, minimum: 0}}
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/lat'}
+        - {$ref: '#/components/parameters/lon'}
+        - {$ref: '#/components/parameters/radius_km'}
+        - {$ref: '#/components/parameters/admin'}
+      responses: {'200': {description: OK}}
+  /analogs:
+    get:
+      summary: Años análogos y proyección
+      parameters: [{name: date, in: query, schema: {type: string, format: date}}]
+      responses: {'200': {description: OK}}
+  /season: {get: {summary: Inicio/pico/fin por año y tendencias, responses: {'200': {description: OK}}}}
+  /context:
+    get:
+      summary: Anomalías meteorológicas y fase ONI
+      parameters:
+        - {$ref: '#/components/parameters/from'}
+        - {$ref: '#/components/parameters/to'}
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/lat'}
+        - {$ref: '#/components/parameters/lon'}
+        - {$ref: '#/components/parameters/radius_km'}
+        - {$ref: '#/components/parameters/admin'}
+      responses: {'200': {description: OK}}
+  /admin/search:
+    get:
+      summary: Buscar unidades administrativas por nombre o código
+      parameters: [{name: q, in: query, required: true, schema: {type: string}}]
+      responses:
+        '200': {description: Candidatos con código, nombre, país, padre y bbox}
+  /reported:
+    get:
+      summary: Incendios CONAFOR mensuales frente a detecciones armonizadas del estado y año
+      parameters:
+        - {$ref: '#/components/parameters/from'}
+        - {$ref: '#/components/parameters/to'}
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/lat'}
+        - {$ref: '#/components/parameters/lon'}
+        - {$ref: '#/components/parameters/radius_km'}
+        - {$ref: '#/components/parameters/admin'}
+      responses:
+        '200': {description: Valores mensuales reportados, detecciones del estado y cobertura de datos por año}
+  /risk: {get: {summary: Riesgo próximo, exposición, índice de prioridad, responses: {'200': {description: OK}}}}
+  /recent:
+    get:
+      summary: Detecciones NRT
+      parameters: [{name: hours, in: query, schema: {type: integer, enum: [24, 48]}}]
+      responses: {'200': {description: OK}}
+  /alerts/cap: {get: {summary: Feed CAP (status Exercise/Test en demo), responses: {'200': {description: application/xml}}}}
+  /resolve-area:
+    post:
+      summary: Texto libre a intención estructurada y geometría candidata
+      requestBody:
+        content: {application/json: {schema: {type: object, required: [text], properties: {text: {type: string}, lang: {type: string}}}}}
+      responses: {'200': {description: "Intención (área, fechas) + candidatos si hay ambigüedad"}}
+  /return-period:
+    get:
+      summary: Percentil empírico y periodo de retorno de un mes (1/(1-percentil), tope 50 años)
+      parameters:
+        - {name: year, in: query, required: true, schema: {type: integer}}
+        - {name: month, in: query, required: true, schema: {type: integer, minimum: 1, maximum: 12}}
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+      responses: {'200': {description: "percentile, return_period_years, n de años de referencia"}}
+  /weekday:
+    get:
+      summary: Día de la semana de inicio de los incendios (eventos, no puntos crudos) con chi-cuadrado
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+      responses: {'200': {description: "counts_monday_first, n_events, p_value, summary_es"}}
+  /night:
+    get:
+      summary: Proporción de detecciones nocturnas VIIRS por año
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+      responses: {'200': {description: "rows por año: night_detections, total_detections, night_ratio"}}
