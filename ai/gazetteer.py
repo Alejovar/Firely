@@ -15,6 +15,8 @@ COUNTRIES = ('Mexico', 'Argentina')
 
 def _key(value):
     value = fold(str(value or ''))
+    # punctuation separates words: the LLM keeps 'Arteaga, Coahuila' as written, and 'arteaga,' must match 'arteaga'
+    value = re.sub(r'[^\w\s-]', ' ', value)
     value = re.sub(r'\b(?:incendios?|fires?|wildfires?|queimas?|en|in|em|sierra|serra|mountains?|municipio|municipality|cidade|ciudad|de|del|da|do|the|province|provincia|estado|state)\b', ' ', value)
     return ' '.join(value.split())
 

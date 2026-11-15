@@ -82,6 +82,9 @@ def test_gazetteer_fixture(tmp_path):
     assert result['ambiguous'] is True
     assert {c['code'] for c in result['candidates'] if c['kind'] == 'mun'} == {'05004', '16010'}
     assert gazetteer.resolve('Sierra de Arteaga', root=tmp_path)['candidates']
+    # the LLM keeps punctuation as written: 'Arteaga, Coahuila' must still resolve to the Coahuila municipality
+    qualified = gazetteer.resolve('Arteaga, Coahuila', root=tmp_path)
+    assert qualified['candidates'][0]['code'] == '05004' and qualified['ambiguous'] is False
 
 
 def test_narration_numbers_and_citation(monkeypatch):
