@@ -13,7 +13,7 @@ Dos imágenes y un `docker-compose.yml` en la raíz:
 docker compose up --build          # http://localhost:8080
 ```
 
-La API lee `./data/processed` (cámbialo con `FIRELY_DATA_PROCESSED=/ruta`). Las llaves son opcionales; sin ellas todo funciona salvo la capa en vivo (`/recent` responde 503 con un mensaje claro) y el LLM (la búsqueda usa reglas locales). Pon `FIRMS_MAP_KEY`, `ANTHROPIC_API_KEY` en un `.env` junto al compose.
+La API lee `./data/processed` (cámbialo con `FIRELY_DATA_PROCESSED=/ruta`). Las llaves son opcionales; sin ellas todo funciona salvo la capa en vivo (`/recent` responde 503 con un mensaje claro) y el LLM (la búsqueda usa reglas locales). Pon `FIRMS_MAP_KEY`, `ANTHROPIC_API_KEY` en un `.env` junto al compose. Los datos se montan en solo lectura; el estado que la API sí escribe (borradores CAP aprobados para ejercicio y la caché de NASA POWER) vive en el volumen `firely-state`, montado en `/state` (`FIRELY_STATE_DIR`).
 
 ## En una EC2 (recomendado: `t3.medium`, 4 GB, 20 GB gp3)
 

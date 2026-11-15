@@ -120,7 +120,7 @@ Todo lo que distingue a Firely de un dashboard de puntos de calor, agrupado por 
 | Extracción de reportes oficiales | Hace viable comparar con estadísticas en PDF | §11.2 |
 | Borradores de comunicados con aprobación humana | Uso responsable de IA en emergencias | §11.2 |
 | Consultas SQL para científicos | Profundidad sin perder transparencia | §11.2 |
-| Escenarios de simulacro (visión) | Usa la historia para entrenar brigadas | §11.2 |
+| Escenarios de simulacro | Usa la historia real del área para entrenar brigadas, etapa por etapa | §11.2 |
 
 ### Plataforma abierta
 
@@ -798,6 +798,8 @@ Cada módulo se describe con: pregunta que responde, cómo se calcula, qué ve e
 
 **Casos límite.** Correlación no implica causa; se rotula como contexto, no como explicación definitiva.
 
+**Implementación.** `GET /weather` (`api/app/weather_routes.py`) consulta el endpoint mensual de POWER (`PRECTOTCORR`, `T2M`, `RH2M`, `WS2M`, comunidad `AG`) en el centroide del área redondeado a 0.5°, con IPv4 forzado y caché en disco (`data/processed/cache/power/`) para que la demo funcione sin red. Las anomalías se calculan contra el promedio del mismo mes calendario de 2001 al último año completo; junto a cada mes va `fire_anomaly_ratio` (conteo armonizado / mediana del mismo mes). Con `year` y `month` devuelve la frase del mes ("el marzo más seco desde 2011") calculada, no redactada por un modelo. En la web aparece en la pestaña Contexto como dos gráficas alineadas (precipitación y fuego), nunca en doble eje.
+
 ### 8.11 Riesgo próximo
 
 **Pregunta:** ¿qué tan peligrosas son las condiciones de los próximos días?
@@ -871,6 +873,8 @@ Los pesos son transparentes y ajustables por el usuario.
 
 **Casos límite.** Es una herramienta de apoyo; no reemplaza el conocimiento local. Se dice explícitamente.
 
+**Implementación (v1).** `GET /risk` combina anomalía (0.35), recurrencia (0.25), exposición (0.25), temporada (0.15) y peligro meteorológico FWI (0.15, percentil del FWI medio de GFWED del mes frente a los años con dato del área; solo donde existe la tabla de contexto). Los pesos se cambian con `w_anomaly`, `w_recurrence`, `w_exposure`, `w_season` y `w_fwi` (0–10); un peso 0 quita el componente y los componentes sin datos se omiten renormalizando el resto, lo que se declara en `method`. La respuesta trae `weights`, `weights_custom` y `disclaimer`. En la pestaña Riesgo, el usuario mueve los pesos con deslizadores y el índice se recalcula con los mismos datos.
+
 ---
 
 ## 9. Salidas y descargas
@@ -919,6 +923,8 @@ Cada descarga incluye un encabezado o archivo de metadatos con `methodology_vers
 - `area`: `areaDesc` y `polygon`
 
 **Flujo.** Las alertas CAP se generan como borrador; una persona las revisa y aprueba antes de publicarlas. Se exponen en un feed para que otros sistemas las consuman.
+
+**Implementación.** `POST /cap/draft` crea el borrador (siempre `status=Exercise`, `scope=Restricted`, polígono de las celdas H3 del área); `POST /cap/approve/{id}` registra la aprobación humana **solo para ejercicio**, y `GET /alerts/cap` publica un feed Atom (`application/atom+xml`) con los borradores aprobados embebidos como CAP 1.2. Los borradores sin aprobar nunca aparecen en el feed, y ningún mensaje lleva `Actual`. La página Plataforma permite redactar, revisar el XML, aprobar y descargar.
 
 ---
 
@@ -985,6 +991,8 @@ Cada gráfica genera un texto alternativo con sus hallazgos clave ("Calendario 2
 
 **Cómo funciona.** El LLM recibe el documento, extrae registros con un esquema definido (entidad, municipio, periodo, número de incendios, superficie reportada), y cada registro se valida (tipos, rangos, sumas que cuadren con totales del documento). Los registros dudosos se marcan para revisión. Alimenta `reported_fires`.
 
+**Implementación.** `POST /reports/extract` (`ai/reports.py`) acepta el texto pegado de un PDF o una hoja de cálculo. Hay dos extractores con el mismo validador: uno por reglas (detecta delimitadores, encabezados en español, inglés y portugués, formatos numéricos `1,234.5` / `1.234,5` y filas de total) y, si hay llave de Anthropic, el LLM mediante una llamada forzada a herramienta con el esquema `ai/prompts/report.schema.json`. El documento va entre etiquetas `<documento>` y el prompt indica tratarlo como datos; la salida del modelo se vuelve a tipar y validar. Cada registro lleva `issues` y `needs_review`, y los `checks` comparan la suma de incendios y superficie con la fila de total. No se guarda nada: la respuesta es una hoja de revisión (con CSV) que una persona acepta antes de usarla.
+
 #### Borradores de comunicados
 
 **Qué es.** Textos listos para revisión a partir de una alerta: mensaje CAP y texto para redes sociales de protección civil.
@@ -1010,11 +1018,15 @@ Cada gráfica genera un texto alternativo con sus hallazgos clave ("Calendario 2
 - Responde con texto breve e imágenes (calendario, mapa de últimas 24 h).
 - Usa las mismas herramientas que el asistente y el servidor MCP.
 
-#### Escenarios de simulacro (visión)
+**Implementación.** `bot/telegram_bot.py` atiende `/calendario`, `/temporada`, `/incendios`, `/semaforo` (índice de prioridad), `/hoy` (detecciones NRT de 24 h) y `/lang`. El texto libre se trata como una consulta en lenguaje natural (área y fechas vía `/resolve-area`). La ubicación compartida se convierte en un recuadro de ~25 km alrededor del punto del usuario (nunca un punto generado) y responde con prioridad y detecciones de hoy; se recuerda para `/semaforo` y `/hoy` sin argumento. Las notas de voz se transcriben en el servidor con `faster-whisper` si está instalado (`bot/stt.py`, el audio no sale del servidor); si no lo está, el bot pide escribir la pregunta. Antes de responder, repite lo que entendió ("Entendí: «…»").
+
+#### Escenarios de simulacro
 
 **Qué es.** Ejercicios de entrenamiento para brigadas basados en incendios históricos reales del área.
 
 **Cómo funciona.** Se toma un evento real y su contexto (fecha, temporada, meteorología, exposición); el LLM arma un escenario por etapas con preguntas de decisión ("es 15 de marzo, la temporada va adelantada y aparece este evento a 8 km de una localidad, ¿qué priorizan?"). Los datos del escenario vienen del historial; el LLM solo estructura la narrativa.
+
+**Implementación.** `GET /drill` (`api/app/drill_routes.py`) elige un evento real del área (el más grande, el más largo o el más reciente, o uno por `event_id`) y arma cuatro etapas por plantilla: detección (primer día, posición del mes en la temporada, anomalía del mes, fase ENSO, anomalía de FWI), exposición (localidades a menos de 30 km con población), evolución (día de más actividad y noches con detecciones) y desenlace (duración, tamaño armonizado, extensión aproximada y ranking en el área), que se revela al final. Las preguntas no tienen respuesta única: son para la discusión del equipo. En la web se recorre paso a paso desde Plataforma › Simulacros.
 
 ### 11.3 Implementación
 
@@ -1049,11 +1061,23 @@ Cada gráfica genera un texto alternativo con sus hallazgos clave ("Calendario 2
 | `GET /events` | `from`, `to`, `active_only` | Eventos con atributos y ranking |
 | `GET /analogs` | `date` | Años análogos y rango de proyección |
 | `GET /season` | — | Fechas de inicio/pico/fin por año y tendencias |
-| `GET /context` | `from`, `to` | Anomalías meteorológicas y fase ONI |
-| `GET /risk` | — | Riesgo próximo, exposición, índice de prioridad |
+| `GET /context` | `from`, `to` | Fase ONI y anomalías de FWI (GFWED) |
+| `GET /weather` | `from`, `to`, `year`, `month` | Anomalías de NASA POWER junto a la anomalía de fuego (§8.10) |
+| `GET /risk` | `w_anomaly`, `w_recurrence`, `w_exposure`, `w_season`, `w_fwi` | Índice de prioridad con componentes y pesos (§8.16) |
 | `GET /recent` | `hours` (24/48) | Detecciones NRT |
-| `GET /alerts/cap` | — | Feed CAP |
+| `GET /return-period`, `/weekday`, `/night` | `year`, `month` | Periodo de retorno, firma humana y fuego nocturno |
+| `GET /territory`, `/recurrence`, `/regimes`, `/reported` | `from`, `to` | Exposición, recurrencia, regímenes y reportes CONAFOR |
+| `GET /spread`, `/wind-localities` | `event_id`, `hours` | Cono indicativo y localidades a favor del viento |
+| `GET /watch`, `/bulletin` | `level`, `country` | Unidades fuera de lo normal y boletín del vigía |
+| `GET /drill` | `pick`, `event_id` | Escenario de simulacro con un evento real |
+| `GET /alerts/cap` | — | Feed Atom con alertas CAP aprobadas para ejercicio |
+| `POST /cap/draft`, `/cap/approve/{id}` | `area`, `text`, `severity` | Borrador CAP y aprobación humana |
 | `POST /resolve-area` | `text` | Intención estructurada y geometría candidata |
+| `POST /reports/extract` | `text` | Registros validados de un reporte oficial |
+| `POST /sql` | `query` | Consulta de solo lectura sobre las vistas Parquet |
+| `GET /hotspots.geojson`, `/export.kml`, `/ogc/...` | `from`, `to`, `limit` | Geodatos y OGC API Features |
+
+En modo real (`FIRELY_API_MODE=real`) todos los routers están montados en `api/app/main.py`; las rutas simuladas que comparten ruta quedan sombreadas y fuera del esquema, así que `/docs` documenta cada endpoint real una sola vez. El contrato vive en `api/openapi.yaml`.
 
 **Ejemplo de respuesta de `/calendar`** (abreviado):
 
@@ -1094,7 +1118,9 @@ Web Component independiente del framework del sitio que lo usa:
 
 ### 12.4 Servidor MCP
 
-Servidor del Model Context Protocol (con el SDK oficial de Python) que expone las mismas herramientas de la API: `resolve_area`, `get_calendar`, `get_events`, `get_analogs`, `get_season`, `get_context`, `get_risk`, `get_recent_hotspots`. Cualquier asistente compatible puede consultar el historial de fuego armonizado. Cada resultado incluye versión metodológica y atribución.
+Servidor del Model Context Protocol (con el SDK oficial de Python) que expone las mismas herramientas de la API. Cualquier asistente compatible puede consultar el historial de fuego armonizado. Cada resultado incluye versión metodológica y atribución.
+
+**Implementación.** `mcp/server.py` (stdio) tiene 19 herramientas: `resolve_area`, `calendar`, `return_period`, `events`, `context`, `weather`, `weekday`, `night`, `season`, `analogs`, `risk`, `spread`, `wind_localities`, `regimes`, `reported`, `recent_hotspots`, `watch`, `bulletin` y `drill_scenario`. Todas llaman a la API HTTP (`FIRELY_API_URL`), así que las cifras son las mismas que ve la app. Instrucciones de conexión en `mcp/README.md` y en Plataforma › Servidor MCP.
 
 ### 12.5 PWA offline
 
@@ -1102,6 +1128,8 @@ Servidor del Model Context Protocol (con el SDK oficial de Python) que expone la
 - El usuario descarga un área antes de salir a campo: se guardan en el navegador (IndexedDB u OPFS) los Parquet filtrados del área, la climatología y las teselas básicas del mapa.
 - DuckDB-WASM consulta esos datos sin conexión.
 - Indicador claro de "disponible sin conexión" y de la fecha de los datos guardados.
+
+**Implementación (v1).** `web/public/manifest.webmanifest` y `web/public/sw.js` (registrado solo en el build de producción). El service worker guarda la app (cache-first para los assets con hash), abre la app sin red (navegación network-first con respaldo) y conserva la última respuesta buena de cada endpoint de análisis (network-first; sin red responde desde la caché con la cabecera `x-firely-offline: 1`). Las teselas del mapa usan stale-while-revalidate con un tope de 600. En Plataforma › Sin conexión, "Guardar área para campo" pide de antemano el calendario, eventos, temporada, años análogos, riesgo, territorio, patrones, contexto y los puntos del último año del área, y registra la fecha. La versión con Parquet y DuckDB-WASM queda como siguiente paso: la v1 guarda respuestas de la API, no tablas.
 
 ### 12.6 Ingesta y actualización
 
@@ -1249,6 +1277,11 @@ Transparencia que también suma ante el jurado:
 - **Suomi-NPP terminó en noviembre de 2026.** A partir de ahí la referencia VIIRS es NOAA-20 calibrado contra S-NPP; cualquier error en esa intercalibración se propaga a los meses más recientes.
 - **La corrección por nubes usa datos de Aqua**, que empiezan en julio de 2002 y tienen resolución de 1°; es una aproximación regional, no una máscara por píxel.
 - **GFWED tiene unos meses de retraso** en su versión histórica; para los últimos meses se usa el pronóstico experimental GEOS-5.
+- **El componente FWI del índice de prioridad solo existe donde hay tabla de contexto** (hoy, celdas de Coahuila con años GFWED completos); fuera de ahí el índice se renormaliza sin él y lo declara.
+- **NASA POWER se consulta en el centroide del área** (malla de 0.5°): en áreas grandes o de relieve complejo, el clima del centroide no representa toda el área.
+- **La extracción de reportes no sustituye la captura oficial:** copia valores del texto y valida tipos y sumas, pero un PDF escaneado sin capa de texto necesita OCR antes.
+- **La transcripción de notas de voz depende de un modelo local opcional** (`faster-whisper`); sin él, el bot pide escribir la pregunta.
+- **El modo sin conexión v1 guarda respuestas de la API**, no los Parquet: solo funcionan sin red las consultas que se guardaron antes.
 
 ---
 

@@ -75,6 +75,12 @@ class FirelyClient:
     def events(self, bbox: str) -> dict:
         return self.request("GET", "/events", params={"bbox": bbox})
 
+    def risk(self, bbox: str) -> dict:
+        return self.request("GET", "/risk", params={"bbox": bbox})
+
+    def recent(self, bbox: str, hours: int = 24) -> dict:
+        return self.request("GET", "/recent", params={"bbox": bbox, "hours": hours})
+
     def metadata(self) -> dict:
         return self.request("GET", "/calendar", params={"from": "2001-01-01", "to": "2001-01-01"})
 
@@ -103,6 +109,16 @@ class TelegramClient:
     def send_photo(self, chat_id: int, png: bytes, caption: str) -> None:
         self.call("sendPhoto", data={"chat_id": chat_id, "caption": caption},
                   files={"photo": ("calendar.png", png, "image/png")})
+
+    def download_file(self, file_id: str, max_bytes: int = 5_000_000) -> bytes:
+        """Download a file sent to the bot (voice notes). Telegram serves it from /file/bot<token>/<path>."""
+        info = self.call("getFile", data={"file_id": file_id})["result"]
+        if int(info.get("file_size") or 0) > max_bytes:
+            raise APIError("File too large")
+        url = self.base_url.replace("/bot", "/file/bot", 1) + info["file_path"]
+        response = self.transport.get(url) if hasattr(self.transport, "get") else httpx.get(url, timeout=40)
+        response.raise_for_status()
+        return response.content[:max_bytes]
 
     def set_commands(self, commands: list[dict]) -> None:
         self.call("setMyCommands", data={"commands": __import__("json").dumps(commands)})

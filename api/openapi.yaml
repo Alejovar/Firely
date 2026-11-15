@@ -178,13 +178,18 @@ paths:
       responses: {'200': {description: Contexto territorial}}
   /risk:
     get:
-      summary: Índice de prioridad v0, transparente y normalizado a 0-100
+      summary: Índice de prioridad v1 (0-100) con pesos ajustables por el usuario (§8.16) y componente FWI cuando hay datos
       parameters:
         - {$ref: '#/components/parameters/h3'}
         - {$ref: '#/components/parameters/bbox'}
         - {$ref: '#/components/parameters/admin'}
         - {name: geometry, in: query, schema: {type: string}}
-      responses: {'200': {description: Índice, nivel, componentes y método}}
+        - {name: w_anomaly, in: query, schema: {type: number, minimum: 0, maximum: 10, default: 0.35}}
+        - {name: w_recurrence, in: query, schema: {type: number, minimum: 0, maximum: 10, default: 0.25}}
+        - {name: w_exposure, in: query, schema: {type: number, minimum: 0, maximum: 10, default: 0.25}}
+        - {name: w_season, in: query, schema: {type: number, minimum: 0, maximum: 10, default: 0.15}}
+        - {name: w_fwi, in: query, schema: {type: number, minimum: 0, maximum: 10, default: 0.15}}
+      responses: {'200': {description: "Índice, nivel, componentes, weights, weights_custom y método"}}
   /watch:
     get:
       summary: Boletín mensual de unidades administrativas
@@ -198,7 +203,7 @@ paths:
       summary: Detecciones NRT
       parameters: [{name: hours, in: query, schema: {type: integer, enum: [24, 48]}}]
       responses: {'200': {description: OK}}
-  /alerts/cap: {get: {summary: Feed CAP (status Exercise/Test en demo), responses: {'200': {description: application/xml}}}}
+  /alerts/cap: {get: {summary: Feed Atom con los borradores CAP 1.2 aprobados para ejercicio (status Exercise; nunca Actual), responses: {'200': {description: application/atom+xml}}}}
   /resolve-area:
     post:
       summary: Texto libre a intención estructurada y geometría candidata
@@ -325,3 +330,44 @@ paths:
         - {$ref: '#/components/parameters/h3'}
         - {$ref: '#/components/parameters/bbox'}
       responses: {'200': {description: "regime_counts, change, FeatureCollection con regime_class y changed"}}
+  /weather:
+    get:
+      summary: Contexto meteorológico NASA POWER (§8.10) - anomalías de precipitación, temperatura, humedad y viento junto a la anomalía de fuego
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/admin'}
+        - {name: lat, in: query, schema: {type: number}}
+        - {name: lon, in: query, schema: {type: number}}
+        - {name: radius_km, in: query, schema: {type: number}}
+        - {name: from, in: query, schema: {type: string, format: date}}
+        - {name: to, in: query, schema: {type: string, format: date}}
+        - {name: year, in: query, description: Con month, agrega una frase resumen del mes, schema: {type: integer}}
+        - {name: month, in: query, schema: {type: integer, minimum: 1, maximum: 12}}
+      responses: {'200': {description: "rows (anomalías + fire_anomaly_ratio), climatology, summary"}, '503': {description: power_unavailable}}
+  /reports/extract:
+    post:
+      summary: Extracción de reportes oficiales (§11.2) - texto pegado de un PDF/tabla a registros validados; no guarda ni publica
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: {type: string, maxLength: 60000}
+                source_label: {type: string}
+                use_llm: {type: boolean, default: true}
+      responses: {'200': {description: "records (con issues y needs_review), checks contra totales, csv"}, '422': {description: texto vacío o demasiado largo}}
+  /drill:
+    get:
+      summary: Escenario de simulacro (§11.2) por etapas con un evento histórico real del área; texto por plantilla
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/admin'}
+        - {name: event_id, in: query, schema: {type: string}}
+        - {name: min_hotspots, in: query, schema: {type: integer, minimum: 3, default: 10}}
+        - {name: pick, in: query, schema: {type: string, enum: [largest, longest, recent], default: largest}}
+      responses: {'200': {description: "event, stages (deteccion, exposicion, evolucion, desenlace), disclaimer"}, '404': {description: sin eventos}}

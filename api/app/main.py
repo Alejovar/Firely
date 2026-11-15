@@ -18,9 +18,21 @@ if _real_mode:  # registered before the mock routes so /season, /analogs... reso
     from .extra_routes import router as _extra_router
     from .ai_routes import router as _ai_router
     from .analysis_routes import router as _analysis_router
+    from .pro_routes import router as _pro_router
+    from .ogc_routes import router as _ogc_router
+    from .export_routes import router as _export_router
+    from .weather_routes import router as _weather_router
+    from .reports_routes import router as _reports_router
+    from .drill_routes import router as _drill_router
     app.include_router(_extra_router)     # /hotspots.geojson, /recurrence, /territory, /risk, /watch
     app.include_router(_ai_router)        # POST /resolve-area, /describe
-    app.include_router(_analysis_router)
+    app.include_router(_analysis_router)  # /season, /analogs, /return-period, /weekday, /night
+    app.include_router(_pro_router)       # /sql, /bulletin, /cap/*, /alerts/cap (feed), /spread, /wind-localities, /regimes
+    app.include_router(_ogc_router)       # /ogc/... (OGC API Features)
+    app.include_router(_export_router)    # /export.kml
+    app.include_router(_weather_router)   # /weather (NASA POWER, §8.10)
+    app.include_router(_reports_router)   # POST /reports/extract (§11.2)
+    app.include_router(_drill_router)     # /drill (escenarios de simulacro, §11.2)
 
 
 def envelope(**extra):
@@ -185,3 +197,20 @@ def resolve_area(req: ResolveReq):
                         {"label": "Arteaga, Coahuila", "bbox": "-100.9,25.2,-100.2,25.7", "score": 0.9},
                         {"label": "Arteaga, Michoacán", "bbox": "-102.4,18.2,-102.0,18.5", "score": 0.4}],
                     ambiguous=True)
+
+
+
+if _real_mode:
+    # The real routers are registered first and win at request time; hide the shadowed mock duplicates from
+    # the OpenAPI schema so /docs documents the real endpoint once (and not the mock one by accident).
+    _real_keys = set()
+    for _route in app.router.routes:
+        _router = getattr(_route, "original_router", None)
+        for _r in (getattr(_router, "routes", None) or []):
+            for _m in getattr(_r, "methods", None) or ():
+                _real_keys.add((_r.path, _m))
+    for _route in app.router.routes:
+        if getattr(_route, "original_router", None) is None and hasattr(_route, "include_in_schema"):
+            if any((getattr(_route, "path", None), _m) in _real_keys for _m in getattr(_route, "methods", None) or ()):
+                _route.include_in_schema = False
+    app.openapi_schema = None

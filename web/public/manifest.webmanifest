@@ -1,0 +1,14 @@
+{
+  "name": "Firely · Actividad de quemas",
+  "short_name": "Firely",
+  "description": "Calendario armonizado MODIS/VIIRS de puntos de calor, análisis y alertas. Datos: NASA FIRMS.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0d0f11",
+  "theme_color": "#0d0f11",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

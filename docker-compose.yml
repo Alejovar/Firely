@@ -13,8 +13,11 @@ services:
       FIRMS_MAP_KEY: ${FIRMS_MAP_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       FIRELY_LLM_MODEL: ${FIRELY_LLM_MODEL:-}
+      # writable state (CAP drafts approved for exercise, NASA POWER cache); the data stays read-only
+      FIRELY_STATE_DIR: /state
     volumes:
       - ${FIRELY_DATA_PROCESSED:-./data/processed}:/data/processed:ro
+      - firely-state:/state
     read_only: true
     tmpfs:
       - /tmp:size=1g
@@ -36,3 +39,6 @@ services:
         condition: service_healthy
     ports:
       - "${FIRELY_PORT:-8080}:80"
+
+volumes:
+  firely-state:

@@ -6,6 +6,7 @@ Run with ``.venv/bin/python -m bot.telegram_bot``.
 from __future__ import annotations
 
 import json
+import math
 import re
 import time
 from pathlib import Path
@@ -14,12 +15,13 @@ import httpx
 
 from .client import APIError, FirelyClient, TelegramClient, ROOT, setting
 from .render import calendar_png
+from . import stt
 
 
 STATE_PATH = ROOT / "data" / "interim" / "bot_state.json"
 LANGS = {"es", "en", "pt"}
 WORDS = {
-    "es": {"help": "Comandos: /calendario <lugar> [año], /temporada <lugar>, /incendios <lugar>, /lang es|en|pt, /ayuda.",
+    "es": {"help": "Comandos: /calendario <lugar> [año], /temporada <lugar>, /incendios <lugar>, /semaforo <lugar>, /hoy <lugar>, /lang es|en|pt, /ayuda. También puedes escribir o mandar una nota de voz (¿cómo va la temporada en Arteaga?) o compartir tu ubicación.",
            "welcome": "Firely: calendario de actividad de quemas.\n", "usage": "Indica un lugar. Ejemplo: /calendario Arteaga 2021",
            "unknown": "Comando no reconocido. Usa /ayuda.", "choice": "Elige un lugar respondiendo con su número:",
            "bad_choice": "Responde con uno de los números de la lista.", "not_found": "No se encontró el lugar.",
@@ -29,8 +31,8 @@ WORDS = {
            "no_data": "No hay datos disponibles para este lugar y periodo.",
            "peak": "Mes con mayor actividad", "latest": "Último mes", "anomaly": "anomalía", "return": "periodo de retorno",
            "unavailable": "no disponible", "years": "años", "events": "Incendios principales", "season": "Temporada",
-           "simulated": "Datos simulados de la API de desarrollo."},
-    "en": {"help": "Commands: /calendario <place> [year], /temporada <place>, /incendios <place>, /lang es|en|pt, /ayuda.",
+           "simulated": "Datos simulados de la API de desarrollo.", "heard": "Entendí", "no_voice": "No puedo transcribir notas de voz en este servidor. Escribe tu pregunta, por ejemplo: incendios en Arteaga en marzo de 2021.", "voice_error": "No pude descargar o entender la nota de voz. Intenta de nuevo o escribe la pregunta.", "here": "Tu ubicación (±25 km)", "priority": "Prioridad", "recent": "Detecciones de las últimas 24 h", "recent_none": "Sin detecciones en las últimas 24 h.", "recent_off": "La capa de detecciones recientes no está disponible en este servidor.", "no_location": "Indica un lugar o comparte tu ubicación.", "point": "Un punto de calor es una detección satelital, no un incendio confirmado."},
+    "en": {"help": "Commands: /calendario <place> [year], /temporada <place>, /incendios <place>, /semaforo <place>, /hoy <place>, /lang es|en|pt, /ayuda. You can also type or send a voice note (how is the season in Arteaga?) or share your location.",
            "welcome": "Firely: fire activity calendar.\n", "usage": "Enter a place. Example: /calendario Arteaga 2021",
            "unknown": "Unknown command. Use /ayuda.", "choice": "Choose a place by replying with its number:",
            "bad_choice": "Reply with a number from the list.", "not_found": "Place not found.",
@@ -40,8 +42,8 @@ WORDS = {
            "no_data": "No data available for this place and period.",
            "peak": "Peak activity month", "latest": "Latest month", "anomaly": "anomaly", "return": "return period",
            "unavailable": "unavailable", "years": "years", "events": "Top fire events", "season": "Season",
-           "simulated": "Simulated data from the development API."},
-    "pt": {"help": "Comandos: /calendario <lugar> [ano], /temporada <lugar>, /incendios <lugar>, /lang es|en|pt, /ayuda.",
+           "simulated": "Simulated data from the development API.", "heard": "I understood", "no_voice": "This server cannot transcribe voice notes. Type your question, e.g. fires in Arteaga in March 2021.", "voice_error": "I could not download or understand the voice note. Try again or type the question.", "here": "Your location (±25 km)", "priority": "Priority", "recent": "Detections in the last 24 h", "recent_none": "No detections in the last 24 h.", "recent_off": "The recent-detections layer is not available on this server.", "no_location": "Name a place or share your location.", "point": "A hotspot is a satellite detection, not a confirmed fire."},
+    "pt": {"help": "Comandos: /calendario <lugar> [ano], /temporada <lugar>, /incendios <lugar>, /semaforo <lugar>, /hoy <lugar>, /lang es|en|pt, /ayuda. Você também pode escrever ou mandar um áudio (como está a temporada em Arteaga?) ou compartilhar sua localização.",
            "welcome": "Firely: calendário de atividade do fogo.\n", "usage": "Informe um lugar. Exemplo: /calendario Arteaga 2021",
            "unknown": "Comando desconhecido. Use /ayuda.", "choice": "Escolha um lugar respondendo com o número:",
            "bad_choice": "Responda com um número da lista.", "not_found": "Lugar não encontrado.",
@@ -51,7 +53,7 @@ WORDS = {
            "no_data": "Não há dados para este lugar e período.",
            "peak": "Mês de maior atividade", "latest": "Último mês", "anomaly": "anomalia", "return": "período de retorno",
            "unavailable": "indisponível", "years": "anos", "events": "Principais incêndios", "season": "Temporada",
-           "simulated": "Dados simulados da API de desenvolvimento."},
+           "simulated": "Dados simulados da API de desenvolvimento.", "heard": "Entendi", "no_voice": "Este servidor não transcreve áudios. Escreva sua pergunta, por exemplo: incêndios em Arteaga em março de 2021.", "voice_error": "Não consegui baixar ou entender o áudio. Tente de novo ou escreva a pergunta.", "here": "Sua localização (±25 km)", "priority": "Prioridade", "recent": "Detecções das últimas 24 h", "recent_none": "Sem detecções nas últimas 24 h.", "recent_off": "A camada de detecções recentes não está disponível neste servidor.", "no_location": "Informe um lugar ou compartilhe sua localização.", "point": "Um ponto de calor é uma detecção de satélite, não um incêndio confirmado."},
 }
 MONTHS = {
     "es": "ene feb mar abr may jun jul ago sep oct nov dic".split(),
@@ -95,6 +97,15 @@ def _bbox(candidate: dict) -> str | None:
     return box
 
 
+def location_bbox(lat, lon, km: float = 25.0) -> str | None:
+    """Box of about `km` around a location shared in Telegram. The point comes from the user, never from a model."""
+    if not isinstance(lat, (int, float)) or not isinstance(lon, (int, float)) or not (-90 <= lat <= 90 and -180 <= lon <= 180):
+        return None
+    d_lat = km / 111.0
+    d_lon = d_lat / max(0.2, math.cos(math.radians(lat)))
+    return f"{max(-180, lon - d_lon):.4f},{max(-90, lat - d_lat):.4f},{min(180, lon + d_lon):.4f},{min(90, lat + d_lat):.4f}"
+
+
 class Bot:
     def __init__(self, telegram: TelegramClient, api: FirelyClient, *, state_path: Path = STATE_PATH,
                  min_interval: float = 1.0, clock=time.monotonic):
@@ -128,7 +139,7 @@ class Bot:
 
     def handle_update(self, update: dict) -> None:
         message = update.get("message") or {}
-        if not isinstance(message.get("text"), str) or not isinstance(message.get("chat"), dict):
+        if not isinstance(message.get("chat"), dict):
             return
         chat_id = message["chat"].get("id")
         if not isinstance(chat_id, int):
@@ -137,7 +148,35 @@ class Bot:
         record = self.state.setdefault(key, {"lang": "es"})
         lang = record.get("lang", "es") if record.get("lang") in LANGS else "es"
         words = WORDS[lang]
-        command, argument, year = parse_command(message["text"])
+        location = message.get("location")
+        if isinstance(location, dict):
+            box = location_bbox(location.get("latitude"), location.get("longitude"))
+            if box:
+                record["location"] = {"label": words["here"], "bbox": box}
+                record.pop("pending", None)
+                self._save()
+                self._fetch(chat_id, lang, "semaforo", record["location"], None)
+                self._fetch(chat_id, lang, "hoy", record["location"], None)
+            return
+        text = message.get("text")
+        voice = message.get("voice") or message.get("audio")
+        if not isinstance(text, str) and isinstance(voice, dict) and voice.get("file_id"):
+            if not stt.available():
+                self._send(chat_id, words["no_voice"])
+                return
+            try:
+                text = stt.transcribe(self.telegram.download_file(voice["file_id"]), lang)
+            except (APIError, httpx.HTTPError, OSError, KeyError, ValueError):
+                text = None
+            if not text:
+                self._send(chat_id, words["voice_error"])
+                return
+            self.telegram.send_message(chat_id, f"{words['heard']}: «{text}»")
+        if not isinstance(text, str):
+            return
+        command, argument, year = parse_command(text)
+        if command is None and record.get("pending") is None and argument and not argument.isdigit():
+            command = "calendario"  # free text or a transcribed voice note: natural-language area + dates
         pending = record.get("pending")
         is_choice = command is None and pending is not None
         now = self.clock()
@@ -169,11 +208,14 @@ class Bot:
         if command in {"start", "ayuda", "help"}:
             self._send(chat_id, (words["welcome"] if command == "start" else "") + words["help"])
             return
-        if command not in {"calendario", "temporada", "incendios"}:
+        if command not in {"calendario", "temporada", "incendios", "semaforo", "hoy"}:
             self._send(chat_id, words["unknown"])
             return
         if not argument:
-            self._send(chat_id, words["usage"])
+            if command in {"semaforo", "hoy"} and record.get("location"):
+                self._fetch(chat_id, lang, command, record["location"], None)
+            else:
+                self._send(chat_id, words["no_location"] if command in {"semaforo", "hoy"} else words["usage"])
             return
         try:
             resolved = self.api.resolve(argument, lang)
@@ -193,6 +235,11 @@ class Bot:
             choices = "\n".join(f"{i}. {item.get('label') or '?'}" for i, item in enumerate(candidates, 1))
             self._send(chat_id, words["choice"] + "\n" + choices, resolved)
             return
+        if year is None and command == "calendario":
+            intent = resolved.get("intent") or {}
+            start, end = intent.get("date_from"), intent.get("date_to")
+            if isinstance(start, str) and isinstance(end, str) and start[:4] == end[:4] and start[:4].isdigit():
+                year = int(start[:4])
         self._fetch(chat_id, lang, command, candidates[0], year)
 
     def _fetch(self, chat_id: int, lang: str, command: str, candidate: dict, year: int | None) -> None:
@@ -207,10 +254,14 @@ class Bot:
                 result = self.api.calendar(bbox, year)
             elif command == "temporada":
                 result = self.api.season(bbox)
+            elif command == "semaforo":
+                result = self.api.risk(bbox)
+            elif command == "hoy":
+                result = self.api.recent(bbox, 24)
             else:
                 result = self.api.events(bbox)
         except APIError:
-            self._send(chat_id, words["down"], {})
+            self._send(chat_id, words["recent_off"] if command == "hoy" else words["down"], {})
             return
         self.last_envelope = result
         prefix = (words["simulated"] + "\n") if result.get("mock") else ""
@@ -243,6 +294,27 @@ class Bot:
             except ValueError:
                 return
             self.telegram.send_photo(chat_id, png, footer(result))
+        elif command == "semaforo":
+            summary = result.get("summary_es")
+            parts = [f"{words['priority']} · {label}", str(summary) if summary else words["no_data"]]
+            for component in (result.get("components") or [])[:5]:
+                if isinstance(component, dict) and component.get("note"):
+                    parts.append(f"- {component.get('label')}: {component['note']}")
+            parts.append(f"Ver datos: {self.api.query_url('/risk', {'bbox': bbox})}")
+            self._send(chat_id, prefix + "\n".join(parts), result)
+        elif command == "hoy":
+            features = [f for f in (result.get("features") or []) if isinstance(f, dict)]
+            if not features:
+                self._send(chat_id, prefix + f"{label}\n{words['recent_none']}", result)
+                return
+            frps = [(f.get("properties") or {}).get("frp_mw") for f in features]
+            frps = [x for x in frps if isinstance(x, (int, float))]
+            lines = [prefix + f"{words['recent']} · {label}: {len(features)}"]
+            if frps:
+                lines.append(f"FRP máx.: {max(frps):g} MW")
+            lines.append(words["point"])
+            lines.append(f"Ver datos: {self.api.query_url('/recent', {'bbox': bbox, 'hours': 24})}")
+            self._send(chat_id, "\n".join(lines), result)
         elif command == "temporada":
             summary = result.get("summary_es")
             self._send(chat_id, prefix + f"{words['season']} · {label}\n" +
@@ -270,6 +342,8 @@ class Bot:
             {"command": "calendario", "description": "Calendario de fuego"},
             {"command": "temporada", "description": "Temporada"},
             {"command": "incendios", "description": "Eventos principales"},
+            {"command": "semaforo", "description": "Prioridad del área"},
+            {"command": "hoy", "description": "Detecciones últimas 24 h"},
             {"command": "lang", "description": "es / en / pt"},
         ])
         offset = None

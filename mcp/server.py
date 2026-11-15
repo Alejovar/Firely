@@ -78,8 +78,97 @@ def return_period(year: int, month: int, h3: str | None = None, bbox: str | None
 @mcp.tool()
 def risk(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
          radius_km: float | None = None, admin: str | None = None) -> dict:
-    """Fire risk summary and exposure (localities, protected areas) for an area."""
+    """Prevention priority index (0-100) with its components (anomaly, recurrence, exposure, season, FWI) for an area."""
     return _call("GET", "/risk", _area(h3, bbox, lat, lon, radius_km, admin))
+
+
+@mcp.tool()
+def events(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
+           radius_km: float | None = None, admin: str | None = None, from_date: str | None = None,
+           to_date: str | None = None, min_hotspots: int = 3) -> dict:
+    """Fire events (clustered hotspots) with duration, harmonized size, FRP, night ratio and their rank in the area."""
+    return _call("GET", "/events", {**_area(h3, bbox, lat, lon, radius_km, admin), "from": from_date, "to": to_date,
+                                    "min_hotspots": min_hotspots})
+
+
+@mcp.tool()
+def context(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
+            radius_km: float | None = None, admin: str | None = None, from_date: str | None = None,
+            to_date: str | None = None) -> dict:
+    """ENSO phase (ONI) and fire-weather index (GFWED FWI) anomalies per month."""
+    return _call("GET", "/context", {**_area(h3, bbox, lat, lon, radius_km, admin), "from": from_date, "to": to_date})
+
+
+@mcp.tool()
+def weather(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
+            radius_km: float | None = None, admin: str | None = None, year: int | None = None,
+            month: int | None = None) -> dict:
+    """NASA POWER precipitation/temperature/humidity/wind anomalies next to the fire anomaly. Pass year+month for a one-sentence summary. Context, not causation."""
+    return _call("GET", "/weather", {**_area(h3, bbox, lat, lon, radius_km, admin), "year": year, "month": month})
+
+
+@mcp.tool()
+def weekday(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
+            radius_km: float | None = None, admin: str | None = None) -> dict:
+    """Day-of-week distribution of fire events with a chi-square test (human signature of fire)."""
+    return _call("GET", "/weekday", _area(h3, bbox, lat, lon, radius_km, admin))
+
+
+@mcp.tool()
+def night(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
+          radius_km: float | None = None, admin: str | None = None) -> dict:
+    """Share of night-time detections per year (fire persistence)."""
+    return _call("GET", "/night", _area(h3, bbox, lat, lon, radius_km, admin))
+
+
+@mcp.tool()
+def recent_hotspots(hours: int = 24, h3: str | None = None, bbox: str | None = None, lat: float | None = None,
+                    lon: float | None = None, radius_km: float | None = None) -> dict:
+    """Near-real-time FIRMS detections of the last 24 or 48 hours (needs the server's FIRMS key)."""
+    return _call("GET", "/recent", {"hours": hours, "h3": h3, "bbox": bbox, "lat": lat, "lon": lon, "radius_km": radius_km})
+
+
+@mcp.tool()
+def spread(event_id: str | None = None, lat: float | None = None, lon: float | None = None, bbox: str | None = None,
+           hours: int = 24) -> dict:
+    """Indicative spread cone from the wind forecast. NOT an official forecast nor a fire-behaviour model."""
+    return _call("GET", "/spread", {"event_id": event_id, "lat": lat, "lon": lon, "bbox": bbox, "hours": hours})
+
+
+@mcp.tool()
+def wind_localities(event_id: str | None = None, lat: float | None = None, lon: float | None = None,
+                    bbox: str | None = None, hours: int = 24) -> dict:
+    """Localities downwind (possible smoke) of an event or point, with population. Indicative only."""
+    return _call("GET", "/wind-localities", {"event_id": event_id, "lat": lat, "lon": lon, "bbox": bbox, "hours": hours})
+
+
+@mcp.tool()
+def reported(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
+             radius_km: float | None = None, admin: str | None = None, from_date: str | None = None,
+             to_date: str | None = None) -> dict:
+    """Officially reported fires (CONAFOR, Mexico) next to detected hotspots for the state of the area."""
+    return _call("GET", "/reported", {**_area(h3, bbox, lat, lon, radius_km, admin), "from": from_date, "to": to_date})
+
+
+@mcp.tool()
+def regimes(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
+            radius_km: float | None = None, admin: str | None = None) -> dict:
+    """Fire regime class per H3 cell and cells whose regime changed between 2001-2012 and 2013-2026."""
+    return _call("GET", "/regimes", _area(h3, bbox, lat, lon, radius_km, admin))
+
+
+@mcp.tool()
+def bulletin(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
+             radius_km: float | None = None, admin: str | None = None) -> dict:
+    """Weekly watch bulletin for an area (template from the harmonized series; not an official alert)."""
+    return _call("GET", "/bulletin", _area(h3, bbox, lat, lon, radius_km, admin))
+
+
+@mcp.tool()
+def drill_scenario(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
+                   radius_km: float | None = None, admin: str | None = None, pick: str = "largest") -> dict:
+    """Staged training scenario built from a real historical event of the area (pick: largest|longest|recent)."""
+    return _call("GET", "/drill", {**_area(h3, bbox, lat, lon, radius_km, admin), "pick": pick})
 
 
 @mcp.tool()

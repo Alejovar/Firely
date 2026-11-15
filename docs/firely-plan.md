@@ -24,6 +24,7 @@ Este documento define **qué se construye, en qué orden, quién lo hace, cómo 
 14. Factores que deciden ganar
 15. Reglas del equipo durante el hackathon
 16. Principios no negociables
+17. Estado de implementación
 
 ---
 
@@ -484,3 +485,64 @@ El jurado global solo ve esto. Revisar el formato exacto de este año (suele ser
 - Atribución a NASA FIRMS y cumplimiento de términos de uso de todas las fuentes.
 - La incertidumbre se muestra, no se esconde.
 - Ninguna llave o secreto en el código ni en pantalla.
+
+---
+
+## 17. Estado de implementación (14 de noviembre de 2026)
+
+Revisión del repositorio contra los criterios de "terminado" de §2. **Hecho** = existe en código, con pruebas, y se ve en la app o en la API; **parcial** = funciona con límites declarados; **pendiente** = no existe todavía. Los criterios de §2 siguen siendo la referencia: una función solo cuenta como terminada cuando se ve en la demo desplegada.
+
+### 17.1 Completado en esta revisión
+
+| Función | Qué se hizo | Dónde |
+|---|---|---|
+| Routers sin montar | `/sql`, `/bulletin`, `/cap/*`, `/spread`, `/wind-localities`, `/regimes`, `/ogc/...` y `/export.kml` tenían código y pruebas, pero **no respondían en el despliegue** porque no estaban montados en la app. Ahora se montan en modo real, y las rutas simuladas sombreadas salen del esquema de `/docs` | `api/app/main.py` |
+| Contexto meteorológico NASA POWER (§8.10) | Nuevo `GET /weather`: anomalías de precipitación, temperatura, humedad y viento junto a la anomalía de fuego, con la frase "el marzo más seco desde…" calculada. IPv4 forzado y caché en disco | `api/app/weather_routes.py`, pestaña Contexto |
+| Índice de prioridad con pesos ajustables (§8.16) | Pesos por parámetro (`w_*`), componente FWI (GFWED) donde hay datos y deslizadores en la pestaña Riesgo | `api/app/extra_routes.py`, `ContextExtras.tsx` |
+| Localidades a favor del viento (§8.14) en la UI | Panel con dirección, alcance y localidades (antes solo existía en la API) | pestaña Riesgo |
+| Feed CAP (§10.2) | `GET /alerts/cap` en modo real es un feed Atom con los borradores **aprobados para ejercicio**; la web crea, revisa y aprueba borradores en el servidor | `pro_routes.py`, Plataforma › Alertas |
+| Extracción de reportes oficiales (§11.2) | `POST /reports/extract`: reglas + LLM opcional con esquema, validación de tipos, rangos y totales, marcas de revisión; no guarda nada | `ai/reports.py`, `reports_routes.py`, Plataforma › Reportes |
+| SQL para científicos (§11.2) | La UI ejecuta consultas de solo lectura con ejemplos y descarga CSV (antes decía "VISIÓN") | Plataforma › Consultas SQL |
+| Agente vigía (§11.2) | Boletín del área actual desde `/bulletin` en la UI | Plataforma › Agente vigía |
+| Escenarios de simulacro (Nivel 3 → hecho) | `GET /drill`: cuatro etapas con un evento real del área; recorrido paso a paso en la web | `drill_routes.py`, Plataforma › Simulacros |
+| Servidor MCP (§12.4) | De 7 a 19 herramientas (eventos, contexto, clima, viento, regímenes, reportes, boletín, simulacro…) | `mcp/server.py` |
+| OGC API Features (§12.2) | Enlace y guía para QGIS en la UI (antes "PRÓXIMAMENTE") | Plataforma › Exportar a SIG |
+| Bot con notas de voz (§11.2) | Texto libre, ubicación compartida, `/semaforo`, `/hoy` y notas de voz con transcripción local opcional | `bot/telegram_bot.py`, `bot/stt.py` |
+| PWA offline (§12.5) | Manifiesto, service worker, "Guardar área para campo" e indicador en línea / sin conexión | `web/public/sw.js`, Plataforma › Sin conexión |
+| Contrato | `api/openapi.yaml` incluye los endpoints nuevos y los parámetros de pesos | `api/openapi.yaml` |
+
+Pruebas: `tests/test_api_new.py` (18) y `tests/test_bot_extra.py` (8). La suite de Python (129) y la de la web (46) pasan, y `vite build` compila.
+
+### 17.2 Estado por nivel
+
+| Nivel | Función | Estado | Nota |
+|---|---|---|---|
+| 0 | Descarga, limpieza, armonización, validación, Parquet | Hecho | Armonización v1.2; validación año-fuera contra factor fijo (`harmonization_summary.json`) |
+| 0 | Gráfica estrella, "Cómo armonizamos", calendario, desglose, CSV/PNG, atribución | Hecho | |
+| 0 | Capa 24/48 h | Parcial | `/recent` requiere `FIRMS_MAP_KEY` en el servidor; el NRT no está ingerido en las tablas |
+| 0 | Despliegue | Parcial | `docker compose up --build` listo; falta URL pública probada desde otra red |
+| 1 | Lenguaje natural, años análogos, curva de ritmo, temporada, retorno, día de la semana, nocturno, El Niño, recurrencia, comparador, perfiles, multilenguaje, widget, GeoJSON/KML, API + `/docs` | Hecho | |
+| 1 | Contexto meteorológico (POWER) | Hecho | Nuevo en esta revisión |
+| 1 | Índice de prioridad | Hecho | v1 con pesos ajustables; el mapa por celda sigue pendiente (hoy es un índice por área) |
+| 1 | Agrícola vs forestal | Parcial | Filtro por cobertura del suelo; sin clasificador temporal |
+| 1 | Ficha PDF | Parcial | Falta el código QR a la vista en vivo |
+| 1 | CAP | Hecho | Feed Atom de ejercicios aprobados |
+| 1 | MCP | Hecho | 19 herramientas por stdio; no hay despliegue HTTP del servidor MCP |
+| 2 | Corrección por nubes | Parcial | Celdas con `clear_frac < 0.5` marcadas en el calendario (solo Coahuila); sin vista corregida |
+| 2 | Superresolución "VIIRS virtual" | Pendiente | Necesita el DEM de Coahuila y un modelo entrenado |
+| 2 | Regímenes, cono, viento, detectados vs reportados, SQL, vigía, comunicados, extracción, bot, PWA, modo historia, sonificación, OGC | Hecho | PWA v1 guarda respuestas de la API, no Parquet + DuckDB-WASM |
+| 2 | Riesgo próximo GFWED (pronóstico de 8 días) | Parcial | El FWI histórico entra al índice; falta bajar el pronóstico GEOS-5 diario |
+| 2 | Alertas por suscripción | Parcial | Suscripciones y evaluación en el navegador; faltan el job diario y los envíos por correo o Telegram |
+| 2 | Animación de 25 años | Parcial | Animación mes a mes del área en Historia; sin globo continental ni exportación a video |
+| 3 | Capa GOES | Pendiente | Visible como "Visión · próximamente" en el mapa |
+| 3 | Escenarios de simulacro | Hecho | Nuevo en esta revisión |
+| CA | Dataset con DOI | Pendiente | Requiere publicar el dataset (Zenodo) |
+
+### 17.3 Siguientes pasos sugeridos (en orden)
+
+1. **Desplegar y probar desde otra red** con `FIRELY_API_MODE=real` (Nivel 0): ahora están montados todos los routers.
+2. **Ingerir NRT** y programar el job diario (`pipeline/nrt.py`), que además habilita alertas por suscripción y el vigía nocturno.
+3. **Pronóstico GFWED de 8 días** para la frase de riesgo de la semana (§8.11).
+4. **QR en la ficha PDF** y prueba de impresión en blanco y negro.
+5. **DOI** del dataset y del notebook (§15).
+6. Superresolución y GOES quedan como visión en el pitch si no hay tiempo.

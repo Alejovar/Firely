@@ -237,10 +237,33 @@ def territory(h3: str | None = None, bbox: str | None = None, lat: float | None 
     return _territory(cells, area)
 
 
+DEFAULT_WEIGHTS = {"anomaly": .35, "recurrence": .25, "exposure": .25, "season": .15, "fwi": .15}
+
+
+def _weights(**given):
+    """User weights (§8.16: "los pesos son transparentes y ajustables"). None keeps the default."""
+    out = {}
+    for key, default in DEFAULT_WEIGHTS.items():
+        value = given.get(key)
+        if value is None:
+            out[key] = default
+            continue
+        if not (isinstance(value, (int, float)) and math.isfinite(value) and 0 <= value <= 10):
+            raise HTTPException(422, f"w_{key} must be between 0 and 10")
+        out[key] = float(value)
+    if sum(out.values()) <= 0:
+        raise HTTPException(422, "At least one weight must be positive")
+    return out
+
+
 @router.get("/risk")
 def risk(h3: str | None = None, bbox: str | None = None, lat: float | None = None,
          lon: float | None = None, radius_km: float | None = None,
-         admin: str | None = None, geometry: str | None = None):
+         admin: str | None = None, geometry: str | None = None,
+         w_anomaly: float | None = None, w_recurrence: float | None = None, w_exposure: float | None = None,
+         w_season: float | None = None, w_fwi: float | None = None):
+    weights = _weights(anomaly=w_anomaly, recurrence=w_recurrence, exposure=w_exposure, season=w_season, fwi=w_fwi)
+    custom = any(v is not None for v in (w_anomaly, w_recurrence, w_exposure, w_season, w_fwi))
     cells, area = _area(h3, bbox, lat, lon, radius_km, admin, geometry)
     if cells is None:
         raise HTTPException(422, "risk requires an area selector")
@@ -254,7 +277,7 @@ def risk(h3: str | None = None, bbox: str | None = None, lat: float | None = Non
     components = []
     if refs:
         percentile = (sum(v < current for v in refs) + .5 * sum(v == current for v in refs)) / len(refs)
-        components.append({"key": "anomaly", "label": "Anomalía", "value": percentile, "weight": .35,
+        components.append({"key": "anomaly", "label": "Anomalía", "value": percentile, "weight": weights["anomaly"],
                            "note": f"{current:.1f} detecciones equivalentes en {MONTHS[month-1].lower()} {year}; percentil {percentile:.2f} frente a {len(refs)} años comparables."})
     # Only the 15 complete calendar years before the current year are considered.
     years = range(year - 15, year)
@@ -263,7 +286,7 @@ def risk(h3: str | None = None, bbox: str | None = None, lat: float | None = Non
         with db.connection() as con:
             n = con.execute(f"WITH annual AS (SELECT h3_r6, year, sum(count_harm) n FROM {db.table_sql(files)} WHERE h3_r6 IN (SELECT unnest(?)) GROUP BY 1,2) SELECT count(DISTINCT h3_r6) FILTER (WHERE burned >= 3) FROM (SELECT h3_r6, count(*) FILTER (WHERE n >= 1.0) burned FROM annual GROUP BY 1)", [files, cells]).fetchone()[0]
         share = n / len(cells)
-        components.append({"key": "recurrence", "label": "Recurrencia", "value": share, "weight": .25,
+        components.append({"key": "recurrence", "label": "Recurrencia", "value": share, "weight": weights["recurrence"],
                            "note": f"{n} de {len(cells)} celdas tuvieron al menos tres años con una detección equivalente entre {year-15} y {year-1}."})
     territory_data = _territory(cells, area)
     population = territory_data["population_total"]
@@ -271,24 +294,50 @@ def risk(h3: str | None = None, bbox: str | None = None, lat: float | None = Non
         # Exposure also counts localities within 10 km of the area centroid.
         near = sum((l["pop"] or 0) for l in territory_data["localities"] if l["dist_km"] <= 10)
         exposure = min(1.0, math.log1p(population + near) / math.log1p(1_000_000))
-        components.append({"key": "exposure", "label": "Exposición", "value": exposure, "weight": .25,
+        components.append({"key": "exposure", "label": "Exposición", "value": exposure, "weight": weights["exposure"],
                            "note": f"{population} habitantes dentro del área y {near} en localidades a 10 km del centro; escala logarítmica hasta un millón."})
     medians = {m: statistics.median([v for y, mm, v in monthly if mm == m and y < year]) for m in range(1,13)
                if any(mm == m and y < year for y, mm, v in monthly)}
     if medians:
         top = sorted(medians, key=lambda m: (-medians[m], m))[:3]
         season = 1 if month in top else .5 if any((month-m) % 12 in (1,11) for m in top) else 0
-        components.append({"key": "season", "label": "Temporada", "value": season, "weight": .15,
+        components.append({"key": "season", "label": "Temporada", "value": season, "weight": weights["season"],
                            "note": f"Mes actual {MONTHS[month-1].lower()}; tres meses con mayor mediana histórica: {', '.join(MONTHS[m-1].lower() for m in top)}."})
+    fwi_component = _fwi_component(cells, year, month)
+    if fwi_component:
+        components.append({**fwi_component, "weight": weights["fwi"]})
+    components = [c for c in components if c["weight"] > 0]
     weight_sum = sum(c["weight"] for c in components)
     index = round(100 * sum(c["value"] * c["weight"] for c in components) / weight_sum, 1) if weight_sum else 0
     level = "baja" if index < 30 else "media" if index < 55 else "alta" if index < 75 else "extrema"
-    dropped = set(("anomaly", "recurrence", "exposure", "season")) - {c["key"] for c in components}
-    method = "Índice de prioridad v0: media ponderada de anomalía (0.35), recurrencia (0.25), exposición (0.25) y temporada (0.15); componentes entre 0 y 1. No es una probabilidad de incendio."
+    dropped = {k for k, w in weights.items() if w > 0} - {c["key"] for c in components}
+    shown = ", ".join(f"{label} ({weights[key]:g})" for key, label in (("anomaly", "anomalía"), ("recurrence", "recurrencia"),
+                      ("exposure", "exposición"), ("season", "temporada"), ("fwi", "peligro meteorológico FWI")) if weights[key] > 0)
+    method = (f"Índice de prioridad v1: media ponderada de {shown}; componentes entre 0 y 1. "
+              f"{'Pesos definidos por el usuario. ' if custom else ''}No es una probabilidad de incendio.")
     if dropped:
         method += f" Sin datos para {', '.join(sorted(dropped))}; pesos disponibles renormalizados de {weight_sum:.2f} a 1."
-    return _envelope(_cutoff(), area=area, index=index, level=level, components=components,
-                     period=f"{year:04d}-{month:02d}", summary_es=f"Prioridad {level}: índice {index:.1f} de 100 para {MONTHS[month-1].lower()} {year}.", method=method)
+    return _envelope(_cutoff(), area=area, index=index, level=level, components=components, weights=weights,
+                     weights_custom=custom, period=f"{year:04d}-{month:02d}",
+                     summary_es=f"Prioridad {level}: índice {index:.1f} de 100 para {MONTHS[month-1].lower()} {year}.", method=method,
+                     disclaimer="Herramienta de apoyo; no reemplaza el conocimiento local.")
+
+
+def _fwi_component(cells, year, month):
+    """FWI (GFWED) percentile of the period within the same calendar month of the area's history. None if unavailable."""
+    path = db.file_path("context/fwi_coahuila_month.parquet")
+    if not path or not cells:
+        return None
+    with db.connection() as con:
+        rows = con.execute("SELECT year, avg(fwi_mean) FROM read_parquet(?) WHERE h3_r6 IN (SELECT unnest(?)) AND month=? GROUP BY 1",
+                           [path, cells, month]).fetchall()
+    series = {y: v for y, v in rows if v is not None}
+    if year not in series or len(series) < 4:
+        return None
+    current, refs = series[year], [v for y, v in series.items() if y != year]
+    pct = (sum(v < current for v in refs) + .5 * sum(v == current for v in refs)) / len(refs)
+    return {"key": "fwi", "label": "Peligro meteorológico (FWI)", "value": pct,
+            "note": f"FWI medio de {MONTHS[month-1].lower()} {year}: {current:.1f}; percentil {pct:.2f} frente a {len(refs)} años con dato (NASA GFWED)."}
 
 
 MIN_BASELINE = 5.0  # detections-equivalent: floor of the reference used by /watch

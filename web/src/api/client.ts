@@ -217,3 +217,66 @@ export interface WatchRow { code: string; name: string; parent: string | null; c
 export interface WatchResponse extends Envelope { period: string; level: string; n_reviewed: number; rows: WatchRow[] }
 export const getWatch = (level: 'mun' | 'ent' | 'adm1' | 'adm2' = 'mun', country = 'Mexico', top = 10, signal?: AbortSignal) =>
   request<WatchResponse>(`/watch?level=${level}&country=${encodeURIComponent(country)}&top=${top}`, { signal });
+
+// ---- endpoints added after the review (api/app/weather_routes.py, pro_routes.py, reports_routes.py, drill_routes.py) ----
+const postJson = <T,>(path: string, body: unknown, signal?: AbortSignal) =>
+  request<T>(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal });
+
+export interface RiskWeights { anomaly: number; recurrence: number; exposure: number; season: number; fwi: number }
+export interface WeightedRiskResponse extends RiskResponse { weights: RiskWeights; weights_custom: boolean; disclaimer?: string }
+export const getRiskWeighted = (area: Area, weights?: Partial<RiskWeights>, signal?: AbortSignal) =>
+  request<WeightedRiskResponse>(`/risk?${withArea(area, Object.fromEntries(Object.entries(weights ?? {}).map(([k, v]) => [`w_${k}`, v])))}`, { signal });
+
+export interface WeatherRow {
+  year: number; month: number; precip_mm_day: number | null; precip_anom_mm_day: number | null; temp_c: number | null;
+  temp_anom_c: number | null; rh_pct: number | null; rh_anom_pct: number | null; wind_ms: number | null; wind_anom_ms: number | null;
+  fire_anomaly_ratio: number | null;
+}
+export interface WeatherResponse extends Envelope {
+  centroid: { lat: number; lon: number }; source: string; rows: WeatherRow[]; note: string; method: string;
+  summary: { year: number; month: number; text: string; driest_since: number | null; driest_on_record: boolean } | null;
+}
+export const getWeather = (area: Area, from: string, to: string, year?: number, month?: number, signal?: AbortSignal) =>
+  request<WeatherResponse>(`/weather?${withArea(area, { from, to, year, month })}`, { signal });
+
+export interface SqlResponse extends Envelope { query: string; views: string[]; columns: string[]; rows: unknown[][]; n_rows: number; truncated: boolean; max_rows: number; note: string }
+export const runSql = (query: string, signal?: AbortSignal) => postJson<SqlResponse>('/sql', { query }, signal);
+
+export interface BulletinSection { heading: string; text: string; level?: string; index?: number; period?: string; items?: { name: string; text: string }[] }
+export interface BulletinResponse extends Envelope { title: string; sections: BulletinSection[]; sources: string[]; generated_by: string; generated_at: string }
+export const getBulletin = (area: Area, signal?: AbortSignal) => request<BulletinResponse>(`/bulletin?${withArea(area)}`, { signal });
+
+export interface CapDraft { id: string; status: 'Exercise'; approval: string; severity: string; text: string; area_desc: string; created_at: string; approved_at: string | null; xml?: string }
+export const createCapDraft = (area: Area & { areaDesc?: string }, text: string, severity: string, signal?: AbortSignal) =>
+  postJson<Envelope & { draft: CapDraft; published: false }>('/cap/draft', { area, text, severity }, signal);
+export const approveCapDraft = (id: string, signal?: AbortSignal) =>
+  postJson<Envelope & { draft: CapDraft; published: false; note: string }>(`/cap/approve/${id}`, {}, signal);
+export const listCapDrafts = (signal?: AbortSignal) => request<Envelope & { drafts: CapDraft[] }>('/cap/drafts', { signal });
+
+export interface ReportRecord {
+  state: string | null; municipality: string | null; year: number | null; month: number | null; fires: number | null;
+  area_ha: number | null; cause: string | null; source_line: number | null; issues: string[]; needs_review: boolean;
+}
+export interface ReportExtractResponse {
+  methodology_version: string; attribution: string; source: 'rules' | 'llm'; records: ReportRecord[];
+  checks: { check: string; expected: number; computed: number; ok: boolean }[]; warning?: string | null;
+  n_records: number; n_needs_review: number; all_checks_ok: boolean | null; csv: string; stored: false; note: string;
+}
+export const extractReport = (text: string, useLlm = true, signal?: AbortSignal) =>
+  postJson<ReportExtractResponse>('/reports/extract', { text, use_llm: useLlm }, signal);
+
+export interface DrillStage { key: string; title: string; situation: string; facts: string[]; question: string; daily?: { date: string; detections: number; night: number }[] }
+export interface DrillResponse extends Envelope { event: FireEvent; n_events_in_area: number; stages: DrillStage[]; disclaimer: string; method: string }
+export const getDrill = (area: Area, pick: 'largest' | 'longest' | 'recent' = 'largest', signal?: AbortSignal) =>
+  request<DrillResponse>(`/drill?${withArea(area, { pick })}`, { signal });
+
+export interface SpreadResponse extends Envelope {
+  warning: string; hours: number; origin: { lat: number; lon: number }; wind: { speed_kmh: number; from_deg: number; source: string };
+  direction: { toward_deg: number; toward_compass: string }; reach_km: number; half_angle_deg: number; method: string;
+}
+export interface WindLocalitiesResponse extends SpreadResponse {
+  n_localities: number; localities: { name: string; country: string; pop: number | null; distance_km: number; bearing_deg: number; compass: string }[];
+}
+export const getSpread = (area: Area, hours = 24, signal?: AbortSignal) => request<SpreadResponse>(`/spread?${withArea(area, { hours })}`, { signal });
+export const getWindLocalities = (area: Area, hours = 12, signal?: AbortSignal) =>
+  request<WindLocalitiesResponse>(`/wind-localities?${withArea(area, { hours })}`, { signal });

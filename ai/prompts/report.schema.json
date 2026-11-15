@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["records", "totals"],
+  "properties": {
+    "records": {"type": "array", "maxItems": 2000, "items": {"$ref": "#/$defs/record"}},
+    "totals": {"type": "array", "maxItems": 50, "items": {"$ref": "#/$defs/record"}}
+  },
+  "$defs": {
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "municipality", "year", "month", "fires", "area_ha", "cause", "source_line"],
+      "properties": {
+        "state": {"type": ["string", "null"], "maxLength": 120},
+        "municipality": {"type": ["string", "null"], "maxLength": 120},
+        "year": {"type": ["integer", "null"]},
+        "month": {"type": ["integer", "null"]},
+        "fires": {"type": ["number", "null"]},
+        "area_ha": {"type": ["number", "null"]},
+        "cause": {"type": ["string", "null"], "maxLength": 120},
+        "source_line": {"type": ["integer", "null"]}
+      }
+    }
+  }
+}

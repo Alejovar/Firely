@@ -20,7 +20,7 @@ import h3
 import h3 as h3lib  # routes below take a query parameter named h3, which shadows the module
 import requests
 import urllib3.util.connection as urllib3_connection
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
@@ -230,7 +230,7 @@ APPROVED = "aprobado_para_ejercicio"
 
 
 def _cap_dir():
-    path = db.processed_root() / "cap_drafts"
+    path = db.state_root() / "cap_drafts"
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -325,6 +325,38 @@ def cap_drafts():
         drafts.append({k: d.get(k) for k in ("id", "status", "approval", "severity", "area_desc", "text", "created_at", "approved_at")})
     drafts.sort(key=lambda d: d["created_at"] or "", reverse=True)
     return _envelope(_cutoff(), drafts=drafts)
+
+
+def build_cap_feed(drafts, updated):
+    """Atom feed (the usual CAP distribution channel) with the approved Exercise drafts embedded as CAP 1.2."""
+    entries = []
+    for d in drafts:
+        cap = d.get("xml", "").replace('<?xml version="1.0" encoding="UTF-8"?>', "")
+        entries.append(f"<entry><id>urn:firely:cap:{d['id']}</id><title>{escape(d.get('text', '')[:120])}</title>"
+                       f"<updated>{d.get('approved_at') or d.get('created_at')}</updated>"
+                       f"<summary>{escape(d.get('area_desc') or '')} · {d.get('severity')} · ejercicio</summary>"
+                       f"<content type=\"application/cap+xml\">{cap}</content></entry>")
+    return ('<?xml version="1.0" encoding="UTF-8"?><feed xmlns="http://www.w3.org/2005/Atom">'
+            "<id>urn:firely:cap-feed</id><title>Firely · alertas CAP de ejercicio</title>"
+            f"<updated>{updated}</updated><author><name>Firely (demo)</name></author>"
+            "<rights>Fuente de datos: NASA FIRMS. Solo ejercicios (status=Exercise); no son alertas oficiales.</rights>"
+            + "".join(entries) + "</feed>")
+
+
+@router.get("/alerts/cap")
+def alerts_cap_feed():
+    """§10.2: feed of drafts a person approved for exercise use. Unapproved drafts are never listed."""
+    approved = []
+    for p in sorted(_cap_dir().glob("*.json")):
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if d.get("approval") == APPROVED and d.get("status") == "Exercise":
+            approved.append(d)
+    approved.sort(key=lambda d: d.get("approved_at") or "", reverse=True)
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+    return Response(build_cap_feed(approved[:50], now), media_type="application/atom+xml")
 
 
 # ----------------------------------------------------------------------------------------------- 4. spread + wind localities

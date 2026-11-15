@@ -10,6 +10,11 @@ def processed_root() -> Path:
     return Path(os.environ.get("FIRELY_DATA_PROCESSED", "data/processed"))
 
 
+def state_root() -> Path:
+    """Writable folder for app state (CAP drafts, API caches). The processed data can stay read-only."""
+    return Path(os.environ.get("FIRELY_STATE_DIR") or processed_root())
+
+
 def parquet_files(table: str) -> list[str]:
     root = processed_root() / table
     return sorted(str(p) for p in root.glob("*/year=*/*.parquet"))
