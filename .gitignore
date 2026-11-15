@@ -1,8 +1,7 @@
-# Datos (pesados y descargables de nuevo)
-data/raw
-data/raw/
-data/interim/
-data/processed/
+# Datos locales: conservar solo los contratos de tablas, no los datasets
+/data/*
+!/data/schemas/
+!/data/schemas/**
 *.nc
 *.tif
 *.zip
@@ -11,12 +10,26 @@ data/processed/
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+/.aws/
+/.codex/
 
 # Python
 .venv/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
 
 # Node / frontend
 node_modules/
@@ -31,11 +44,41 @@ web/android/app/src/main/assets/capacitor.config.json
 web/android/app/src/main/assets/capacitor.plugins.json
 web/test-results/
 web/playwright-report/
+test-results/
+playwright-report/
+coverage/
+.vitest/
+
+# Android: binarios, cachés y archivos generados en cualquier app
+*.apk
+*.aab
+*.aar
+*.ap_
+*.dex
+*.class
+.gradle/
+**/android/**/build/
+**/android/local.properties
+**/android/capacitor-cordova-android-plugins/
+**/android/app/src/main/assets/public/
+**/android/app/src/main/assets/capacitor.config.json
+**/android/app/src/main/assets/capacitor.plugins.json
+**/android/app/src/main/res/xml/config.xml
+
+# Prototipo local anterior; la app activa está en web/android
+/mobile-smoke/
+
+# Previsualizaciones generadas de Astryx (conservar los temas fuente)
+**/themes/**/preview.html
+**/themes/**/preview.png
+**/themes/**/sheet-actions.html
+**/themes/**/*.pictures.json
 
 # Sistema
 .DS_Store
+.idea/
+*.log
 
 # Datos externos locales y artefactos de build
-data/external/
 *.tsbuildinfo
 .duckdb_tmp/
