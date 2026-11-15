@@ -228,3 +228,100 @@ paths:
         - {$ref: '#/components/parameters/h3'}
         - {$ref: '#/components/parameters/bbox'}
       responses: {'200': {description: "rows por año: night_detections, total_detections, night_ratio"}}
+  /export.kml:
+    get:
+      summary: Puntos armonizados en KML (atribución NASA FIRMS en la descripción)
+      parameters:
+        - {$ref: '#/components/parameters/from'}
+        - {$ref: '#/components/parameters/to'}
+        - {name: limit, in: query, schema: {type: integer, default: 5000, minimum: 1, maximum: 20000}}
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/lat'}
+        - {$ref: '#/components/parameters/lon'}
+        - {$ref: '#/components/parameters/radius_km'}
+        - {$ref: '#/components/parameters/admin'}
+      responses: {'200': {description: application/vnd.google-earth.kml+xml}}
+  /ogc:
+    get: {summary: OGC API Features - landing, responses: {'200': {description: links}}}
+  /ogc/conformance:
+    get: {summary: OGC API Features - conformance, responses: {'200': {description: conformsTo}}}
+  /ogc/collections:
+    get: {summary: "OGC API Features - colecciones (events, cell_activity)", responses: {'200': {description: collections}}}
+  /ogc/collections/{collectionId}:
+    get:
+      summary: OGC API Features - una colección
+      parameters:
+        - {name: collectionId, in: path, required: true, schema: {type: string, enum: [events, cell_activity]}}
+      responses: {'200': {description: collection}, '404': {description: no existe}}
+  /ogc/collections/{collectionId}/items:
+    get:
+      summary: OGC API Features - items como application/geo+json (events con n_hotspots_harm>=3; cell_activity con count_harm)
+      parameters:
+        - {name: collectionId, in: path, required: true, schema: {type: string, enum: [events, cell_activity]}}
+        - {name: limit, in: query, schema: {type: integer, default: 100, minimum: 1, maximum: 1000}}
+        - {name: offset, in: query, schema: {type: integer, default: 0, minimum: 0}}
+        - {name: bbox, in: query, schema: {type: string}, description: "west,south,east,north"}
+        - {name: datetime, in: query, schema: {type: string}, description: "instante o intervalo RFC 3339 (a/b, ../b, a/..)"}
+      responses: {'200': {description: FeatureCollection con numberMatched, attribution, methodology_version, data_cutoff}}
+  /sql:
+    post:
+      summary: SQL de solo lectura (un SELECT, sin ';') sobre las vistas cell_month_harmonized, events y climatology; máx. 1000 filas y 15 s
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [query], properties: {query: {type: string}}}}}
+      responses: {'200': {description: "columns, rows, query, truncated, views"}, '400': {description: "Consulta rechazada o con error"}, '408': {description: "Tiempo agotado"}}
+  /bulletin:
+    get:
+      summary: Boletín semanal del agente vigía (plantilla determinista sobre /risk, /watch y la serie)
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {name: polish, in: query, schema: {type: boolean, default: false}, description: "Pule el texto con LLM si hay ANTHROPIC_API_KEY; las cifras no cambian"}
+      responses: {'200': {description: "title, sections[], sources[], generated_by"}}
+  /cap/draft:
+    post:
+      summary: Borrador CAP 1.2 (status Exercise, aprobación pendiente; nada se publica)
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [area, text], properties: {area: {}, text: {type: string}, severity: {type: string, enum: [Minor, Moderate, Severe, Extreme]}}}}}
+      responses: {'200': {description: "draft con id, xml, status Exercise, approval borrador"}}
+  /cap/approve/{draft_id}:
+    post:
+      summary: Marca el borrador como aprobado_para_ejercicio (status sigue Exercise, nunca Actual)
+      parameters:
+        - {name: draft_id, in: path, required: true, schema: {type: string}}
+      responses: {'200': {description: "draft actualizado"}, '404': {description: "No existe"}}
+  /cap/drafts:
+    get:
+      summary: Lista de borradores CAP
+      responses: {'200': {description: "drafts"}}
+  /spread:
+    get:
+      summary: Cono de propagación orientativo (±22.5°) según viento Open-Meteo; no es pronóstico oficial
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {name: lat, in: query, schema: {type: number}}
+        - {name: lon, in: query, schema: {type: number}}
+        - {name: event_id, in: query, schema: {type: string}}
+        - {name: hours, in: query, schema: {type: integer, minimum: 1, maximum: 72, default: 24}}
+      responses: {'200': {description: "wind, direction, reach_km, cone (GeoJSON Feature)"}, '503': {description: "wind_unavailable"}}
+  /wind-localities:
+    get:
+      summary: Localidades a favor del viento (sector ±22.5°), por población
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {name: lat, in: query, schema: {type: number}}
+        - {name: lon, in: query, schema: {type: number}}
+        - {name: event_id, in: query, schema: {type: string}}
+        - {name: hours, in: query, schema: {type: integer, minimum: 1, maximum: 72, default: 24}}
+      responses: {'200': {description: "localities con distance_km y bearing_deg, sector"}, '503': {description: "wind_unavailable"}}
+  /regimes:
+    get:
+      summary: Régimen de fuego por celda y cambio 2001-2012 vs 2013-2026 (GeoJSON H3)
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+      responses: {'200': {description: "regime_counts, change, FeatureCollection con regime_class y changed"}}
