@@ -10,8 +10,15 @@ import { onSubscriptionsChanged } from './lib/alerts';
 import { listServerSubscriptions } from './api/client';
 import { Box, Inline } from './ui/kit';
 import type { Page } from './state/hash';
+import { isMobileApp } from './mobile/backend';
+import { API_URL } from './api/client';
+import { NativeSupport } from './mobile/NativeSupport';
+import MobileNavigation from './mobile/MobileNavigation';
 
 const s = stylex.create({
+  nativeApp: { display: 'block', height: 'auto', minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'calc(var(--spacing-10) * 2 + env(safe-area-inset-bottom))', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' },
+  nativeRail: { display: 'none' },
+  nativeBody: { display: 'contents' },
   app: {
     display: 'grid', gridTemplateColumns: { default: '76px minmax(0, 1fr)', '@media (max-width: 720px)': 'minmax(0, 1fr)' },
     gridTemplateRows: { default: 'minmax(0, 1fr)', '@media (max-width: 720px)': 'auto auto minmax(0, 1fr)' },
@@ -69,6 +76,7 @@ const Platform = lazy(() => import('./pages/Platform'));
 const Ficha = lazy(() => import('./pages/Ficha'));
 const WidgetDoc = lazy(() => import('./pages/WidgetDoc'));
 const Identity = lazy(() => import('./pages/Identity'));
+const Field = lazy(() => import('./pages/Field'));
 
 function Logo() {
   return <Box xs={s.logo} aria-hidden="true">{[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => <Inline key={i} xs={[s.sq, i % 2 === 1 && s.sqDim, i === 4 && s.sqEmber]} />)}</Box>;
@@ -90,18 +98,20 @@ function Shell() {
   const t = useNav(app.lang);
   const page = app.page;
   const alerts = useAlertCount();
+  useEffect(() => { if (isMobileApp && !API_URL) app.navigate('campo'); }, []);
   const item = (key: Page, label: string, minor = false) => (
     <button key={key} type="button" aria-current={page === key ? 'page' : undefined} onClick={() => app.navigate(key)} {...stylex.props(s.navItem, minor && s.navMinor, page === key && s.navOn)}>{label}</button>
   );
   return (
-    <Box xs={s.app}>
-      <Box as="nav" aria-label={t.main} xs={s.rail}>
+    <Box xs={[s.app, isMobileApp && s.nativeApp]}>
+      <Box as="nav" aria-label={t.main} xs={[s.rail, isMobileApp && s.nativeRail]}>
         <Logo />
         {item('explorar', t.explore)}{item('asistente', t.assistant)}{item('metodo', t.method)}{item('plataforma', t.platform)}{item('historia', t.history)}
+        {item('campo', app.lang === 'en' ? 'Field areas' : 'Áreas de campo')}
         <Inline xs={s.divider} aria-hidden="true" />
         {item('ficha', t.sheet, true)}{item('widget', t.widget, true)}{item('identidad', t.identity, true)}
       </Box>
-      <Box xs={s.body}>
+      <Box xs={[s.body, isMobileApp && s.nativeBody]}>
         <Box as="header" xs={s.header}>
           <button type="button" onClick={() => app.navigate('explorar')} {...stylex.props(s.brand)} aria-label="Firely">
             <Inline xs={s.brandName}>Firely</Inline>
@@ -119,6 +129,7 @@ function Shell() {
           </Box>
         </Box>
         <Box as="main" xs={s.main}>
+          <NativeSupport />
           <Suspense fallback={<Box xs={s.fallback}><Skeleton width="100%" height="60vh" /></Box>}>
             {page === 'explorar' && <Explorer />}
             {page === 'asistente' && <Assistant />}
@@ -128,9 +139,11 @@ function Shell() {
             {page === 'ficha' && <Ficha />}
             {page === 'widget' && <WidgetDoc />}
             {page === 'identidad' && <Identity />}
+            {page === 'campo' && <Field />}
           </Suspense>
         </Box>
       </Box>
+      {isMobileApp && <MobileNavigation />}
     </Box>
   );
 }

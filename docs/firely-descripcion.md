@@ -137,7 +137,7 @@ Todo lo que distingue a Firely de un dashboard de puntos de calor, agrupado por 
 | Diferenciador | Por qué es diferente | Sección |
 |---|---|---|
 | Bot con notas de voz | Llega a brigadistas en campo con mala conexión y manos ocupadas | §11.2 |
-| PWA offline | Consulta sin señal en la sierra | §12.5 |
+| Modo offline móvil (pendiente) | Consulta sin señal en la sierra | §12.5 |
 | Descripciones accesibles automáticas | Gráficas comprensibles con lector de pantalla | §14 |
 | Sonificación del calendario | 25 años de fuego que se escuchan; accesibilidad y momento memorable | §7.6 |
 | Multilenguaje ES/EN/PT | Toda Latinoamérica, incluido Brasil | §11.2 |
@@ -1121,14 +1121,13 @@ Servidor del Model Context Protocol (con el SDK oficial de Python) que expone la
 
 **Implementación.** `mcp/server.py` (stdio) tiene 19 herramientas: `resolve_area`, `calendar`, `return_period`, `events`, `context`, `weather`, `weekday`, `night`, `season`, `analogs`, `risk`, `spread`, `wind_localities`, `regimes`, `reported`, `recent_hotspots`, `watch`, `bulletin` y `drill_scenario`. Todas llaman a la API HTTP (`FIRELY_API_URL`), así que las cifras son las mismas que ve la app. Instrucciones de conexión en `mcp/README.md` y en Plataforma › Servidor MCP.
 
-### 12.5 PWA offline
+### 12.5 Modo offline móvil (pendiente)
 
-- La app se instala como PWA.
-- El usuario descarga un área antes de salir a campo: se guardan en el navegador (IndexedDB u OPFS) los Parquet filtrados del área, la climatología y las teselas básicas del mapa.
-- DuckDB-WASM consulta esos datos sin conexión.
-- Indicador claro de "disponible sin conexión" y de la fecha de los datos guardados.
+**Estado real (15 de noviembre de 2026).** No existe una PWA implementada. La rama `feat/mobile-main-ec2` añade persistencia de consultas para Android con Capacitor y Filesystem; la prueba en teléfono y la conexión al backend público de EC2 siguen pendientes. Consumir la API por sí solo no proporciona modo offline.
 
-**Implementación (v1).** `web/public/manifest.webmanifest` y `web/public/sw.js` (registrado solo en el build de producción). El service worker guarda la app (cache-first para los assets con hash), abre la app sin red (navegación network-first con respaldo) y conserva la última respuesta buena de cada endpoint de análisis (network-first; sin red responde desde la caché con la cabecera `x-firely-offline: 1`). Las teselas del mapa usan stale-while-revalidate con un tope de 600. En Plataforma › Sin conexión, "Guardar área para campo" pide de antemano el calendario, eventos, temporada, años análogos, riesgo, territorio, patrones, contexto y los puntos del último año del área, y registra la fecha. La versión con Parquet y DuckDB-WASM queda como siguiente paso: la v1 guarda respuestas de la API, no tablas.
+El objetivo para la app móvil es descargar un área antes de salir a campo, conservar sus consultas y mostrar claramente la fecha de descarga, el corte de los datos y qué contenido está disponible sin señal. Las teselas del mapa requieren una estrategia propia de descarga y almacenamiento.
+
+La implementación inicial de esa rama guarda respuestas de la API por área y filtros, con su fecha y procedencia. El mapa base y las condiciones recientes requieren conexión. Parquet y DuckDB-WASM son una alternativa futura, no una capacidad existente. La integración móvil y los criterios de aceptación se detallan en `mobile-main-ec2.md` y `../web/ANDROID.md`.
 
 ### 12.6 Ingesta y actualización
 
@@ -1154,7 +1153,7 @@ Servidor del Model Context Protocol (con el SDK oficial de Python) que expone la
                  │                         │                          │
                  ▼                         ▼                          ▼
      Frontend + DuckDB-WASM         API FastAPI + DuckDB        Jobs programados
-     (mapa, calendario, PWA)        (REST, OGC, CAP)            (ingesta NRT, alertas, vigía)
+     (mapa, calendario)             (REST, OGC, CAP)            (ingesta NRT, alertas, vigía)
                  │                         │
                  │             ┌───────────┼────────────┬───────────────┐
                  ▼             ▼           ▼            ▼               ▼
@@ -1187,7 +1186,7 @@ firely/
 ├── mcp/               # servidor MCP
 ├── ai/                # prompts, esquemas, agentes (vigía, extracción)
 ├── bot/               # bot de Telegram
-├── web/               # frontend, PWA, widget
+├── web/               # frontend y widget
 ├── infra/             # Dockerfiles, CI/CD, despliegue
 ├── data/              # esquemas y muestras (no datos completos)
 └── docs/              # metodología, API, guía de uso
@@ -1280,7 +1279,7 @@ Transparencia que también suma ante el jurado:
 - **NASA POWER se consulta en el centroide del área** (malla de 0.5°): en áreas grandes o de relieve complejo, el clima del centroide no representa toda el área.
 - **La extracción de reportes no sustituye la captura oficial:** copia valores del texto y valida tipos y sumas, pero un PDF escaneado sin capa de texto necesita OCR antes.
 - **La transcripción de notas de voz depende de un modelo local opcional** (`faster-whisper`); sin él, el bot pide escribir la pregunta.
-- **El modo sin conexión v1 guarda respuestas de la API**, no los Parquet: solo funcionan sin red las consultas que se guardaron antes.
+- **Modo sin conexión móvil en validación:** la rama `feat/mobile-main-ec2` guarda respuestas de la API por área y filtros; faltan pruebas en teléfono y con EC2. No existe una PWA ni descarga offline del mapa base.
 
 ---
 

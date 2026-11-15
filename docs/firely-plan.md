@@ -118,7 +118,7 @@ Funcionan de verdad en una o dos regiones de la demo. En el pitch: "piloto listo
 | Borradores de comunicados (§11.2) | BIA | Borrador CAP y texto de redes con botón de aprobación |
 | SQL para científicos (§11.2) | BIA | Consulta generada, mostrada y ejecutada en solo lectura |
 | Bot con notas de voz (§11.2) | BIA | Responde una nota de voz con texto e imagen |
-| PWA offline (§12.5) | FE | Un área consultable en modo avión |
+| Modo offline móvil (§12.5, pendiente) | FE | Un área descargada consultable tras cerrar y reabrir la app en modo avión |
 | Modo historia (§7.6) | FE + BIA | Recorrido completo para la región de la demo |
 | Sonificación (§7.6) | FE | El calendario suena con las reglas definidas |
 | Animación de 25 años (§7.6) | FE | Video exportado para el pitch |
@@ -166,7 +166,7 @@ Hasta 6 personas (verificar el máximo vigente en las reglas).
 - Define los contratos de la API en la hora 0–2 y publica una versión simulada (con datos de prueba) en la hora 4.
 
 ### FE — Frontend
-- App, mapa, calendario, desglose, comparador, pestañas, PWA, modo historia, animación, sonificación, descripciones accesibles en la interfaz, widget visual.
+- App, mapa, calendario, desglose, comparador, pestañas, modo offline móvil pendiente, modo historia, animación, sonificación, descripciones accesibles en la interfaz, widget visual.
 - Aplica la identidad visual diseñada en Claude Design.
 - Trabaja contra la API simulada desde la hora 4.
 
@@ -268,7 +268,7 @@ Bloques aproximados. Los puntos de control (§7) mandan sobre este horario.
 | 20–24 | **Punto de control hora 24** (preparación) | Tendencias y semáforo | Ajustes con datos armonizados | Perfiles, multilenguaje, redacción | Pestañas de análisis | Ficha PDF v1 |
 | 24–28 | Corrección por nubes (piloto) | Integración en pestañas | Riesgo GFWED | Widget; MCP; CAP | Comparador; semáforo; curva | Página del proyecto (borrador) |
 | 28–34 | Superresolución (piloto) | Regímenes | Cono y viento; reportados | Asistente con UI generativa; GeoJSON/KML | Asistente en la UI; accesibilidad | Prueba de punta a punta #2; usuarios reales |
-| 34–40 | Notebook y DOI; GOES (visión) | Hallazgo principal pulido | Pulido de textos y casos límite | Vigía, extracción, comunicados, SQL, bot, alertas | PWA, modo historia, sonificación, animación | Guion final; grabación de clips |
+| 34–40 | Notebook y DOI; GOES (visión) | Hallazgo principal pulido | Pulido de textos y casos límite | Vigía, extracción, comunicados, SQL, bot, alertas | Modo offline móvil, modo historia, sonificación, animación | Guion final; grabación de clips |
 | 40–44 | **Congelar código.** Correcciones | Correcciones | Correcciones | Correcciones | Correcciones | Ensayo con demo real ×3 |
 | 44–48 | Apoyo a materiales | Apoyo a materiales | Apoyo a materiales | Apoyo a materiales | Video de respaldo | Video, página, envío, ensayo final |
 
@@ -307,7 +307,7 @@ En cada punto: 15 minutos, todos presentes, decisión explícita y anotada.
 Cuando el tiempo apriete, se recorta de arriba hacia abajo:
 
 1. **Nivel 3 → diapositivas.** GOES y simulacros se muestran como visión.
-2. **Nivel 2, piezas de menor visibilidad:** OGC, SQL avanzado, extracción de reportes, alertas por suscripción, PWA offline.
+2. **Nivel 2, piezas de menor visibilidad:** OGC, SQL avanzado, extracción de reportes, alertas por suscripción, modo offline móvil.
 3. **Nivel 2, piezas científicas pesadas:** superresolución, regímenes, corrección por nubes (si se recorta, se menciona como siguiente fase).
 4. **Nivel 2, piezas de demo:** se conservan las 3–4 más vistosas (por ejemplo, asistente, cono de propagación, sonificación, animación).
 5. **Nivel 1 se protege.** Si algo de Nivel 1 no sale, se oculta antes que mostrarlo roto.
@@ -328,7 +328,7 @@ Cuando el tiempo apriete, se recorta de arriba hacia abajo:
 | Volumen de datos excede memoria | Media | Alto | polars o DuckDB en lugar de pandas; procesar por año | Resolución H3 más gruesa |
 | API del LLM falla o tarda en la demo | Media | Alto | Caché de respuestas de la demo; plantillas de respaldo | Video de respaldo del momento del asistente |
 | Geocodificador limita solicitudes | Media | Medio | Respetar 1 consulta/s; cachear lugares de la demo | Lista local de lugares precargados |
-| Internet del evento falla | Media | Muy alto | Video de respaldo; hotspot del celular | Demo con datos locales (DuckDB-WASM + PWA) |
+| Internet del evento falla | Media | Muy alto | Video de respaldo; hotspot del celular | Modo offline móvil por implementar; no disponible como respaldo actual |
 | Integración de última hora rompe la app | Alta | Muy alto | Congelar código en hora 40; pruebas de punta a punta | Volver a la última versión estable (etiquetada) |
 | Demasiadas funciones a medias | Alta | Muy alto | Criterios de "terminado" y puntos de control | Ocultar lo que no está listo |
 | Fuente externa caída (POWER, GFWED, FIRMS NRT) | Baja | Medio | Cachear datos de las regiones de la demo | Mostrar datos cacheados con fecha |
@@ -508,7 +508,7 @@ Revisión del repositorio contra los criterios de "terminado" de §2. **Hecho** 
 | Servidor MCP (§12.4) | De 7 a 19 herramientas (eventos, contexto, clima, viento, regímenes, reportes, boletín, simulacro…) | `mcp/server.py` |
 | OGC API Features (§12.2) | Enlace y guía para QGIS en la UI (antes "PRÓXIMAMENTE") | Plataforma › Exportar a SIG |
 | Bot con notas de voz (§11.2) | Texto libre, ubicación compartida, `/semaforo`, `/hoy` y notas de voz con transcripción local opcional | `bot/telegram_bot.py`, `bot/stt.py` |
-| PWA offline (§12.5) | Fuera de la web: el modo sin conexión lo cubre la app Android (Android Studio) del equipo, que consume la API | — |
+| Modo offline móvil (§12.5) | En validación en `feat/mobile-main-ec2`: paquetes de consultas con Filesystem, sin PWA. Pendientes EC2 real y prueba en Android físico | `web/ANDROID.md` |
 | Contrato | `api/openapi.yaml` incluye los endpoints nuevos y los parámetros de pesos | `api/openapi.yaml` |
 
 Pruebas: `tests/test_api_new.py` (18) y `tests/test_bot_extra.py` (8). La suite de Python (129) y la de la web (46) pasan, y `vite build` compila.
@@ -541,7 +541,8 @@ Pruebas: `tests/test_jobs_forecast.py` (7, red simulada). Suite de Python: 136 e
 | 1 | MCP | Hecho | 19 herramientas por stdio; no hay despliegue HTTP del servidor MCP |
 | 2 | Corrección por nubes | Parcial | Celdas con `clear_frac < 0.5` marcadas en el calendario (solo Coahuila); sin vista corregida |
 | 2 | Superresolución "VIIRS virtual" | Pendiente | Necesita el DEM de Coahuila y un modelo entrenado |
-| 2 | Regímenes, cono, viento, detectados vs reportados, SQL, vigía, comunicados, extracción, bot, PWA, modo historia, sonificación, OGC | Hecho | PWA v1 guarda respuestas de la API, no Parquet + DuckDB-WASM |
+| 2 | Regímenes, cono, viento, detectados vs reportados, SQL, vigía, comunicados, extracción, bot, modo historia, sonificación, OGC | Hecho | |
+| 2 | Modo offline móvil (§12.5) | Parcial (rama `feat/mobile-main-ec2`) | Descarga y persistencia implementadas y probadas con fixtures; pendientes teléfono autorizado y EC2 real. No existe PWA |
 | 2 | Riesgo próximo GFWED (pronóstico de 8 días) | Hecho (API) | `/risk/forecast` con el pronóstico GEOS-5 real; climatología 1981–2010 solo en Coahuila (fuera: clase EFFIS absoluta). Falta mostrarlo en la web |
 | 2 | Alertas por suscripción | Parcial | Endpoints + job diario + envío por Telegram con aprobación humana listos y probados con mocks; sin correo, sin envío real probado (no hay `TELEGRAM_BOT_TOKEN` aquí), la web aún usa sus suscripciones locales y la evaluación es mensual (último mes armonizado), no sobre NRT |
 | 2 | Animación de 25 años | Parcial | Animación mes a mes del área en Historia; sin globo continental ni exportación a video |

@@ -57,5 +57,14 @@ export function calendarSvg(data:CalendarResponse,title:string,metric:'count'|'f
  const legendY=74+years.length*22;
  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><defs><pattern id="cloud" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="6" fill="${xml(palette('var(--color-border-emphasized)'))}"/></pattern></defs><rect width="100%" height="100%" fill="${xml(background)}"/><text x="16" y="25" fill="${xml(ink)}" font-family="sans-serif" font-size="16">${xml(title)}</text><text x="56" y="53" fill="${xml(sub)}" font-family="sans-serif" font-size="11">E       F       M       A       M       J       J       A       S       O       N       D</text><text x="700" y="53" fill="${xml(sub)}" font-family="sans-serif" font-size="11">ONI</text>${cells}${yearLabels}<text x="16" y="${legendY}" fill="${xml(sub)}" font-family="sans-serif" font-size="10">0</text>${ramp.map((color,i)=>`<rect x="${42+i*18}" y="${legendY-9}" width="15" height="9" fill="${xml(palette(color))}"/>`).join('')}<text x="${50+ramp.length*18}" y="${legendY}" fill="${xml(sub)}" font-family="sans-serif" font-size="10">${Math.round(max)} ${xml(metric)} · ≈ MODIS · Nubes · Niña / Niño</text><text x="16" y="${height-8}" fill="${xml(sub)}" font-family="sans-serif" font-size="10">${xml(provenance(data))}</text></svg>`;
 }
-export function saveFile(name:string,content:BlobPart,type:string){const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000);}
+export async function saveFile(name:string,content:BlobPart,type:string){
+  const blob = new Blob([content], { type });
+  const { Capacitor } = await import('@capacitor/core');
+  if (Capacitor.isNativePlatform()) {
+    const { shareNativeFile } = await import('../mobile/shareFile');
+    await shareNativeFile(name, blob);
+    return;
+  }
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 export async function svgPng(svg:string){const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));try{const img=new Image();img.src=url;await img.decode();const canvas=document.createElement('canvas');canvas.width=img.naturalWidth*2;canvas.height=img.naturalHeight*2;const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas unavailable');ctx.scale(2,2);ctx.drawImage(img,0,0);return await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('PNG unavailable')),'image/png'));}finally{URL.revokeObjectURL(url);}}

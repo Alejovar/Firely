@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Vector rendition of web/public/icon.svg. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="512" android:viewportHeight="512">
+    <path android:fillColor="#0d0f11" android:pathData="M0,0H512V512H0Z" />
+    <path android:fillColor="#f2711c" android:pathData="M262,92c22,70 82,92 74,170 22,-8 34,-30 34,-56 58,74 40,170 -28,206 -66,34 -170,10 -196,-66 -24,-72 26,-118 46,-168 6,40 30,62 46,64 -16,-62 8,-112 24,-150z" />
+    <path android:fillColor="#ffd9a8" android:pathData="M290,352a34,34 0,1 1,-68,0a34,34 0,1 1,68,0" />
+</vector>

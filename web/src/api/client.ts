@@ -1,5 +1,7 @@
 // Typed client for the Firely API (see api/openapi.yaml). All shapes below were taken from real responses.
-export const API_URL = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+import { configuredBackend } from '../mobile/backend';
+import { fieldStore, canReadOffline } from '../mobile/fieldStore';
+export const API_URL = configuredBackend();
 
 export type Reference = 'median' | 'mean';
 export type Metric = 'count' | 'frp';
@@ -118,7 +120,24 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, init);
+  if (!API_URL) throw new ApiError(0, 'backend_not_configured');
+  const timeout = AbortSignal.timeout(20_000);
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, { ...init, signal: init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout });
+  } catch (error) {
+    if (init?.signal?.aborted) throw error;
+    if ((!init?.method || init.method === 'GET') && canReadOffline(path)) {
+      const stored = await fieldStore.lookup(API_URL, path);
+      if (init?.signal?.aborted) throw error;
+      if (stored) {
+        window.dispatchEvent(new CustomEvent('firely:field-response', { detail: { savedAt: stored.savedAt, label: stored.label } }));
+        return stored.data as T;
+      }
+      throw new ApiError(0, 'offline_not_saved');
+    }
+    throw error;
+  }
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { detail?: { code?: string } | string } | null;
     throw new ApiError(response.status, typeof body?.detail === 'object' ? body.detail?.code : undefined);

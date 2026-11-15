@@ -1,5 +1,7 @@
 # FIRELY web
 
+La variante Android basada en este frontend se documenta en [ANDROID.md](ANDROID.md).
+
 Interfaz Nivel 0 con React, TypeScript y MapLibre GL. Consulta la API de `../api/openapi.yaml`. La URL base predeterminada es `http://127.0.0.1:8000`; se puede cambiar con `VITE_API_URL`.
 
 ```fish

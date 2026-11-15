@@ -13,6 +13,8 @@ export const calendarCellValue = (n: number | null | undefined, lang: Lang) => n
 export const newest = (rows: CalendarRow[]) => [...rows].sort((a, b) => b.year - a.year || b.month - a.month)[0];
 export const apiMessage = (error: unknown, lang: Lang) => {
   const e = error as ApiError;
+  if (e?.code === 'backend_not_configured') return lang === 'en' ? 'Configure the server in Field areas.' : lang === 'pt' ? 'Configure o servidor em Áreas de campo.' : 'Configura el servidor en Áreas de campo.';
+  if (e?.code === 'offline_not_saved') return lang === 'en' ? 'Server unreachable. This exact query has not been downloaded.' : lang === 'pt' ? 'Servidor inacessível. Esta consulta não foi baixada.' : 'No se pudo conectar al servidor. Esta consulta exacta no está descargada.';
   const base = words[lang].retry;
   return e?.status ? `${base} (${e.status}${e.code ? ` · ${e.code}` : ''})` : base;
 };
