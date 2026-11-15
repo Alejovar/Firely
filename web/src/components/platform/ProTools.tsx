@@ -18,7 +18,6 @@ import {
   ApiError, API_URL, approveCapDraft, createCapDraft, extractReport, getBulletin, getDrill, listCapDrafts, runSql,
   type Area, type BulletinResponse, type CapDraft, type DrillResponse, type ReportExtractResponse, type SqlResponse,
 } from '../../api/client';
-import { loadSavedAreas, offlineSupported, saveAreaForField, type SavedArea } from '../../lib/offline';
 
 const sx = stylex.create({
   mono: { fontFamily: 'var(--font-family-mono)', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: '20rem', overflow: 'auto', backgroundColor: 'var(--color-background-muted)', padding: 'var(--spacing-4)', borderRadius: 'var(--radius-2)' },
@@ -187,33 +186,5 @@ export function DrillSection({ area, label }: { area: Area; label: string }) {
       <HStack gap={2}><Button label="Anterior" variant="ghost" isDisabled={step === 0} onClick={() => setStep(s => s - 1)} /><Button label={step + 1 < data.stages.length ? 'Siguiente etapa' : 'Fin del ejercicio'} isDisabled={step + 1 >= data.stages.length} onClick={() => setStep(s => s + 1)} /></HStack>
       <Text type="supporting" color="secondary">{data.disclaimer} {data.attribution} · v{data.methodology_version}</Text>
     </VStack>}
-  </VStack></Card>;
-}
-
-// ------------------------------------------------------------------ offline (PWA, §12.5)
-
-export function OfflineSection({ area, areaKey, label, from, to }: { area: Area; areaKey: string; label: string; from: string; to: string }) {
-  const [saved, setSaved] = useState<SavedArea[]>(loadSavedAreas);
-  const [progress, setProgress] = useState<[number, number] | null>(null);
-  const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
-  useEffect(() => {
-    const up = () => setOnline(true); const down = () => setOnline(false);
-    window.addEventListener('online', up); window.addEventListener('offline', down);
-    return () => { window.removeEventListener('online', up); window.removeEventListener('offline', down); };
-  }, []);
-  const save = async () => {
-    setProgress([0, 1]);
-    await saveAreaForField(label, areaKey, area, from, to, (d, t) => setProgress([d, t]));
-    setSaved(loadSavedAreas()); setProgress(null);
-  };
-  const current = saved.find(s => s.areaKey === areaKey);
-  return <Card padding={5}><VStack gap={3}>
-    <HStack gap={2} wrap="wrap"><Badge label={online ? 'EN LÍNEA' : 'SIN CONEXIÓN'} variant={online ? 'success' : 'warning'} />{current && <Badge label="DISPONIBLE SIN CONEXIÓN" variant="success" />}</HStack>
-    <Text>Antes de salir a campo, guarda el área: calendario, eventos, temporada, años parecidos, riesgo, territorio y puntos del último año quedan en el dispositivo y se abren sin señal.</Text>
-    {!offlineSupported() && <Banner status="warning" title="Este navegador no admite modo sin conexión" />}
-    <HStack gap={2} wrap="wrap"><Button label={`Guardar ${label} para campo`} variant="primary" onClick={save} isLoading={progress != null} isDisabled={!offlineSupported()} />
-      {progress && <Text type="supporting">{progress[0]} / {progress[1]}</Text>}</HStack>
-    {saved.length > 0 && <VStack gap={1}>{saved.map(s => <HStack key={s.areaKey} gap={2} wrap="wrap" xstyle={sx.row}><Text>{s.label}</Text><Text type="supporting">guardado {new Date(s.savedAt).toLocaleString()} · {s.ok}/{s.total} consultas · periodo {s.from} → {s.to}</Text></HStack>)}</VStack>}
-    <Text type="supporting" color="secondary">Las respuestas guardadas conservan su fecha de corte de datos; al recuperar señal se actualizan solas. Instala la app desde el menú del navegador (“Agregar a la pantalla de inicio”).</Text>
   </VStack></Card>;
 }

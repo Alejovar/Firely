@@ -508,7 +508,7 @@ Revisión del repositorio contra los criterios de "terminado" de §2. **Hecho** 
 | Servidor MCP (§12.4) | De 7 a 19 herramientas (eventos, contexto, clima, viento, regímenes, reportes, boletín, simulacro…) | `mcp/server.py` |
 | OGC API Features (§12.2) | Enlace y guía para QGIS en la UI (antes "PRÓXIMAMENTE") | Plataforma › Exportar a SIG |
 | Bot con notas de voz (§11.2) | Texto libre, ubicación compartida, `/semaforo`, `/hoy` y notas de voz con transcripción local opcional | `bot/telegram_bot.py`, `bot/stt.py` |
-| PWA offline (§12.5) | Manifiesto, service worker, "Guardar área para campo" e indicador en línea / sin conexión | `web/public/sw.js`, Plataforma › Sin conexión |
+| PWA offline (§12.5) | Fuera de la web: el modo sin conexión lo cubre la app Android (Android Studio) del equipo, que consume la API | — |
 | Contrato | `api/openapi.yaml` incluye los endpoints nuevos y los parámetros de pesos | `api/openapi.yaml` |
 
 Pruebas: `tests/test_api_new.py` (18) y `tests/test_bot_extra.py` (8). La suite de Python (129) y la de la web (46) pasan, y `vite build` compila.
