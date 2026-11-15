@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as stylex from '@stylexjs/stylex';
 import { Map as MlMap, type GeoJSONSource } from 'maplibre-gl';
+import '../../lib/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { cellToBoundary } from 'h3-js';
 import { Heading, Text } from '@astryxdesign/core/Text';
@@ -27,7 +28,9 @@ const s = stylex.create({
   controls: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--spacing-3)', flexWrap: 'wrap' },
   group: { display: 'flex', alignItems: 'center', gap: 'var(--spacing-2)', flexWrap: 'wrap' },
   stage: { position: 'relative', width: '100%', aspectRatio: { default: '16 / 10', '@media (max-width: 720px)': '4 / 5' }, borderRadius: '2px', overflow: 'hidden', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', backgroundColor: 'var(--color-background-muted)' },
-  map: { position: 'absolute', inset: 0 },
+  // width/height too: maplibre-gl.css sets .maplibregl-map{position:relative} and can win over 'absolute', which
+  // left the container 0 px tall (blank animation)
+  map: { position: 'absolute', inset: 0, width: '100%', height: '100%' },
   stamp: { position: 'absolute', top: 'var(--spacing-3)', left: 'var(--spacing-3)', display: 'flex', flexDirection: 'column', gap: '2px', padding: '8px 12px', borderRadius: '2px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-text-secondary)', backgroundColor: 'var(--color-background-surface)', pointerEvents: 'none' },
   month: { fontFamily: 'var(--font-family-heading)', fontWeight: 600, fontSize: { default: '24px', '@media (max-width: 720px)': '19px' }, lineHeight: 1.1, fontVariantNumeric: 'lining-nums tabular-nums', fontVariationSettings: '"opsz" 36' },
   est: { display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--color-text-secondary)' },

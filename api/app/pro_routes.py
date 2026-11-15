@@ -180,7 +180,7 @@ def build_bulletin(cells, area, country_hint="Mexico"):
 
 def _polish(sections):
     """Optionally rewrite prose with the LLM; keep the template when any number would change."""
-    from ai.intent import setting
+    from ai.intent import llm_model, setting
     from ai.narrate import numbers_preserved
     if not setting("ANTHROPIC_API_KEY"):
         return sections, False
@@ -193,7 +193,7 @@ def _polish(sections):
             if len(text) < 20 or s["heading"] == "Aviso":
                 out.append(s)
                 continue
-            resp = client.messages.create(model=setting("FIRELY_LLM_MODEL", "claude-sonnet-5-5"), max_tokens=400,
+            resp = client.messages.create(model=llm_model(), max_tokens=1024, output_config={"effort": "low"},
                                           system="Reescribe en español, claro y breve. No agregues ni cambies cifras, nombres ni afirmaciones. Solo texto plano.",
                                           messages=[{"role": "user", "content": text}])
             new = "".join(b.text for b in resp.content if getattr(b, "type", None) == "text").strip()

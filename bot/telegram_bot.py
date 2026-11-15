@@ -1,4 +1,4 @@
-"""Long-polling Telegram interface to Firely's read-only API.
+"""Long-polling Telegram interface to Firely.
 
 Run with ``.venv/bin/python -m bot.telegram_bot``.
 """
@@ -28,8 +28,8 @@ def default_state_path() -> Path:
 STATE_PATH = default_state_path()
 LANGS = {"es", "en", "pt"}
 WORDS = {
-    "es": {"start": "Tu chat_id es: {chat_id}\nLo necesitas para suscribirte a las alertas de ejercicio de Firely: en la web (Plataforma › Alertas) o con POST /api/subscriptions indica este chat_id, el área y el umbral. Un operador revisa y aprueba cada suscripción antes de cualquier envío, y todos los mensajes van marcados EJERCICIO / PRUEBA (no son alertas oficiales). Para darte de baja, pide al operador que borre la suscripción.\n",
-           "help": "Comandos: /calendario <lugar> [año], /temporada <lugar>, /incendios <lugar>, /semaforo <lugar>, /hoy <lugar>, /lang es|en|pt, /ayuda. También puedes escribir o mandar una nota de voz (¿cómo va la temporada en Arteaga?) o compartir tu ubicación.",
+    "es": {"start": "Tu chat_id es: {chat_id}\nUsa /suscribir <lugar> para recibir alertas de ejercicio en este chat. Cada mensaje se marca EJERCICIO / PRUEBA y no es una alerta oficial. Para darte de baja escribe /baja.\n",
+           "help": "Comandos: /calendario <lugar> [año], /temporada <lugar>, /incendios <lugar>, /semaforo <lugar>, /pronostico <lugar>, /alerta <lugar>, /suscribir <lugar>, /suscripciones, /baja [id], /hoy <lugar>, /lang es|en|pt, /ayuda. También puedes escribir o mandar una nota de voz (¿cómo va la temporada en Arteaga?) o compartir tu ubicación.",
            "welcome": "Firely: calendario de actividad de quemas.\n", "usage": "Indica un lugar. Ejemplo: /calendario Arteaga 2021",
            "unknown": "Comando no reconocido. Usa /ayuda.", "choice": "Elige un lugar respondiendo con su número:",
            "bad_choice": "Responde con uno de los números de la lista.", "not_found": "No se encontró el lugar.",
@@ -39,9 +39,9 @@ WORDS = {
            "no_data": "No hay datos disponibles para este lugar y periodo.",
            "peak": "Mes con mayor actividad", "latest": "Último mes", "anomaly": "anomalía", "return": "periodo de retorno",
            "unavailable": "no disponible", "years": "años", "events": "Incendios principales", "season": "Temporada",
-           "simulated": "Datos simulados de la API de desarrollo.", "heard": "Entendí", "no_voice": "No puedo transcribir notas de voz en este servidor. Escribe tu pregunta, por ejemplo: incendios en Arteaga en marzo de 2021.", "voice_error": "No pude descargar o entender la nota de voz. Intenta de nuevo o escribe la pregunta.", "here": "Tu ubicación (±25 km)", "priority": "Prioridad", "recent": "Detecciones de las últimas 24 h", "recent_none": "Sin detecciones en las últimas 24 h.", "recent_off": "La capa de detecciones recientes no está disponible en este servidor.", "no_location": "Indica un lugar o comparte tu ubicación.", "point": "Un punto de calor es una detección satelital, no un incendio confirmado."},
-    "en": {"start": "Your chat_id is: {chat_id}\nYou need it to subscribe to Firely exercise alerts: on the web (Platform › Alerts) or with POST /api/subscriptions, give this chat_id, the area and the threshold. An operator reviews and approves each subscription before anything is sent, and every message is marked EXERCISE / TEST (not an official alert). To unsubscribe, ask the operator to delete the subscription.\n",
-           "help": "Commands: /calendario <place> [year], /temporada <place>, /incendios <place>, /semaforo <place>, /hoy <place>, /lang es|en|pt, /ayuda. You can also type or send a voice note (how is the season in Arteaga?) or share your location.",
+           "simulated": "Datos simulados de la API de desarrollo.", "heard": "Entendí", "no_voice": "No puedo transcribir notas de voz en este servidor. Escribe tu pregunta, por ejemplo: incendios en Arteaga en marzo de 2021.", "voice_error": "No pude descargar o entender la nota de voz. Intenta de nuevo o escribe la pregunta.", "here": "Tu ubicación (±25 km)", "priority": "Prioridad", "recent": "Detecciones de las últimas 24 h", "recent_none": "Sin detecciones en las últimas 24 h.", "recent_off": "La capa de detecciones recientes no está disponible en este servidor.", "no_location": "Indica un lugar o comparte tu ubicación.", "point": "Un punto de calor es una detección satelital, no un incendio confirmado.", "outlook": "Perspectiva 1-3 meses", "expected": "esperadas", "normal": "normal", "outlook_clim": "aquí el modelo no supera a lo normal; se muestra lo normal", "issued": "Con datos hasta", "outlook_note": "Actividad esperada (detecciones armonizadas), no dónde empieza un incendio."},
+    "en": {"start": "Your chat_id is: {chat_id}\nUse /suscribir <place> for exercise alerts in this chat. Every message is marked EXERCISE / TEST and is not an official alert. To unsubscribe, send /baja.\n",
+           "help": "Commands: /calendario <place> [year], /temporada <place>, /incendios <place>, /semaforo <place>, /pronostico <place>, /alerta <place>, /suscribir <place>, /suscripciones, /baja [id], /hoy <place>, /lang es|en|pt, /ayuda. You can also type or send a voice note (how is the season in Arteaga?) or share your location.",
            "welcome": "Firely: fire activity calendar.\n", "usage": "Enter a place. Example: /calendario Arteaga 2021",
            "unknown": "Unknown command. Use /ayuda.", "choice": "Choose a place by replying with its number:",
            "bad_choice": "Reply with a number from the list.", "not_found": "Place not found.",
@@ -51,9 +51,9 @@ WORDS = {
            "no_data": "No data available for this place and period.",
            "peak": "Peak activity month", "latest": "Latest month", "anomaly": "anomaly", "return": "return period",
            "unavailable": "unavailable", "years": "years", "events": "Top fire events", "season": "Season",
-           "simulated": "Simulated data from the development API.", "heard": "I understood", "no_voice": "This server cannot transcribe voice notes. Type your question, e.g. fires in Arteaga in March 2021.", "voice_error": "I could not download or understand the voice note. Try again or type the question.", "here": "Your location (±25 km)", "priority": "Priority", "recent": "Detections in the last 24 h", "recent_none": "No detections in the last 24 h.", "recent_off": "The recent-detections layer is not available on this server.", "no_location": "Name a place or share your location.", "point": "A hotspot is a satellite detection, not a confirmed fire."},
-    "pt": {"start": "Seu chat_id é: {chat_id}\nVocê precisa dele para assinar os alertas de exercício do Firely: na web (Plataforma › Alertas) ou com POST /api/subscriptions, informe este chat_id, a área e o limiar. Um operador revisa e aprova cada assinatura antes de qualquer envio, e todas as mensagens são marcadas EXERCÍCIO / TESTE (não são alertas oficiais). Para cancelar, peça ao operador que apague a assinatura.\n",
-           "help": "Comandos: /calendario <lugar> [ano], /temporada <lugar>, /incendios <lugar>, /semaforo <lugar>, /hoy <lugar>, /lang es|en|pt, /ayuda. Você também pode escrever ou mandar um áudio (como está a temporada em Arteaga?) ou compartilhar sua localização.",
+           "simulated": "Simulated data from the development API.", "heard": "I understood", "no_voice": "This server cannot transcribe voice notes. Type your question, e.g. fires in Arteaga in March 2021.", "voice_error": "I could not download or understand the voice note. Try again or type the question.", "here": "Your location (±25 km)", "priority": "Priority", "recent": "Detections in the last 24 h", "recent_none": "No detections in the last 24 h.", "recent_off": "The recent-detections layer is not available on this server.", "no_location": "Name a place or share your location.", "point": "A hotspot is a satellite detection, not a confirmed fire.", "outlook": "1-3 month outlook", "expected": "expected", "normal": "normal", "outlook_clim": "the model does not beat normal here; showing normal", "issued": "Data up to", "outlook_note": "Expected activity (harmonized detections), not where a fire will start."},
+    "pt": {"start": "Seu chat_id é: {chat_id}\nUse /suscribir <lugar> para receber alertas de exercício neste chat. Cada mensagem é marcada EXERCÍCIO / TESTE e não é um alerta oficial. Para cancelar, escreva /baja.\n",
+           "help": "Comandos: /calendario <lugar> [ano], /temporada <lugar>, /incendios <lugar>, /semaforo <lugar>, /pronostico <lugar>, /alerta <lugar>, /suscribir <lugar>, /suscripciones, /baja [id], /hoy <lugar>, /lang es|en|pt, /ayuda. Você também pode escrever ou mandar um áudio (como está a temporada em Arteaga?) ou compartilhar sua localização.",
            "welcome": "Firely: calendário de atividade do fogo.\n", "usage": "Informe um lugar. Exemplo: /calendario Arteaga 2021",
            "unknown": "Comando desconhecido. Use /ayuda.", "choice": "Escolha um lugar respondendo com o número:",
            "bad_choice": "Responda com um número da lista.", "not_found": "Lugar não encontrado.",
@@ -63,8 +63,29 @@ WORDS = {
            "no_data": "Não há dados para este lugar e período.",
            "peak": "Mês de maior atividade", "latest": "Último mês", "anomaly": "anomalia", "return": "período de retorno",
            "unavailable": "indisponível", "years": "anos", "events": "Principais incêndios", "season": "Temporada",
-           "simulated": "Dados simulados da API de desenvolvimento.", "heard": "Entendi", "no_voice": "Este servidor não transcreve áudios. Escreva sua pergunta, por exemplo: incêndios em Arteaga em março de 2021.", "voice_error": "Não consegui baixar ou entender o áudio. Tente de novo ou escreva a pergunta.", "here": "Sua localização (±25 km)", "priority": "Prioridade", "recent": "Detecções das últimas 24 h", "recent_none": "Sem detecções nas últimas 24 h.", "recent_off": "A camada de detecções recentes não está disponível neste servidor.", "no_location": "Informe um lugar ou compartilhe sua localização.", "point": "Um ponto de calor é uma detecção de satélite, não um incêndio confirmado."},
+           "simulated": "Dados simulados da API de desenvolvimento.", "heard": "Entendi", "no_voice": "Este servidor não transcreve áudios. Escreva sua pergunta, por exemplo: incêndios em Arteaga em março de 2021.", "voice_error": "Não consegui baixar ou entender o áudio. Tente de novo ou escreva a pergunta.", "here": "Sua localização (±25 km)", "priority": "Prioridade", "recent": "Detecções das últimas 24 h", "recent_none": "Sem detecções nas últimas 24 h.", "recent_off": "A camada de detecções recentes não está disponível neste servidor.", "no_location": "Informe um lugar ou compartilhe sua localização.", "point": "Um ponto de calor é uma detecção de satélite, não um incêndio confirmado.", "outlook": "Perspectiva 1-3 meses", "expected": "esperadas", "normal": "normal", "outlook_clim": "aqui o modelo não supera o normal; mostra-se o normal", "issued": "Dados até", "outlook_note": "Atividade esperada (detecções harmonizadas), não onde um incêndio vai começar."},
 }
+WORDS["es"].update({
+    "subscribed": "Suscrito a {name}. Alertas de EJERCICIO / PRUEBA, evaluación diaria, umbral de índice 55. Para darte de baja escribe /baja.",
+    "subscriptions": "Tus suscripciones:", "none": "No tienes suscripciones.",
+    "removed": "Suscripciones eliminadas:", "no_match": "No encontré una suscripción con ese ID.",
+    "many_matches": "El ID coincide con varias suscripciones. Escribe más caracteres.",
+    "threshold": "umbral", "subscribe_usage": "Indica un lugar. Ejemplo: /suscribir Arteaga",
+})
+WORDS["en"].update({
+    "subscribed": "Subscribed to {name}. EXERCISE / TEST alerts, evaluated daily, index threshold 55. To unsubscribe, send /baja.",
+    "subscriptions": "Your subscriptions:", "none": "You have no subscriptions.",
+    "removed": "Subscriptions removed:", "no_match": "No subscription has that ID.",
+    "many_matches": "That ID matches several subscriptions. Enter more characters.",
+    "threshold": "threshold", "subscribe_usage": "Enter a place. Example: /suscribir Arteaga",
+})
+WORDS["pt"].update({
+    "subscribed": "Inscrito em {name}. Alertas de EXERCÍCIO / TESTE, avaliação diária, limiar do índice 55. Para cancelar, escreva /baja.",
+    "subscriptions": "Suas inscrições:", "none": "Você não tem inscrições.",
+    "removed": "Inscrições removidas:", "no_match": "Nenhuma inscrição tem esse ID.",
+    "many_matches": "Esse ID corresponde a várias inscrições. Digite mais caracteres.",
+    "threshold": "limiar", "subscribe_usage": "Informe um lugar. Exemplo: /suscribir Arteaga",
+})
 MONTHS = {
     "es": "ene feb mar abr may jun jul ago sep oct nov dic".split(),
     "en": "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(),
@@ -223,14 +244,36 @@ class Bot:
         if command in {"ayuda", "help"}:
             self._send(chat_id, words["help"])
             return
-        if command not in {"calendario", "temporada", "incendios", "semaforo", "hoy"}:
+        if command in {"baja", "suscripciones"}:
+            try:
+                rows = self.api.my_subscriptions(chat_id).get("rows", [])
+                if command == "suscripciones":
+                    lines = [f"{row['name']} · {words['threshold']} {row['min_index']:g} · ID {row['id']}" for row in rows]
+                    self._send(chat_id, words["subscriptions"] + "\n" + "\n".join(lines) if lines else words["none"])
+                    return
+                matches = [row for row in rows if row["id"].startswith(argument)] if argument else rows
+                if not matches:
+                    self._send(chat_id, words["no_match"] if argument else words["none"])
+                    return
+                if argument and len(matches) > 1:
+                    self._send(chat_id, words["many_matches"])
+                    return
+                for row in matches:
+                    self.api.unsubscribe(row["id"], chat_id)
+            except APIError:
+                self._send(chat_id, words["down"], {})
+                return
+            self._send(chat_id, words["removed"] + "\n" + "\n".join(row["name"] for row in matches))
+            return
+        if command not in {"calendario", "temporada", "incendios", "semaforo", "hoy", "pronostico", "alerta", "suscribir"}:
             self._send(chat_id, words["unknown"])
             return
         if not argument:
             if command in {"semaforo", "hoy"} and record.get("location"):
                 self._fetch(chat_id, lang, command, record["location"], None)
             else:
-                self._send(chat_id, words["no_location"] if command in {"semaforo", "hoy"} else words["usage"])
+                self._send(chat_id, words["no_location"] if command in {"semaforo", "hoy"} else
+                           words["subscribe_usage"] if command == "suscribir" else words["usage"])
             return
         try:
             resolved = self.api.resolve(argument, lang)
@@ -265,6 +308,10 @@ class Bot:
             return
         label = candidate.get("label") or ""
         try:
+            if command == "suscribir":
+                result = self.api.subscribe(label or "Área", bbox, chat_id, lang, min_index=55)
+                self._send(chat_id, words["subscribed"].format(name=label or "Área"), result)
+                return
             if command == "calendario":
                 result = self.api.calendar(bbox, year)
             elif command == "temporada":
@@ -273,6 +320,10 @@ class Bot:
                 result = self.api.risk(bbox)
             elif command == "hoy":
                 result = self.api.recent(bbox, 24)
+            elif command == "pronostico":
+                result = self.api.outlook(bbox)
+            elif command == "alerta":
+                result = self.api.alert(bbox, label or "Área", lang)
             else:
                 result = self.api.events(bbox)
         except APIError:
@@ -330,6 +381,34 @@ class Bot:
             lines.append(words["point"])
             lines.append(f"Ver datos: {self.api.query_url('/recent', {'bbox': bbox, 'hours': 24})}")
             self._send(chat_id, "\n".join(lines), result)
+        elif command == "alerta":
+            # The alert as it would arrive, evaluated now; a reply to whoever asks.
+            text = result.get("message") or words["no_data"]
+            self._send(chat_id, prefix + text, result)
+        elif command == "pronostico":
+            items = [f for f in (result.get("forecasts") or []) if isinstance(f, dict)]
+            if not items:
+                self._send(chat_id, prefix + (result.get("empty_reason") or words["no_data"]), result)
+                return
+            lines = [prefix + f"{words['outlook']} · {label}"]
+            issued = sorted({f.get("issue") for f in items if f.get("issue")})
+            for f in items:
+                target = str(f.get("target") or "")
+                month = MONTHS[lang][int(target[5:7]) - 1] + " " + target[:4] if len(target) == 7 else target
+                normal = f.get("normal_detections")
+                if f.get("show") == "climatology":
+                    lines.append(f"{month}: {words['normal']} ~{normal:g} ({words['outlook_clim']})")
+                    continue
+                ratio = f.get("ratio_to_normal")
+                ratio_txt = f" · {ratio:g}×" if isinstance(ratio, (int, float)) else ""
+                country = f" [{f.get('country')}]" if len({x.get('country') for x in items}) > 1 else ""
+                lines.append(f"{month}{country}: ~{f.get('expected_detections'):g} {words['expected']} "
+                             f"({words['normal']} {normal:g}){ratio_txt}")
+            if issued:
+                lines.append(f"{words['issued']} {', '.join(issued)}")
+            lines.append(words["outlook_note"])
+            lines.append(f"Ver datos: {self.api.query_url('/forecast', {'bbox': bbox})}")
+            self._send(chat_id, "\n".join(lines), result)
         elif command == "temporada":
             summary = result.get("summary_es")
             self._send(chat_id, prefix + f"{words['season']} · {label}\n" +
@@ -359,6 +438,11 @@ class Bot:
             {"command": "temporada", "description": "Temporada"},
             {"command": "incendios", "description": "Eventos principales"},
             {"command": "semaforo", "description": "Prioridad del área"},
+            {"command": "pronostico", "description": "Perspectiva de actividad 1-3 meses"},
+            {"command": "alerta", "description": "Ver la alerta de ejercicio de un lugar ahora"},
+            {"command": "suscribir", "description": "Suscribirse a alertas de ejercicio"},
+            {"command": "suscripciones", "description": "Ver tus suscripciones"},
+            {"command": "baja", "description": "Cancelar tus suscripciones"},
             {"command": "hoy", "description": "Detecciones últimas 24 h"},
             {"command": "lang", "description": "es / en / pt"},
         ])

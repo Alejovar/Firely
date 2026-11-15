@@ -13,12 +13,11 @@ from zipfile import ZipFile
 import duckdb
 import h3
 
-from pipeline.ingest import COUNTRIES, annual_sources
+from pipeline.ingest import annual_sources
 
 
 def build(raw: Path, processed: Path, country: str, force: bool = False) -> dict:
-    if country not in COUNTRIES:
-        raise ValueError(f"country must be one of {sorted(COUNTRIES)}")
+    # Any FIRMS country works: the mask only reads the annual all-country summaries (which carry `type`).
     dest = processed / "static_sources" / f"{country}.parquet"
     if dest.exists() and not force:
         return {"country": country, "skipped": True}
@@ -68,7 +67,7 @@ def build(raw: Path, processed: Path, country: str, force: bool = False) -> dict
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--country", required=True, choices=sorted(COUNTRIES))
+    parser.add_argument("--country", required=True, help="FIRMS country name, e.g. Mexico, Bolivia")
     parser.add_argument("--raw", type=Path, default=Path(os.getenv("FIRELY_DATA_RAW", "data/raw")))
     parser.add_argument("--processed", type=Path, default=Path(os.getenv("FIRELY_DATA_PROCESSED", "data/processed")))
     parser.add_argument("--force", action="store_true")

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Vector rendition of web/public/icon.svg. -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp" android:height="108dp"
-    android:viewportWidth="512" android:viewportHeight="512">
-    <path android:fillColor="#0d0f11" android:pathData="M0,0H512V512H0Z" />
-    <path android:fillColor="#f2711c" android:pathData="M262,92c22,70 82,92 74,170 22,-8 34,-30 34,-56 58,74 40,170 -28,206 -66,34 -170,10 -196,-66 -24,-72 26,-118 46,-168 6,40 30,62 46,64 -16,-62 8,-112 24,-150z" />
-    <path android:fillColor="#ffd9a8" android:pathData="M290,352a34,34 0,1 1,-68,0a34,34 0,1 1,68,0" />
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="512" android:viewportHeight="512">
+  <path android:pathData="M112,0H400Q512,0 512,112V400Q512,512 400,512H112Q0,512 0,400V112Q0,0 112,0Z" android:fillColor="#1a1f1c" />
+  <path android:pathData="M256 70 L417 163 Q429 170 429 184 L429 328 Q429 342 417 349 L270 434 Q256 442 242 434 L95 349 Q83 342 83 328 L83 184 Q83 170 95 163 L242 78 Q249 74 256 70 Z" android:fillColor="#f26a1b" />
+  <path android:pathData="M256 140 C300 200 344 236 334 310 C326 368 292 398 256 398 C220 398 186 368 178 310 C172 262 204 236 220 196 C228 232 242 250 258 254 C248 214 240 178 256 140 Z" android:fillColor="#1a1f1c" />
+  <path android:pathData="M256 300 C276 322 288 338 284 358 C280 376 268 386 256 386 C244 386 232 376 228 358 C225 342 238 326 256 300 Z" android:fillColor="#7cc7ff" />
+  <path android:pathData="M440.0,92.0a26.0,26.0 0,1 1,-52.0,0a26.0,26.0 0,1 1,52.0,0" android:fillColor="#e9ece6" />
+  <path android:pathData="M352 64 A72 72 0 0 1 444 154" android:fillColor="#00000000" android:strokeColor="#e9ece6" android:strokeWidth="10" android:strokeLineCap="round" android:fillAlpha=".55" android:strokeAlpha=".55" />
 </vector>

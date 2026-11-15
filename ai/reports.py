@@ -13,7 +13,7 @@ import json
 import re
 from pathlib import Path
 
-from .intent import MONTH_INDEX, fold, setting
+from .intent import MONTH_INDEX, fold, llm_model, setting
 
 FIELDS = ("state", "municipality", "year", "month", "fires", "area_ha", "cause")
 HEADERS = {
@@ -191,14 +191,17 @@ def _llm(text: str, client=None) -> dict | None:
             client = anthropic.Anthropic(api_key=key, timeout=20.0)
         schema = json.loads((Path(__file__).parent / "prompts" / "report.schema.json").read_text(encoding="utf-8"))
         system = (Path(__file__).parent / "prompts" / "report.md").read_text(encoding="utf-8")
+        # Structured output (JSON schema) instead of a forced tool call: current models reject forced tool_choice.
         response = client.messages.create(
-            model=setting("FIRELY_LLM_MODEL", "claude-sonnet-5-5"), max_tokens=4000, system=system,
+            model=llm_model(), max_tokens=16000, system=system,
             messages=[{"role": "user", "content": f"<documento>\n{text}\n</documento>"}],
-            tools=[{"name": "record_fire_statistics", "description": "Records copied from the document", "input_schema": schema}],
-            tool_choice={"type": "tool", "name": "record_fire_statistics"})
+            output_config={"format": {"type": "json_schema", "schema": schema}})
+        if getattr(response, "stop_reason", None) in ("refusal", "max_tokens"):
+            return None
         for block in response.content:
-            if getattr(block, "type", None) == "tool_use" and getattr(block, "name", None) == "record_fire_statistics":
-                data = block.input if isinstance(block.input, dict) else {}
+            if getattr(block, "type", None) == "text":
+                data = json.loads(block.text)
+                data = data if isinstance(data, dict) else {}
                 recs = [{f: r.get(f) for f in FIELDS} | {"source_line": r.get("source_line")}
                         for r in data.get("records", []) if isinstance(r, dict)][:MAX_ROWS]
                 tots = [{f: r.get(f) for f in FIELDS} | {"source_line": r.get("source_line")}

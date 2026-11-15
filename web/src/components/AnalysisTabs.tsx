@@ -17,6 +17,7 @@ import { SeasonPanel, AnalogsPanel, ContextPanel, ReportedPanel, WeekdayNightPan
 import { CumulativeChart, FireEvents, RecurrencePanel, RiskPanel, TerritoryPanel } from './analysis/ExpandedPanels';
 import { RiskWeightsPanel, WeatherPanel, WindPanel } from './analysis/ContextExtras';
 import { ForecastPanel, PriorityPanel } from './analysis/ForecastPriority';
+import { OutlookPanel } from './analysis/OutlookPanel';
 
 const sx = stylex.create({
   head: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' },
@@ -101,7 +102,7 @@ export default function AnalysisTabs() {
         {data.tab === 'analogs' && <><AnalogsPanel data={data.analogs} lang={app.lang} />{data.calendar.data ? <CumulativeChart calendar={data.calendar.data} analogs={data.analogs} lang={app.lang} currentYear={Number(data.analogs.date.slice(0, 4))} /> : data.calendar.error && fallback(data.calendar.error)}</>}
         {data.tab === 'season' && <SeasonPanel data={data.season} lang={app.lang} />}
         {data.tab === 'context' && <><ContextPanel data={data.context} lang={app.lang} /><WeatherPanel area={area} from={contextFrom} to={contextTo} lang={app.lang} /><Card padding={5}><VStack gap={3}><Heading level={3}>CONAFOR</Heading>{data.reported?.data ? <ReportedPanel data={data.reported.data} lang={app.lang} /> : data.reported?.error ? fallback(data.reported.error) : <EmptyState title={c.admin} description={c.choose} />}</VStack></Card></>}
-        {data.tab === 'risk' && <><ForecastPanel area={area} lang={app.lang} /><RiskPanel data={data.risk} territory={data.territory.data} lang={app.lang} /><PriorityPanel area={area} lang={app.lang} /><RiskWeightsPanel area={area} lang={app.lang} /><WindPanel area={area} lang={app.lang} /></>}
+        {data.tab === 'risk' && <><OutlookPanel area={area} lang={app.lang} /><ForecastPanel area={area} lang={app.lang} /><RiskPanel data={data.risk} territory={data.territory.data} lang={app.lang} /><PriorityPanel area={area} lang={app.lang} /><RiskWeightsPanel area={area} lang={app.lang} /><WindPanel area={area} lang={app.lang} /></>}
         {data.tab === 'patterns' && <><WeekdayNightPanel data={{ weekday: data.weekday, night: data.night }} lang={app.lang} />{data.recurrence.data ? <RecurrencePanel data={data.recurrence.data} lang={app.lang} /> : data.recurrence.error && fallback(data.recurrence.error)}</>}
         {data.tab === 'territory' && <TerritoryPanel data={data.territory} lang={app.lang} />}
       </VStack>}

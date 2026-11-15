@@ -189,27 +189,65 @@ class FakeTelegram:
         self.sent.append((chat_id, text))
 
 
-def test_subscriptions_crud_and_alerts_job(data):
+def test_subscriptions_crud_and_alerts_job(data, monkeypatch):
     client = _client(subscriptions_routes.router)
     r = client.post("/subscriptions", json={"name": "Arteaga", "area": {"h3": CELL}, "chat_id": 123456789, "min_index": 10})
     assert r.status_code == 201
     sub = r.json()["subscription"]
-    assert sub["approved"] is False and sub["chat_id_masked"] == "…789" and "chat_id" not in sub
+    assert sub["approved"] is True and sub["approved_at"] == sub["created_at"]
+    assert sub["chat_id_masked"] == "…789" and "chat_id" not in sub
+    assert "/baja" in r.json()["note"] and "EJERCICIO" in r.json()["note"]
     low = client.post("/subscriptions", json={"name": "Alto umbral", "area": {"h3": CELL}, "chat_id": 5, "min_index": 100}).json()
     assert client.post("/subscriptions", json={"name": "x", "area": {}, "chat_id": 1}).status_code == 422
     assert len(client.get("/subscriptions").json()["rows"]) == 2
+    assert [x["id"] for x in client.get("/subscriptions", params={"chat_id": 123456789}).json()["rows"]] == [sub["id"]]
+    assert client.get("/subscriptions", params={"chat_id": 999}).json()["rows"] == []
+    assert client.delete(f"/subscriptions/{sub['id']}").status_code == 403
+    mismatch = client.delete(f"/subscriptions/{sub['id']}", params={"chat_id": 5})
+    assert mismatch.status_code == 403 and mismatch.json()["detail"] == {"code": "chat_mismatch"}
+
+    # Preview: evaluates now with the real data and returns the message, never sends
+    prev = client.get(f"/subscriptions/{sub['id']}/preview").json()
+    assert prev["sent"] is False and prev["evaluation"]["triggered"] is True
+    assert prev["status"] in {"would_send", "telegram_not_configured"}
+    assert prev["message"].startswith("[EJERCICIO / PRUEBA]") and "123456789" not in str(prev)
+    assert client.get(f"/subscriptions/{low['subscription']['id']}/preview").json()["status"] == "below_threshold"
+    assert client.get("/subscriptions/nope/preview").status_code == 404
+    demo = client.post("/subscriptions", json={"name": "Solo prueba", "area": {"h3": CELL}, "min_index": 10}).json()["subscription"]
+    assert demo["chat_id_masked"] is None
+    assert client.get(f"/subscriptions/{demo['id']}/preview").json()["status"] == "no_chat"
+    assert {e["subscription"]: e for e in alerts_job.run(dry_run=True, telegram=FakeTelegram())}[demo["id"]]["status"] == "no_chat"
+    assert client.delete(f"/subscriptions/{demo['id']}").json() == {"deleted": demo["id"]}
+
+    # On demand (bot /alerta): no subscription, reply only, says whether the threshold is reached
+    area = client.get("/alerts/preview", params={"h3": CELL, "name": "Arteaga", "min_index": 10}).json()
+    assert area["sent"] is False and area["triggered"] is True and "Hoy SE ALCANZA" in area["message"]
+    assert "baja de la suscripción" not in area["message"]
+    assert client.get("/alerts/preview", params={"name": "x"}).status_code == 422
+
+    # Test send from the web: needs the bot token, goes only to the subscription's chat, rate limited
+    import ai.intent as intent_mod
+    real_setting, real_telegram = intent_mod.setting, alerts_job._telegram
+    monkeypatch.setattr("ai.intent.setting", lambda name, default=None: None)
+    assert client.post(f"/subscriptions/{sub['id']}/test").status_code == 503
+    monkeypatch.setattr("ai.intent.setting", lambda name, default=None: "fake-token" if name == "TELEGRAM_BOT_TOKEN" else default)
+    tg_test = FakeTelegram()
+    monkeypatch.setattr(alerts_job, "_telegram", lambda token: tg_test)
+    ok = client.post(f"/subscriptions/{sub['id']}/test").json()
+    assert ok["sent"] is True and tg_test.sent and tg_test.sent[0][0] == 123456789 and tg_test.sent[0][1].startswith("[EJERCICIO / PRUEBA]")
+    assert client.post(f"/subscriptions/{sub['id']}/test").status_code == 429  # cooldown
+    monkeypatch.setattr(intent_mod, "setting", real_setting); monkeypatch.setattr(alerts_job, "_telegram", real_telegram)
 
     tg = FakeTelegram()
     first = {e["subscription"]: e for e in alerts_job.run(telegram=tg)}
-    assert first[sub["id"]]["status"] == "pending_approval" and tg.sent == []
+    assert first[sub["id"]]["status"] == "sent" and len(tg.sent) == 1
     assert first[low["subscription"]["id"]]["status"] == "below_threshold"
 
-    assert alerts_job.approve(sub["id"])
     dry = {e["subscription"]: e for e in alerts_job.run(dry_run=True, telegram=tg)}
-    assert dry[sub["id"]]["status"] == "dry_run" and "EJERCICIO" in dry[sub["id"]]["message"] and tg.sent == []
+    assert dry[sub["id"]]["status"] == "already_sent" and len(tg.sent) == 1
 
     sent = {e["subscription"]: e for e in alerts_job.run(telegram=tg)}
-    assert sent[sub["id"]]["status"] == "sent" and len(tg.sent) == 1
+    assert sent[sub["id"]]["status"] == "already_sent" and len(tg.sent) == 1
     chat, text = tg.sent[0]
     assert chat == 123456789 and text.startswith("[EJERCICIO / PRUEBA]") and "NASA FIRMS" in text
     assert "3.0× la mediana" in text  # 30 vs median 10 in March
@@ -222,8 +260,8 @@ def test_subscriptions_crud_and_alerts_job(data):
     log = (data / "state" / "alerts_log.jsonl").read_text().splitlines()
     assert log and all("123456789" not in line for line in log)
 
-    assert client.delete(f"/subscriptions/{sub['id']}").json() == {"deleted": sub["id"]}
-    assert client.delete(f"/subscriptions/{sub['id']}").status_code == 404
+    assert client.delete(f"/subscriptions/{sub['id']}", params={"chat_id": 123456789}).json() == {"deleted": sub["id"]}
+    assert client.delete(f"/subscriptions/{sub['id']}", params={"chat_id": 123456789}).status_code == 404
 
 
 # ---------------------------------------------------------------- NRT daily ingestion

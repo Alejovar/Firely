@@ -35,12 +35,37 @@ def setting(name: str, default: str | None = None) -> str | None:
     return default
 
 
+DEFAULT_MODEL = 'claude-haiku-5-5'  # place/date extraction and rewording are small tasks
+
+
+def llm_model() -> str:
+    """FIRELY_LLM_MODEL, or the default when unset OR empty (docker compose passes `FIRELY_LLM_MODEL=` as '')."""
+    return (setting('FIRELY_LLM_MODEL') or '').strip() or DEFAULT_MODEL
+
+
 def fold(value: str) -> str:
     return ''.join(c for c in unicodedata.normalize('NFKD', value.casefold()) if not unicodedata.combining(c))
 
 
 def _month_end(year: int, month: int) -> str:
     return date(year, month, monthrange(year, month)[1]).isoformat()
+
+
+REQUEST_WORDS = (
+    r'muestrame|mostrar|dame|quiero|ver|show|me|mostre|mostra|please|por favor|fires|wildfires|fire|incendios|incendio|'
+    r'queimas|queimada|incendio florestal|burns|en|in|em|de|del|da|do|el|la|los|las|the|from|to|a|hasta|ate|entre|'
+    r'between|during|durante|sobre|actividad|activity|atividade|'
+    # question words: the rules fallback must not mistake them for a place name
+    r'es|sera|seria|probable|probablemente|probabilidad|posible|riesgo|risk|likely|chance|that|there|will|be|is|was|'
+    r'how|what|como|cual|cuantos|cuantas|que|qui|haya|habra|hay|hubo|va|vai|ter|tera|un|una|uno|um|uma|an|any|algun|'
+    r'alguno|alguna|temporada|season|fue|foi|esta|este|estara|el ano|ano|year|mes|month|proximo|siguiente|next|'
+    r'pronostico|forecast|previsao|perspectiva|outlook'
+)
+
+
+def _strip_request_words(text: str) -> str:
+    text = re.sub(rf'\b(?:{REQUEST_WORDS})\b', ' ', text)
+    return re.sub(r'\s+', ' ', text).strip()
 
 
 def rules(text: str, today: date | None = None) -> dict:
@@ -92,9 +117,16 @@ def rules(text: str, today: date | None = None) -> dict:
     place = clean
     for a, b in sorted(spans, reverse=True):
         place = place[:a] + ' ' + place[b:]
-    place = re.sub(r'\b(?:muestrame|mostrar|dame|quiero|ver|show|me|mostre|mostra|please|por favor|fires|wildfires|incendios|incendio|queimas|burns|en|in|em|de|del|da|do|el|la|los|las|the|from|to|a|hasta|ate|entre|between|during|durante|sobre|actividad|activity)\b', ' ', place)
     place = re.sub(r'[^\w\s-]', ' ', place)
-    place = re.sub(r'\s+', ' ', place).strip()
+    # A question usually names the place after its last locative preposition ("... un incendio en arteaga"):
+    # prefer that tail when something remains of it once request words are removed.
+    for match in reversed(list(re.finditer(r'\b(?:en|in|em|near|cerca de|perto de)\b', place))):
+        tail = _strip_request_words(place[match.end():])
+        if tail:
+            place = tail
+            break
+    else:
+        place = _strip_request_words(place)
     return {'place_text': place or None, 'date_from': start, 'date_to': end, 'granularity': granularity, 'lang': lang, 'source': 'rules'}
 
 
@@ -126,13 +158,19 @@ def extract(text: str, *, client=None, today: date | None = None) -> dict:
             client = anthropic.Anthropic(api_key=key, timeout=5.0)
         schema = json.loads((Path(__file__).parent / 'prompts' / 'intent.schema.json').read_text())
         system = (Path(__file__).parent / 'prompts' / 'intent.md').read_text()
-        response = client.messages.create(model=setting('FIRELY_LLM_MODEL', 'claude-sonnet-5-5'), max_tokens=256,
-            system=system, messages=[{'role': 'user', 'content': text}],
-            tools=[{'name': 'extract_intent', 'description': 'Extract place and dates only', 'input_schema': schema}],
-            tool_choice={'type': 'tool', 'name': 'extract_intent'})
+        system += f"\nToday is {(today or date.today()).isoformat()}."
+        # Structured output (JSON schema) instead of a forced tool call: current models reject forced tool_choice.
+        response = client.messages.create(model=llm_model(), max_tokens=1024, system=system,
+            messages=[{'role': 'user', 'content': text}],
+            output_config={'effort': 'low', 'format': {'type': 'json_schema', 'schema': schema}})
+        if getattr(response, 'stop_reason', None) == 'refusal':
+            return rules(text, today)
         for block in response.content:
-            if getattr(block, 'type', None) == 'tool_use' and getattr(block, 'name', None) == 'extract_intent' and _valid(block.input):
-                return {**block.input, 'source': 'llm'}
+            if getattr(block, 'type', None) == 'text':
+                value = json.loads(block.text)
+                if _valid(value):
+                    return {**value, 'source': 'llm'}
+                break
     except Exception:
         pass
     return rules(text, today)

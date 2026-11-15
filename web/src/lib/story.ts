@@ -30,21 +30,28 @@ export function kmlFromHotspots(data: HotspotsGeoJson, meta: { label?: string; f
 export function csvFromHotspots(data: HotspotsGeoJson): string {
   return ['date,sensor,platform,frp_mw,confidence,daynight,lon,lat',...data.features.map(f=>[f.properties.date,f.properties.sensor,f.properties.platform,f.properties.frp_mw??'',f.properties.confidence_h,f.properties.daynight,...f.geometry.coordinates].join(','))].join('\n');
 }
-export function playCalendar(rows: CalendarRow[], onMonth:(year:number,month:number)=>void):()=>void {
+/** Play the calendar as notes. Pass an AudioContext created inside the click handler: a context created later
+ *  (in an effect) can stay suspended under the browsers' autoplay rules, which made this silent. */
+export function playCalendar(rows: CalendarRow[], onMonth:(year:number,month:number)=>void, context?: AudioContext, onDone?: ()=>void):()=>void {
   const AudioContextClass = window.AudioContext;
-  if (!AudioContextClass) return ()=>{};
-  const ctx = new AudioContextClass();
+  if (!context && !AudioContextClass) return ()=>{};
+  const ctx = context ?? new AudioContextClass();
+  void ctx.resume(); // created after the click, but some browsers start it suspended
   let stopped=false;
   const ordered=[...rows].sort((a,b)=>a.year-b.year||a.month-b.month);
   const max=Math.max(1,...ordered.map(r=>r.count_harm??0));
+  // Master chain: notes about 3x louder than before, a triangle wave (richer than a sine, so it carries on laptop
+  // speakers) and a limiter so overlapping notes never clip.
+  const limiter=ctx.createDynamicsCompressor();limiter.threshold.value=-6;limiter.knee.value=0;limiter.ratio.value=20;limiter.attack.value=.002;limiter.release.value=.1;
+  const master=ctx.createGain();master.gain.value=1;master.connect(limiter).connect(ctx.destination);
   ordered.forEach((r,i)=>{
     const start=ctx.currentTime+i*.12;
-    const volume=Math.min(.11,.015+.095*Math.sqrt((r.count_harm??0)/max));
-    const tone=(freq:number,duration:number)=>{const osc=ctx.createOscillator();const gain=ctx.createGain();osc.frequency.value=freq;osc.type='sine';gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(volume,start+.01);gain.gain.exponentialRampToValueAtTime(.001,start+duration);osc.connect(gain).connect(ctx.destination);osc.start(start);osc.stop(start+duration);};
+    const volume=Math.min(.9,.15+.75*Math.sqrt((r.count_harm??0)/max));
+    const tone=(freq:number,duration:number)=>{const osc=ctx.createOscillator();const gain=ctx.createGain();osc.frequency.value=freq;osc.type='triangle';gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(volume,start+.01);gain.gain.exponentialRampToValueAtTime(.001,start+duration);osc.connect(gain).connect(master);osc.start(start);osc.stop(start+duration);};
     tone(220+550*Math.sqrt((r.count_harm??0)/max),.1);
     if((r.anomaly_ratio??0)>=2) tone(370,.08);
     window.setTimeout(()=>{if(!stopped)onMonth(r.year,r.month)},i*120);
   });
-  const timer=window.setTimeout(()=>ctx.close(),ordered.length*120+200);
+  const timer=window.setTimeout(()=>{void ctx.close();onDone?.()},ordered.length*120+200);
   return ()=>{stopped=true;window.clearTimeout(timer);void ctx.close()};
 }

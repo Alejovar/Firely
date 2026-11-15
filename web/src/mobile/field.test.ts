@@ -59,7 +59,7 @@ describe('field packages', () => {
     const pack = await downloadFieldPack('https://one.example/api', selection, new AbortController().signal, () => {}, store);
     expect(pack.resources).toHaveLength(2);
     expect(pack.unavailable.length).toBe(fieldQueries(selection).length - 2);
-    for (const path of ['/risk/forecast', '/recent', '/spread', '/describe', '/subscriptions', '/priority/cells']) expect(canReadOffline(path)).toBe(false);
+    for (const path of ['/forecast', '/risk/forecast', '/recent', '/spread', '/describe', '/subscriptions', '/priority/cells']) expect(canReadOffline(path)).toBe(false);
   });
 
   it('does not persist an aborted download or incompatible optional provenance', async () => {

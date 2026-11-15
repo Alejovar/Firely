@@ -1,5 +1,21 @@
 # Firely Main · Android
 
+## Integración con main
+
+La rama de prueba `integration/mobile-main` integra `main` en `87ec6d4` sobre
+`feat/android-app-ec2`. Conserva Capacitor, la navegación inferior, el compositor
+fijo del chat, las áreas guardadas, las exportaciones nativas y Campo sin ajustes
+de servidor. Añade Gotita con los perfiles Curioso, Brigadista y Científico, la
+consulta de meses futuros y el nuevo icono de Firely. Las rutas, alertas,
+pronóstico y narración de main se incluyen en esta integración.
+
+Los perfiles cambian el personaje y la explicación; las cifras siguen viniendo
+de la API. Las respuestas futuras consultan `/forecast` y el histórico disponible,
+sin presentar meses futuros como observados. Se mantiene la política offline:
+los pronósticos y el asistente necesitan conexión.
+
+Las ramas `main` y `feat/android-app-ec2` se conservan sin modificar.
+
 Esta variante empaqueta el frontend de `main` con Capacitor 8. Conserva React,
 Astryx, MapLibre, calendario, análisis, asistente y metodología. La interfaz se
 ejecuta dentro de un WebView local con acceso a plugins Android; no es una

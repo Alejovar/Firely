@@ -55,6 +55,8 @@ export function encodeCell(row: CalendarRow | undefined, mode: CalendarMode, met
   if (!row) return { background: 'transparent', color: 'var(--color-text-secondary)', step: null };
   if (mode === 'anomaly') {
     const ratio = row.anomaly_ratio;
+    // activity in a month whose normal is zero: above normal, though no ratio exists
+    if (ratio == null && row.reference_zero && (row.count_harm ?? 0) > 0) return { background: DIVERGING[6], color: onCellText(6, 7, scheme, true), step: 6 };
     if (ratio == null || !Number.isFinite(ratio)) return { background: EMPTY_CELL, color: 'var(--color-text-secondary)', step: null };
     const step = divStep(ratio);
     return { background: DIVERGING[step], color: onCellText(step, 7, scheme, true), step };
@@ -133,3 +135,17 @@ export const ANIMATION_RAMP: [number, string][] = [0, 0.25, 0.5, 0.75, 1].map(t 
 export const ANIMATION_GRADIENT = `linear-gradient(90deg, ${ANIMATION_RAMP.map(([, c]) => c).join(', ')})`;
 /** Burned-in video captions: a dark card with light ink, legible over either basemap. */
 export const videoInk = { card: 'rgba(16,20,18,.78)', text: '#f1f3ef', muted: '#b9c0b7', estimated: '#e0a526' } as const;
+
+/** Seasonal outlook (/forecast): tercile categories on the diverging scale (below = blue, above = red), and the
+ *  expected-vs-normal bars (normal = neutral context, expected = accent). */
+export const outlookInk = {
+  below: DIVERGING[1], near: DIVERGING[3], above: DIVERGING[5],
+  normal: 'var(--color-data-neutral)', expected: 'var(--color-data-categorical-orange)',
+} as const;
+
+/** Gotita (assistant mascot) glow behind the large figure, one per mode: decorative, not data. */
+export const gotitaGlow = {
+  curioso: 'radial-gradient(closest-side, color-mix(in srgb, var(--color-data-categorical-green) 26%, transparent), transparent)',
+  brigadista: 'radial-gradient(closest-side, color-mix(in srgb, var(--color-accent) 28%, transparent), transparent)',
+  cientifico: 'radial-gradient(closest-side, color-mix(in srgb, var(--color-data-categorical-blue) 28%, transparent), transparent)',
+} as const;

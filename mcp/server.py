@@ -85,6 +85,17 @@ def risk(h3: str | None = None, bbox: str | None = None, lat: float | None = Non
 
 
 @mcp.tool()
+def outlook(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
+            radius_km: float | None = None, admin: str | None = None, horizon: int | None = None,
+            kind: str = "forecast", issue: str | None = None) -> dict:
+    """1-3 month fire-activity outlook: expected harmonized detections vs normal for the next months, with
+    below/near/above-normal probabilities per cell and the back-test skill. If `show` is 'climatology', the model did
+    not beat climatology there: say so and report the normal. kind is forecast|backtest; issue is YYYY-MM."""
+    return _call("GET", "/forecast", {**_area(h3, bbox, lat, lon, radius_km, admin), "horizon": horizon,
+                                      "kind": kind, "issue": issue})
+
+
+@mcp.tool()
 def events(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
            radius_km: float | None = None, admin: str | None = None, from_date: str | None = None,
            to_date: str | None = None, min_hotspots: int = 3) -> dict:

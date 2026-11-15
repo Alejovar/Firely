@@ -34,10 +34,7 @@ const s = stylex.create({
     borderRightWidth: { default: '1px', '@media (max-width: 720px)': 0 }, borderBottomWidth: { default: 0, '@media (max-width: 720px)': '1px' }, borderStyle: 'solid', borderColor: 'var(--color-border)',
     backgroundColor: 'var(--color-background-surface)', position: { default: 'static', '@media (max-width: 720px)': 'sticky' }, top: 0, zIndex: 20, order: { default: 0, '@media (max-width: 720px)': 1 },
   },
-  logo: { alignSelf: 'center', width: '26px', height: '26px', display: { default: 'grid', '@media (max-width: 720px)': 'none' }, gridTemplateColumns: 'repeat(3, 1fr)', gap: '2px', marginBottom: '16px', flexShrink: 0 },
-  sq: { backgroundColor: 'var(--color-border-emphasized)' },
-  sqDim: { opacity: 0.6 },
-  sqEmber: { backgroundColor: 'var(--color-accent)' },
+  logo: { alignSelf: 'center', width: '34px', height: '34px', display: { default: 'block', '@media (max-width: 720px)': 'none' }, marginBottom: '14px', flexShrink: 0 },
   navItem: {
     padding: '9px 4px', borderRadius: '4px', borderWidth: 0, backgroundColor: { default: 'transparent', ':hover': 'var(--color-background-muted)' },
     color: { default: 'var(--color-text-secondary)', ':hover': 'var(--color-text-primary)' }, fontFamily: 'inherit', fontSize: '12px', fontWeight: 500, lineHeight: 1.25,
@@ -78,11 +75,18 @@ const History = lazy(() => import('./pages/History'));
 const Platform = lazy(() => import('./pages/Platform'));
 const Ficha = lazy(() => import('./pages/Ficha'));
 const WidgetDoc = lazy(() => import('./pages/WidgetDoc'));
-const Identity = lazy(() => import('./pages/Identity'));
 const Field = lazy(() => import('./pages/Field'));
 
+/** Firely mark: an H3 cell (the unit of analysis) in ember, a flame cut out of it, Gotita's water drop at its core
+ *  and a satellite on its orbit. Theme tokens, so it follows light and dark mode; public/icon.svg is the favicon. */
 function Logo() {
-  return <Box xs={s.logo} aria-hidden="true">{[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => <Inline key={i} xs={[s.sq, i % 2 === 1 && s.sqDim, i === 4 && s.sqEmber]} />)}</Box>;
+  return <svg {...stylex.props(s.logo)} viewBox="0 0 512 512" aria-hidden="true">
+    <path d="M256 70 L417 163 Q429 170 429 184 L429 328 Q429 342 417 349 L270 434 Q256 442 242 434 L95 349 Q83 342 83 328 L83 184 Q83 170 95 163 L242 78 Q249 74 256 70 Z" fill="var(--color-accent)" />
+    <path d="M256 140 C300 200 344 236 334 310 C326 368 292 398 256 398 C220 398 186 368 178 310 C172 262 204 236 220 196 C228 232 242 250 258 254 C248 214 240 178 256 140 Z" fill="var(--color-background-surface)" />
+    <path d="M256 300 C276 322 288 338 284 358 C280 376 268 386 256 386 C244 386 232 376 228 358 C225 342 238 326 256 300 Z" fill="var(--color-data-categorical-blue)" />
+    <circle cx="414" cy="92" r="26" fill="var(--color-text-primary)" />
+    <path d="M352 64 A72 72 0 0 1 444 154" fill="none" stroke="var(--color-text-primary)" strokeWidth="10" strokeLinecap="round" opacity=".55" />
+  </svg>;
 }
 
 function useAlertCount() {
@@ -112,7 +116,7 @@ function Shell() {
         {item('explorar', t.explore)}{item('asistente', t.assistant)}{item('metodo', t.method)}{item('plataforma', t.platform)}{item('historia', t.history)}
         {item('campo', app.lang === 'en' ? 'Field areas' : 'Áreas de campo')}
         <Inline xs={s.divider} aria-hidden="true" />
-        {item('ficha', t.sheet, true)}{item('widget', t.widget, true)}{item('identidad', t.identity, true)}
+        {item('ficha', t.sheet, true)}{item('widget', t.widget, true)}
       </Box>
       <Box xs={[s.body, isMobileApp && s.nativeBody]}>
         <Box as="header" xs={s.header}>
@@ -141,7 +145,6 @@ function Shell() {
             {page === 'plataforma' && <Platform />}
             {page === 'ficha' && <Ficha />}
             {page === 'widget' && <WidgetDoc />}
-            {page === 'identidad' && <Identity />}
             {page === 'campo' && <Field />}
           </Suspense>
         </Box>

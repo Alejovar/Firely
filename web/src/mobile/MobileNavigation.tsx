@@ -20,7 +20,7 @@ export default function MobileNavigation() {
   const en = app.lang === 'en', pt = app.lang === 'pt';
   return <VStack as="nav" aria-label={t.main} gap={2} xstyle={styles.dock}>
     {more && <HStack gap={2} wrap="wrap" padding={3}>
-      {([['metodo', t.method], ['historia', t.history], ['plataforma', t.platform], ['ficha', t.sheet], ['widget', t.widget], ['identidad', t.identity]] as [Page, string][])
+      {([['metodo', t.method], ['historia', t.history], ['plataforma', t.platform], ['ficha', t.sheet], ['widget', t.widget]] as [Page, string][])
         .map(([page, label]) => <Button key={page} label={label} variant="ghost" aria-current={app.page === page ? 'page' : undefined} onClick={() => go(page)} />)}
     </HStack>}
     <HStack gap={1} hAlign="between">

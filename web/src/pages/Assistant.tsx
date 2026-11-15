@@ -11,28 +11,58 @@ import { Table } from '@astryxdesign/core/Table';
 import { Banner } from '@astryxdesign/core/Banner';
 import { Collapsible } from '@astryxdesign/core/Collapsible';
 import { List, ListItem } from '@astryxdesign/core/List';
-import { SparklesIcon, MapPinIcon, ChartBarIcon, ArrowUpIcon, StopIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon, ChartBarIcon, ArrowUpIcon, StopIcon, PlusIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { IconButton } from '@astryxdesign/core/IconButton';
+import { Avatar } from '@astryxdesign/core/Avatar';
+import { OutlookPanel } from '../components/analysis/OutlookPanel';
 import { SelectableCard } from '@astryxdesign/core/SelectableCard';
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
 import { Popover } from '@astryxdesign/core/Popover';
 import { Skeleton } from '@astryxdesign/core/Skeleton';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
-import { API_URL, ApiError, getAnalogs, getCalendar, getContext, getReturnPeriod, getTerritory, resolveArea, type AreaCandidate, type AnalogsResponse, type CalendarResponse, type ContextResponse, type ResolveAreaResponse, type TerritoryResponse } from '../api/client';
+import { API_URL, ApiError, getAnalogs, getCalendar, getContext, getOutlook, getReturnPeriod, getTerritory, resolveArea, type OutlookResponse, type AreaCandidate, type AnalogsResponse, type CalendarResponse, type ContextResponse, type ResolveAreaResponse, type TerritoryResponse } from '../api/client';
 import { chartInk, emphasisSeries } from '../lib/dataviz';
 import { monthShort, type Lang } from '../i18n';
 import { useApp } from '../state/AppState';
 import type { AreaSel } from '../state/hash';
-import { calendarQuery, candidateArea, contextWindow, formatAnomaly, formatCount, largestLocalities, latestContextRow, latestRow, localSummary, monthIndex, peakRow, returnPeriodQuery } from '../components/assistant/helpers';
+import { calendarQuery, candidateArea, contextWindow, futureSummary, type FutureItem, type Profile, type MonthHistory, monthHistory, monthsBetween, formatAnomaly, formatCount, largestLocalities, latestContextRow, latestRow, localSummary, monthIndex, peakRow, returnPeriodQuery } from '../components/assistant/helpers';
 import { Caption } from '../ui/kit';
 import ConnectionStatus from '../components/assistant/ConnectionStatus';
 
-type Profile = 'brigadista' | 'cientifico';
+/** Gotita, the assistant, changes costume and voice with the profile. Images in web/public/gotita/. */
+const GOTITA: Record<Profile, { src: string; name: Record<Lang, string>; tagline: Record<Lang, string> }> = {
+  curioso: { src: 'gotita/curioso.png', name: { es: 'Gotita curiosa', en: 'Curious Gotita', pt: 'Gotita curiosa' },
+    tagline: { es: 'Te lo explico con palabras sencillas, sin tecnicismos.', en: 'I explain it in plain words, no jargon.', pt: 'Explico com palavras simples, sem termos técnicos.' } },
+  brigadista: { src: 'gotita/brigadista.png', name: { es: 'Gotita bombera', en: 'Firefighter Gotita', pt: 'Gotita bombeira' },
+    tagline: { es: 'Lo esencial para planear: cuánto, cuándo y dónde.', en: 'What you need to plan: how much, when and where.', pt: 'O essencial para planejar: quanto, quando e onde.' } },
+  cientifico: { src: 'gotita/cientifico.png', name: { es: 'Gotita científica', en: 'Scientist Gotita', pt: 'Gotita cientista' },
+    tagline: { es: 'Con percentiles, intervalos, probabilidades y método.', en: 'With percentiles, intervals, probabilities and method.', pt: 'Com percentis, intervalos, probabilidades e método.' } },
+};
+const curiousLabel: Record<Lang, string> = { es: 'Curioso', en: 'Curious', pt: 'Curioso' };
+const askGotita: Record<Lang, string> = { es: 'Pregunta a Gotita', en: 'Ask Gotita', pt: 'Pergunte à Gotita' };
+const gotitaCopy = {
+  es: { who: '¿Quién te responde?', try: 'Prueba con', hello: (n: string) => `Hola, soy ${n}.`, help: 'Pregúntame por un lugar y un periodo: lo que pasó, cómo viene la temporada o si es probable que haya fuego.' },
+  en: { who: 'Who answers you?', try: 'Try', hello: (n: string) => `Hi, I am ${n}.`, help: 'Ask me about a place and a period: what happened, how the season looks or whether fire is likely.' },
+  pt: { who: 'Quem responde?', try: 'Experimente', hello: (n: string) => `Olá, sou a ${n}.`, help: 'Pergunte sobre um lugar e um período: o que aconteceu, como vem a temporada ou se é provável haver fogo.' },
+} as const;
+function GotitaAvatar({ profile, lang, size = 'md' }: { profile: Profile; lang: Lang; size?: 'sm' | 'md' | 'lg' | 'xl' }) {
+  return <Avatar src={`${import.meta.env.BASE_URL}${GOTITA[profile].src}`} name={GOTITA[profile].name[lang]} size={size} />;
+}
+function GotitaFigure({ profile, lang }: { profile: Profile; lang: Lang }) {
+  const gotita = GOTITA[profile];
+  return <VStack gap={3} hAlign="center">
+    <img {...stylex.props(styles.gotita, motion.idle)} src={`${import.meta.env.BASE_URL}${gotita.src}`} alt={gotita.name[lang]} />
+    <Heading level={2}>{gotitaCopy[lang].hello(gotita.name[lang])}</Heading>
+    <Text color="secondary">{gotita.tagline[lang]}</Text>
+  </VStack>;
+}
+
 type FollowUp = { id: number; turnId: number; kind: 'territory' | 'context'; status: 'running' | 'complete' | 'error'; territory?: TerritoryResponse; context?: ContextResponse; analogs?: AnalogsResponse; error?: string };
 type Turn = {
   id: number; prompt: string; resolveStatus: 'running' | 'complete' | 'error'; cancelled?: boolean;
   calendarStatus?: 'running' | 'complete' | 'error'; resolved?: ResolveAreaResponse;
   selected?: AreaSel; from?: string; to?: string; calendar?: CalendarResponse;
+  future?: { status: 'running' | 'complete' | 'error'; months: string[]; outlook?: OutlookResponse; histories?: Record<number, MonthHistory>; items?: FutureItem[] };
   query?: string; contextQuery?: string; context?: CalendarResponse; contextStatus?: 'running' | 'complete' | 'error'; returnQuery?: string; referenceYears?: number; error?: string; profile: Profile;
 };
 const messages = {
@@ -53,6 +83,18 @@ const chatCopy = {
 const queryListLabel: Record<Lang, string> = { es: 'Consultas exactas usadas', en: 'Exact queries used', pt: 'Consultas exatas usadas' };
 const copyLabel: Record<Lang, string> = { es: 'Copiar consulta', en: 'Copy query', pt: 'Copiar consulta' };
 const contextError: Record<Lang, string> = { es: 'No se pudo cargar el contexto mensual.', en: 'Monthly context could not be loaded.', pt: 'Não foi possível carregar o contexto mensal.' };
+const futureLabel: Record<Lang, string> = { es: 'Consultando pronóstico…', en: 'Reading the outlook…', pt: 'Consultando a previsão…' };
+const futurePrompt: Record<Lang, { title: string; prompt: string }> = {
+  es: { title: 'Consultar meses futuros', prompt: '¿Es probable que haya fuego en Arteaga, Coahuila, en marzo de 2027?' },
+  en: { title: 'Ask about future months', prompt: 'Is fire likely in Arteaga, Coahuila, in March 2027?' },
+  pt: { title: 'Consultar meses futuros', prompt: 'É provável haver fogo em Arteaga, Coahuila, em março de 2027?' },
+};
+const float = stylex.keyframes({ '0%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(calc(var(--spacing-2) * -1))' }, '100%': { transform: 'translateY(0)' } });
+const talking = stylex.keyframes({ '0%': { transform: 'rotate(-4deg)' }, '50%': { transform: 'rotate(4deg)' }, '100%': { transform: 'rotate(-4deg)' } });
+const motion = stylex.create({
+  idle: { animationName: { default: float, '@media (prefers-reduced-motion: reduce)': 'none' }, animationDuration: '4.5s', animationIterationCount: 'infinite', animationTimingFunction: 'ease-in-out' },
+  talking: { animationName: { default: talking, '@media (prefers-reduced-motion: reduce)': 'none' }, animationDuration: '0.9s', animationIterationCount: 'infinite' },
+});
 const styles = stylex.create({
   page: { width: '100%', minWidth: 0, flex: 1, minHeight: 0, overflow: 'hidden', backgroundColor: 'var(--color-background-body)' },
   body: { width: '100%', minWidth: 0, flex: 1, minHeight: 0, alignItems: 'stretch', overflow: 'hidden' },
@@ -64,7 +106,7 @@ const styles = stylex.create({
   resultMobile: { width: '100%', '@media (min-width: 56.251rem)': { display: 'none' } },
   desktopSummary: { display: { default: 'flex', '@media (max-width: 56.25rem)': 'none' } },
   header: { padding: 'var(--spacing-3)', borderBottom: 'thin solid var(--color-border)', width: '100%', flexShrink: 0 },
-  symbol: { width: 'var(--spacing-8)', height: 'var(--spacing-8)', color: 'var(--color-accent)' },
+  gotita: { width: 'calc(var(--spacing-10) * 3)', aspectRatio: '1', objectFit: 'contain', maskImage: 'radial-gradient(closest-side, black 72%, transparent)' },
   smallIcon: { width: 'var(--spacing-5)', height: 'var(--spacing-5)' },
   headerTitle: { fontSize: 'var(--font-size-lg)', lineHeight: 1.2 },
 });
@@ -111,7 +153,7 @@ function Result({ turn, lang, profile, onMap, onMethod }: { turn: Turn; lang: La
         {peak && <VStack gap={0.5}><Text type="supporting">{t.peak}</Text><Text weight="semibold" hasTabularNumbers>{format(peak.count_harm ?? 0)} · {monthLabel(peak, lang)}</Text></VStack>}
         {latest && <VStack gap={0.5}><Text type="supporting">{t.latest}</Text><Text weight="semibold" hasTabularNumbers>{format(latest.count_harm ?? 0)} · {monthLabel(latest, lang)}</Text></VStack>}
         {latest && <VStack gap={0.5}><Text type="supporting">{t.anomaly}</Text><Text weight="semibold" hasTabularNumbers>{latest.anomaly_ratio == null ? t.unavailable : formatAnomaly(latest.anomaly_ratio, lang)}</Text></VStack>}
-        {latest && <VStack gap={0.5}><Text type="supporting">{t.returnPeriod}</Text><Text weight="semibold" hasTabularNumbers>{latest.return_period_years == null ? t.unavailable : `${format(latest.return_period_years)} ${t.years}`}</Text></VStack>}
+        {latest && profile !== 'curioso' && <VStack gap={0.5}><Text type="supporting">{t.returnPeriod}</Text><Text weight="semibold" hasTabularNumbers>{latest.return_period_years == null ? t.unavailable : `${format(latest.return_period_years)} ${t.years}`}</Text></VStack>}
       </Grid>
     </> : <EmptyState title={t.noData} description={t.noDataHelp} isCompact />}
     <Text type="supporting">{t.methodology}: {response.methodology_version} · {t.cutoff}: {response.data_cutoff} · {t.source}: {response.attribution || 'NASA FIRMS'}</Text>
@@ -145,10 +187,30 @@ function FollowUpResult({ item, lang }: { item: FollowUp; lang: Lang }) {
   }
   return <EmptyState title={t.none} isCompact/>;
 }
+function turnBusy(turn: Turn): boolean {
+  return turn.resolveStatus === 'running' || turn.calendarStatus === 'running' || turn.contextStatus === 'running' || turn.future?.status === 'running';
+}
+function cancelTurn(turn: Turn): Turn {
+  return { ...turn, cancelled: turnBusy(turn) || turn.cancelled,
+    resolveStatus: turn.resolveStatus === 'running' ? 'error' : turn.resolveStatus,
+    calendarStatus: turn.calendarStatus === 'running' ? 'error' : turn.calendarStatus,
+    contextStatus: turn.contextStatus === 'running' ? 'error' : turn.contextStatus,
+    future: turn.future?.status === 'running' ? { ...turn.future, status: 'error' } : turn.future,
+  };
+}
+function FutureResult({ turn, lang, profile }: { turn: Turn; lang: Lang; profile: Profile }) {
+  const future = turn.future!;
+  return <Card width="100%" padding={4}><VStack gap={4}>
+    <Heading level={3}>{turn.selected?.label}</Heading>
+    <Text type="supporting">{turn.from} — {turn.to}</Text>
+    <Text>{futureSummary(future.months, future.items ?? [], future.histories ?? {}, lang, profile, future.outlook?.methodology_version)}</Text>
+    {turn.selected && <OutlookPanel area={turn.selected.area} lang={lang} simple={profile === 'curioso'} />}
+  </VStack></Card>;
+}
 export default function Assistant() {
   const app = useApp(), lang = app.lang, t = messages[lang];
   const [turns, setTurns] = useState<Turn[]>([]), [draft, setDraft] = useState('');
-  const [profile, setProfile] = useState<Profile>('brigadista');
+  const [profile, setProfile] = useState<Profile>('curioso');
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const transcriptRef = useRef<HTMLDivElement | null>(null), followLatest = useRef(true);
   const active = useRef<AbortController | null>(null), followUpController = useRef<AbortController | null>(null), nextId = useRef(0), nextFollowUpId = useRef(0);
@@ -167,8 +229,27 @@ export default function Assistant() {
     });
     return () => cancelAnimationFrame(frame);
   }, [turns, followUps]);
+  async function loadFuture(id: number, selected: AreaSel, from: string, to: string, controller: AbortController) {
+    // A question about months that have not happened: the calendar has no data there. Answer with the 1-3 month
+    // outlook where it reaches and with the history of the same calendar month elsewhere (numbers from the API).
+    const months = monthsBetween(from, to), today = new Date().toISOString().slice(0, 10);
+    change(id, { selected, from, to, future: { status: 'running', months } });
+    const [outlook, history] = await Promise.allSettled([getOutlook(selected.area, controller.signal), getCalendar(selected.area, '2001-01-01', today, 'count', 'median', controller.signal)]);
+    if (controller.signal.aborted) return;
+    if (outlook.status === 'rejected' && history.status === 'rejected') { change(id, { future: { status: 'error', months }, error: readableError(outlook.reason, lang) }); return; }
+    const rows = history.status === 'fulfilled' ? history.value.rows : [];
+    const perYear = new Map<number, number>(); rows.forEach(r => perYear.set(r.year, (perYear.get(r.year) ?? 0) + 1));
+    const complete = [...perYear].filter(([, n]) => n === 12).map(([y]) => y), lastYear = complete.length ? Math.max(...complete) : 0;
+    const histories: Record<number, MonthHistory> = {};
+    for (const m of new Set(months.map(ym => Number(ym.slice(5, 7))))) histories[m] = monthHistory(rows, m, lastYear);
+    const out = outlook.status === 'fulfilled' ? outlook.value : undefined;
+    const items: FutureItem[] = (out?.forecasts ?? []).map(f => ({ target: f.target, horizon: f.horizon, expected: f.expected_detections, normal: f.normal_detections,
+      show: f.show, probabilities: f.probabilities, interval: f.interval_10_90, skill: f.skill.skill_vs_climatology }));
+    change(id, { future: { status: 'complete', months, outlook: out, histories, items } });
+  }
   async function loadCalendar(id: number, selected: AreaSel, resolved: ResolveAreaResponse, controller: AbortController) {
     const from = resolved.intent.date_from || app.from, to = resolved.intent.date_to || app.to, query = calendarQuery(selected, from, to);
+    if (resolved.intent.date_from && resolved.intent.date_from > new Date().toISOString().slice(0, 10)) return loadFuture(id, selected, from, to, controller);
     change(id, { selected, from, to, query, calendarStatus: 'running', error: undefined });
     try {
       const response = await getCalendar(selected.area, from, to, 'count', 'median', controller.signal);
@@ -201,19 +282,13 @@ export default function Assistant() {
     setFollowUps(prev => prev.filter(item => item.status !== 'running'));
     const controller = new AbortController(); active.current = controller;
     const id = ++nextId.current; setDraft('');
-    setTurns((prev) => [...prev.map((turn) => ({
-      ...turn,
-      resolveStatus: turn.resolveStatus === 'running' ? 'error' as const : turn.resolveStatus,
-      calendarStatus: turn.calendarStatus === 'running' ? 'error' as const : turn.calendarStatus,
-      contextStatus: turn.contextStatus === 'running' ? 'error' as const : turn.contextStatus,
-      cancelled: turn.resolveStatus === 'running' || turn.calendarStatus === 'running' || turn.contextStatus === 'running' || turn.cancelled,
-    })), { id, prompt, profile, resolveStatus: 'running' }]);
+    setTurns(prev => [...prev.map(cancelTurn), { id, prompt, profile, resolveStatus: 'running' }]);
     try {
       const resolved = await resolveArea(prompt, lang, controller.signal);
       if (controller.signal.aborted) return;
       change(id, { resolved, resolveStatus: 'complete' });
       const valid = resolved.candidates.map(candidateArea).filter((area): area is AreaSel => area !== null);
-      if (!resolved.ambiguous && valid.length === 1) await loadCalendar(id, valid[0], resolved, controller);
+      if (!resolved.ambiguous && valid.length >= 1) await loadCalendar(id, valid[0], resolved, controller);
     } catch (error) { if (!controller.signal.aborted) change(id, { resolveStatus: 'error', error: readableError(error, lang) }); }
   }
   function choose(id: number, candidate: AreaCandidate, resolved: ResolveAreaResponse) {
@@ -228,12 +303,7 @@ export default function Assistant() {
   }
   function stop() {
     active.current?.abort(); followUpController.current?.abort();
-    setTurns(prev => prev.map(turn => ({ ...turn,
-      cancelled: turn.resolveStatus === 'running' || turn.calendarStatus === 'running' || turn.contextStatus === 'running' || turn.cancelled,
-      resolveStatus: turn.resolveStatus === 'running' ? 'error' : turn.resolveStatus,
-      calendarStatus: turn.calendarStatus === 'running' ? 'error' : turn.calendarStatus,
-      contextStatus: turn.contextStatus === 'running' ? 'error' : turn.contextStatus,
-    })));
+    setTurns(prev => prev.map(cancelTurn));
     setFollowUps(prev => prev.filter(item => item.status !== 'running'));
   }
   function reset() {
@@ -273,15 +343,15 @@ export default function Assistant() {
     app.navigate('explorar');
     window.dispatchEvent(new CustomEvent('firely:request-draw', { detail: { mode: 'polygon' } }));
   }
-  const latestTurn = [...turns].reverse().find(turn => turn.calendar);
+  const latestTurn = [...turns].reverse().find(turn => turn.calendar || turn.future?.status === 'complete');
   const ext = extras[lang], ui = chatCopy[lang];
-  const busy = turns.some(turn => turn.resolveStatus === 'running' || turn.calendarStatus === 'running' || turn.contextStatus === 'running') || followUps.some(item => item.status === 'running');
-  const resultCard = (turn: Turn) => <Result turn={turn} lang={lang} profile={profile}
+  const busy = turns.some(turnBusy) || followUps.some(item => item.status === 'running');
+  const resultCard = (turn: Turn) => turn.future?.status === 'complete' ? <FutureResult turn={turn} lang={lang} profile={profile} /> : <Result turn={turn} lang={lang} profile={profile}
     onMap={() => app.patch({ area: turn.selected!, from: turn.from!, to: turn.to!, page: 'explorar' })}
     onMethod={() => app.navigate('metodo')} />;
   const focusComposer = () => document.querySelector<HTMLElement>('[contenteditable="true"][role="textbox"]')?.focus();
   const composer = <VStack gap={2} xstyle={styles.composer}>
-    {latestTurn && <HStack gap={2} wrap="wrap">
+    {latestTurn?.calendar && <HStack gap={2} wrap="wrap">
       <Button label={ext.affected} size="sm" variant="ghost" isDisabled={busy} onClick={() => void followUp(latestTurn, 'territory')} />
       <Button label={ext.why} size="sm" variant="ghost" isDisabled={busy} onClick={() => void followUp(latestTurn, 'context')} />
     </HStack>}
@@ -295,17 +365,21 @@ export default function Assistant() {
   </VStack>;
   return <VStack xstyle={styles.page}>
     <HStack gap={3} vAlign="center" hAlign="between" xstyle={styles.header}>
+      <HStack gap={2} vAlign="center">
+        <VStack xstyle={busy ? motion.talking : undefined}><GotitaAvatar profile={profile} lang={lang} size="sm" /></VStack>
       <VStack gap={1}>
-        <Heading level={1} xstyle={styles.headerTitle}>{ui.title}</Heading>
+        <Heading level={1} xstyle={styles.headerTitle}>{askGotita[lang]}</Heading>
         <ConnectionStatus lang={lang} />
       </VStack>
+      </HStack>
       <HStack gap={1}>
         <Popover label={ui.settings} presentation="adaptive" content={<VStack gap={3}>
+          <HStack gap={3} vAlign="center"><GotitaAvatar profile={profile} lang={lang} size="lg" /><VStack gap={1}><Text weight="semibold">{GOTITA[profile].name[lang]}</Text><Text type="supporting">{GOTITA[profile].tagline[lang]}</Text></VStack></HStack>
           <Text type="supporting">{t.limit}</Text>
           <SegmentedControl label={t.profile} value={profile} onChange={value => { setProfile(value as Profile); if (latestTurn) updateProfile(value as Profile, latestTurn); }}>
-            <SegmentedControlItem value="brigadista" label={t.brigade} /><SegmentedControlItem value="cientifico" label={t.scientist} />
+            <SegmentedControlItem value="curioso" label={curiousLabel[lang]} /><SegmentedControlItem value="brigadista" label={t.brigade} /><SegmentedControlItem value="cientifico" label={t.scientist} />
           </SegmentedControl>
-        </VStack>}><Button label={profile === 'brigadista' ? t.brigade : t.scientist} variant="ghost" size="sm" /></Popover>
+        </VStack>}><IconButton label={profile === 'curioso' ? curiousLabel[lang] : profile === 'brigadista' ? t.brigade : t.scientist} tooltip={ui.settings} icon={<AdjustmentsHorizontalIcon />} variant="ghost" /></Popover>
         <IconButton label={ui.reset} tooltip={ui.reset} variant="ghost" icon={<PlusIcon />} isDisabled={!turns.length && !draft} onClick={reset} />
       </HStack>
     </HStack>
@@ -315,14 +389,13 @@ export default function Assistant() {
           onScroll={() => { const el = transcriptRef.current; if (el) followLatest.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120; }}>
           {turns.length === 0 ? <VStack gap={6} xstyle={styles.welcome}>
             <VStack gap={3}>
-              <SparklesIcon {...stylex.props(styles.symbol)} aria-hidden="true" />
-              <Heading level={2}>{ui.welcome}</Heading>
-              <Text color="secondary">{ui.lead}</Text>
+              <GotitaFigure profile={profile} lang={lang} />
+              <Text color="secondary">{gotitaCopy[lang].help}</Text>
               <Text type="supporting">{app.area.label} · {app.from} — {app.to}</Text>
             </VStack>
             <VStack gap={2}>
               <Text type="label" color="secondary">{ui.example}</Text>
-              <List hasDividers edge="flush">{suggestions[lang].map((suggestion, index) => <ListItem key={suggestion.prompt}
+              <List hasDividers edge="flush">{[...suggestions[lang].slice(0, 2), futurePrompt[lang]].map((suggestion, index) => <ListItem key={suggestion.prompt}
                 label={suggestion.title} description={<Text type="supporting">{suggestion.prompt}</Text>}
                 startContent={index === 1 ? <ChartBarIcon {...stylex.props(styles.smallIcon)} aria-hidden="true" /> : <MapPinIcon {...stylex.props(styles.smallIcon)} aria-hidden="true" />}
                 onClick={() => void submit(suggestion.prompt)} />)}</List>
@@ -331,12 +404,12 @@ export default function Assistant() {
             {turns.map(turn => {
               const resolved = turn.resolved;
               const options = resolved?.candidates.filter(candidate => candidateArea(candidate) !== null) ?? [];
-              const loading = turn.resolveStatus === 'running' || turn.calendarStatus === 'running';
+              const loading = turnBusy(turn);
               return <VStack key={turn.id} gap={3} data-turn-id={turn.id}>
                 <ChatMessage sender="user"><ChatMessageBubble>{turn.prompt}</ChatMessageBubble></ChatMessage>
-                <ChatMessage sender="assistant">
+                <ChatMessage sender="assistant" name={<HStack gap={2} vAlign="center"><GotitaAvatar profile={profile} lang={lang} size="sm" /><Text type="supporting">{GOTITA[profile].name[lang]}</Text></HStack>}>
                   {loading && <ChatMessageBubble variant="ghost"><VStack gap={2} aria-live="polite">
-                    <Text type="supporting">{turn.resolveStatus === 'running' ? t.resolving : t.calendar}</Text>
+                    <Text type="supporting">{turn.resolveStatus === 'running' ? t.resolving : turn.future?.status === 'running' ? futureLabel[lang] : t.calendar}</Text>
                     <Skeleton width="100%" height="var(--spacing-6)" />
                   </VStack></ChatMessageBubble>}
                   {resolved && !turn.cancelled && <ChatMessageBubble variant="ghost" width="100%">
@@ -353,9 +426,9 @@ export default function Assistant() {
                       </VStack>
                     </Collapsible>
                   </ChatMessageBubble>}
-                  {turn.calendar && <VStack width="100%">
+                  {(turn.calendar || turn.future?.status === 'complete') && <VStack width="100%">
                     <VStack xstyle={styles.resultMobile}>{resultCard(turn)}</VStack>
-                    <VStack xstyle={styles.desktopSummary}><Text>{localSummary(turn.calendar, lang, profile, turn.referenceYears)}</Text></VStack>
+                    <VStack xstyle={styles.desktopSummary}><Text>{turn.future?.status === 'complete' ? futureSummary(turn.future.months, turn.future.items ?? [], turn.future.histories ?? {}, lang, profile) : localSummary(turn.calendar!, lang, profile, turn.referenceYears)}</Text></VStack>
                   </VStack>}
                   {turn.cancelled && <ChatSystemMessage>{ui.stopped}</ChatSystemMessage>}
                   {turn.error && <Banner status="error" title={turn.error} endContent={<Button label={ui.retry} onClick={() => void submit(turn.prompt)} />} />}

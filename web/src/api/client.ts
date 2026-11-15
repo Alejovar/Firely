@@ -32,6 +32,8 @@ export interface CalendarRow {
   count_harm_cloudcorr?: number | null;
   frp_harm?: number;
   anomaly_ratio?: number;
+  /** The reference (median/mean of the month) is 0: anomaly_ratio is 1 when the month is also 0, null when it had activity. */
+  reference_zero?: boolean;
   percentile?: number;
   return_period_years?: number;
   clear_frac?: number | null;
@@ -338,9 +340,35 @@ export interface ServerSubscription {
   id: string; created_at: string; name: string; area: Record<string, string | number>; area_cells: number; chat_id_masked: string | null;
   min_index: number; min_anomaly_ratio: number | null; lang: 'es' | 'en' | 'pt'; approved: boolean; approved_at: string | null;
 }
-export interface SubscriptionInput { name: string; area: Area; chat_id: number; min_index?: number; min_anomaly_ratio?: number; lang?: 'es' | 'en' | 'pt' }
+export interface SubscriptionInput { name: string; area: Area; chat_id?: number | null; min_index?: number; min_anomaly_ratio?: number; lang?: 'es' | 'en' | 'pt' }
 export const listServerSubscriptions = (signal?: AbortSignal) => request<{ attribution: string; rows: ServerSubscription[] }>('/subscriptions', { signal });
 export const createServerSubscription = (body: SubscriptionInput, signal?: AbortSignal) =>
   postJson<{ attribution: string; subscription: ServerSubscription; note: string }>('/subscriptions', body, signal);
+export interface SubscriptionPreview {
+  attribution: string; subscription: ServerSubscription; sent: false; note: string; message: string;
+  status: 'below_threshold' | 'no_chat' | 'pending_approval' | 'telegram_not_configured' | 'would_send';
+  evaluation: { period: string; index: number; level: string; summary_es: string; anomaly_ratio: number | null; triggered: boolean; reasons: string[]; data_cutoff: string | null };
+}
+export const previewServerSubscription = (id: string, signal?: AbortSignal) =>
+  request<SubscriptionPreview>(`/subscriptions/${encodeURIComponent(id)}/preview`, { signal });
+export const testServerSubscription = (id: string, signal?: AbortSignal) =>
+  request<{ sent: boolean; triggered: boolean; message: string }>(`/subscriptions/${encodeURIComponent(id)}/test`, { method: 'POST', signal });
 export const deleteServerSubscription = (id: string, signal?: AbortSignal) =>
   request<{ deleted: string }>(`/subscriptions/${encodeURIComponent(id)}`, { method: 'DELETE', signal });
+
+export interface OutlookItem {
+  country: string; issue: string; target: string; horizon: 1 | 2 | 3;
+  expected_detections: number; normal_detections: number; ratio_to_normal: number | null;
+  observed_detections: number | null; show: 'forecast' | 'climatology';
+  skill: { beats_climatology: boolean | null; skill_vs_climatology?: number; rpss?: number; capture10?: number; capture10_climatology?: number };
+  modelled_cells?: number; cells_without_fire_history?: number | null; cells_likely_above_normal?: number;
+  interval_10_90?: [number, number]; probabilities?: { below: number; near: number; above: number };
+  most_likely?: 'below' | 'near' | 'above';
+}
+export interface OutlookResponse {
+  methodology_version: string; data_cutoff: string | null; attribution: string; kind: 'forecast' | 'backtest';
+  area?: Record<string, unknown>; note: string; empty_reason: string | null;
+  validation?: { train: [number, number]; validation: number; test: [number, number] };
+  forecasts: OutlookItem[];
+}
+export const getOutlook = (area: Area, signal?: AbortSignal) => request<OutlookResponse>(`/forecast?${withArea(area)}`, { signal });
