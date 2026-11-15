@@ -1,4 +1,4 @@
-import { useEffect,useMemo,useState } from 'react';
+import { lazy,Suspense,useEffect,useMemo,useState } from 'react';
 import * as stylex from '@stylexjs/stylex';
 import { Layout,LayoutContent,VStack,HStack } from '@astryxdesign/core/Layout';
 import { Grid } from '@astryxdesign/core/Grid';
@@ -15,6 +15,7 @@ import { CompactCalendar } from '../components/story/CompactCalendar';
 import { storySlides,playCalendar } from '../lib/story';
 import { sequentialSteps } from '../lib/dataviz';
 import { Caption } from '../ui/kit';
+const FireAnimation=lazy(()=>import('../components/story/FireAnimation'));
 // The story always walks the whole harmonized series, whatever date range the map has selected.
 const STORY_FROM='2001-01-01';
 const sx=stylex.create({intro:{maxWidth:'72rem'},split:{display:'grid',gridTemplateColumns:{default:'minmax(0,1.4fr) minmax(17rem,1fr)','@media (max-width: 850px)':'minmax(0,1fr)'},gap:'var(--spacing-6)',minWidth:0},segments:{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'var(--spacing-1)'},segment:{height:'var(--spacing-1)',backgroundColor:'var(--color-background-muted)',border:0,borderRadius:'var(--radius-1)',cursor:'pointer'},active:{backgroundColor:'var(--color-accent)'},map:{width:'100%',aspectRatio:'2 / 1',backgroundColor:'var(--color-background-muted)',borderRadius:'var(--radius-3)'},range:{width:'100%'},muted:{color:'var(--color-text-secondary)'},dot:{fill:'var(--color-data-categorical-orange)'},grid:{stroke:'var(--color-border-subtle)'},tiny:{fontSize:'var(--font-size-xs)'}});
@@ -37,4 +38,5 @@ export default function History(){const app=useApp(),t=copy[app.lang];const [dat
  <VStack gap={4}><HStack wrap="wrap" hAlign="between"><Heading level={2}>{t.animTitle}</Heading><Button label={anim?t.stop:t.play} onClick={()=>setAnim(!anim)}/></HStack><VStack gap={3}><svg {...stylex.props(sx.map)} viewBox="0 0 1000 500" role="img" aria-label={`${months[frame]??''}: ${visible.length} puntos visibles`}><path d="M0 100H1000M0 200H1000M0 300H1000M0 400H1000M200 0V500M400 0V500M600 0V500M800 0V500" {...stylex.props(sx.grid)} fill="none"/>{sampled.map((p,i)=><circle key={i} cx={((p.geometry.coordinates[0]-west)/(east-west||1))*980+10} cy={500-((p.geometry.coordinates[1]-south)/(north-south||1))*480-10} r="2" fill={sequentialSteps(app.scheme)[Math.min(4,Math.floor(5*(p.properties.frp_mw??0)/maxFrp))]}/>)}</svg><HStack hAlign="between"><Text>{months[frame]??'—'}</Text><Text type="supporting">{t.source}</Text></HStack><input {...stylex.props(sx.range)} type="range" min={0} max={Math.max(0,months.length-1)} value={frame} onChange={e=>setFrame(Number(e.target.value))} aria-label="Mes de la animación"/><Text type="supporting">{data.points.truncated?'Muestra limitada por la API. ':''}{data.points.attribution} · {data.points.data_cutoff} · v{data.points.methodology_version}</Text></VStack></VStack>
  <Grid columns={{minWidth:280,max:2}} gap={5}><VStack gap={3}><Heading level={2}>{t.listen}</Heading><Text>{t.listenText}</Text><HStack gap={3} wrap="wrap"><Button label={sound?t.stop:`♪ ${app.lang==='es'?'Escuchar':app.lang==='en'?'Listen':'Ouvir'} ${data.cal.rows.at(-1)?.year??'—'}–${data.cal.rows[0]?.year??'—'}`} onClick={()=>setSound(!sound)} variant="primary"/><Text>{soundAt}</Text></HStack><Text type="supporting">{data.cal.attribution} · {data.cal.data_cutoff} · v{data.cal.methodology_version}</Text></VStack><Card padding={4}><CompactCalendar rows={data.cal.rows} lang={app.lang} scheme={app.scheme} highlight={soundCell} small/></Card></Grid>
  </>)}
+ <Suspense fallback={<Skeleton width="100%" height="32rem"/>}><FireAnimation/></Suspense>
  </VStack></LayoutContent>}/>}

@@ -39,8 +39,12 @@ class APIError(Exception):
 
 
 class FirelyClient:
-    def __init__(self, base_url: str | None = None, transport=None):
+    def __init__(self, base_url: str | None = None, transport=None, public_url: str | None = None):
         self.base_url = (base_url or setting("FIRELY_API_URL", "http://127.0.0.1:8000")).rstrip("/")
+        # Links shown to users ("Ver datos") must use the public URL, not the internal one (http://api:8000 in Docker).
+        if public_url is None and base_url is None:
+            public_url = setting("FIRELY_PUBLIC_API_URL")
+        self.public_url = (public_url or self.base_url).rstrip("/")
         self.transport = transport if transport is not None else httpx.Client(timeout=20)
 
     def request(self, method: str, path: str, *, params=None, json=None) -> dict:
@@ -58,7 +62,7 @@ class FirelyClient:
             raise APIError("Firely API unavailable") from exc
 
     def query_url(self, path: str, params: dict) -> str:
-        return self.base_url + path + "?" + urlencode(params)
+        return self.public_url + path + "?" + urlencode(params)
 
     def resolve(self, place: str, lang: str) -> dict:
         return self.request("POST", "/resolve-area", json={"text": place, "lang": lang})

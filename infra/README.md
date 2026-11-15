@@ -1,11 +1,14 @@
 # Despliegue con Docker
 
-Dos imágenes y un `docker-compose.yml` en la raíz:
+Cinco servicios en `docker-compose.yml`:
 
 | Servicio | Imagen | Qué hace |
 |---|---|---|
 | `api` | `infra/Dockerfile.api` (~480 MB) | FastAPI + DuckDB sobre los Parquet. Usuario sin privilegios, sistema de archivos de solo lectura, datos montados `:ro`, 2 workers, límite de 3 GB. |
 | `web` | `infra/Dockerfile.web` (~80 MB) | Compila Vite y sirve los estáticos con nginx; `/api/` se reenvía a la API (mismo origen, sin CORS) con **límite de 10 solicitudes/s por IP** (429 al exceder). |
+| `mcp` | `infra/Dockerfile.services` | Herramientas públicas MCP en `/mcp` (HTTP streamable). Solo consulta la API interna. El host público debe figurar en `FIRELY_MCP_ALLOWED_HOSTS`. |
+| `bot` | `infra/Dockerfile.services` | Bot de Telegram por long polling. Si falta `TELEGRAM_BOT_TOKEN`, sale limpiamente y permanece apagado. |
+| `scheduler` | `infra/Dockerfile.api` | Corre ingesta NRT, alertas diarias y boletín semanal según UTC. Solo este servicio monta los Parquet procesados con escritura. |
 
 ## Local
 
@@ -22,27 +25,43 @@ La API lee `./data/processed` (cámbialo con `FIRELY_DATA_PROCESSED=/ruta`). Las
    ```bash
    mkdir -p data/processed && tar -xzf firely-data.tar.gz -C data/processed
    cp .env.example .env   # y llena las llaves que quieras
+   id -g ubuntu            # usa este número en FIRELY_DATA_GID de .env
+   sudo chgrp -R "$(id -g ubuntu)" data/processed
+   sudo chmod -R g+rwX data/processed
+   sudo find data/processed -type d -exec chmod g+s {} +
    docker compose up -d --build
    ```
 3. Abre el puerto 80/443 en el grupo de seguridad y pon HTTPS delante (CloudFront, un ALB, o Caddy con tu dominio). El contenedor `web` escucha en `FIRELY_PORT` (8080 por defecto).
 
-El pipeline de datos (ingesta, H3, armonización) **no** va en estas imágenes: necesita más de 5 GB de RAM y ~1 h; se corre aparte y solo se sube `data/processed`.
+El procesamiento histórico completo (ingesta, H3, armonización) necesita más memoria y se corre aparte. Antes de exportar datos para despliegue, materializa los derivados:
+
+```bash
+python -m pipeline.derived_tables
+python -m pipeline.animation_frames
+infra/export-runtime-data.sh
+```
+
+El programador diario escribe `nrt/`, `cell_day_nrt/`, `cell_month_nrt/` y `events_nrt/` en el mismo directorio montado en la API como solo lectura. Los datos científicos estándar (SP) se incorporan después con una corrida histórica revisada; NRT no los sobrescribe.
+
+El contenedor `scheduler` usa UID 10001 y se añade únicamente al grupo numérico `FIRELY_DATA_GID`; la API conserva el montaje de datos de solo lectura y no recibe ese grupo. Los comandos anteriores conceden escritura al grupo del directorio procesado y hacen que las carpetas nuevas hereden el grupo. El programador usa `umask 0002` para que sus archivos nuevos puedan actualizarse por ese grupo. **Repite `chgrp`, `chmod` y `find` tras extraer cada archivo nuevo de datos científicos SP**; `tar` puede restaurar permisos sin escritura de grupo. Si el despliegue usa otra cuenta que no sea `ubuntu`, usa su GID real.
 
 ## Comprobaciones
 
 ```bash
-docker compose ps                                  # api y web "healthy"
+docker compose ps                                  # api, web, mcp y scheduler; bot si hay token
 curl "localhost:8080/api/calendar?bbox=-100.9,25.2,-100.2,25.7&from=2021-03-01&to=2021-03-31"
+curl "localhost:8080/mcp"                        # 405/406 sin petición MCP; comprueba que el proxy llega
 ```
 
-## Jobs diarios (cron en el servidor)
+## Jobs automáticos en Docker
 
-Los dos jobs corren **dentro del contenedor `api`** (ya trae el código y escribe solo en el volumen `/state`). Son idempotentes: correrlos dos veces no duplica envíos ni filas.
+`scheduler` ejecuta los jobs en UTC y guarda en `/state/scheduler.json` el último día completado. Los intentos fallidos se reintentan una hora después. No requiere configurar `crontab` del host.
 
 | Job | Qué hace | Requiere |
 |---|---|---|
-| `pipeline.alerts_job` | Evalúa cada suscripción (`POST /subscriptions`) con el índice de prioridad real (`/risk`) y la anomalía del último mes; si supera su umbral envía por Telegram un mensaje marcado **EJERCICIO / PRUEBA**. Cada (suscripción, mes de datos) se envía una sola vez. | `TELEGRAM_BOT_TOKEN` en `.env` (sin él: dry-run, solo registra en `/state/alerts_log.jsonl`) |
-| `pipeline.nrt` | Guarda las detecciones FIRMS NRT de las últimas 48 h de México y Argentina en Parquet, deduplicadas, en `/state/nrt/<País>/date=AAAA-MM-DD/`. | `FIRMS_MAP_KEY` (sin ella sale con código 2 y un mensaje claro) |
+| `pipeline.daily_update` | A las 06:10 UTC, guarda detecciones FIRMS NRT y actualiza tablas NRT diarias, mensuales y de eventos. | `FIRMS_MAP_KEY` (sin ella falla y reintenta después) |
+| `pipeline.alerts_job` | A las 06:30 UTC, evalúa las suscripciones aprobadas. | `TELEGRAM_BOT_TOKEN` (sin él: dry-run) |
+| `pipeline.bulletin_job` | Los lunes a las 07:00 UTC, genera y envía el boletín semanal a suscripciones aprobadas. | `TELEGRAM_BOT_TOKEN` (sin él: dry-run) |
 
 **Aprobación humana.** Una suscripción nueva queda `approved=false` y no recibe nada hasta que el operador la aprueba en el servidor:
 
@@ -52,15 +71,23 @@ docker compose exec -T api python -m pipeline.alerts_job --approve <id>
 docker compose exec -T api python -m pipeline.alerts_job --dry-run       # ver qué se enviaría
 ```
 
-**Cron** (`crontab -e` del usuario que corre Docker, en la carpeta del repo; horas en UTC del servidor):
+**Ejecución manual**, útil antes de activar el programador:
 
-```cron
-# NRT a Parquet a las 06:10 y alertas a las 06:30, todos los días
-10 6 * * * cd /home/ubuntu/Firely && docker compose exec -T api python -m pipeline.nrt --out /state/nrt >> /var/log/firely-nrt.log 2>&1
-30 6 * * * cd /home/ubuntu/Firely && docker compose exec -T api python -m pipeline.alerts_job >> /var/log/firely-alerts.log 2>&1
+```bash
+docker compose run --rm scheduler python -m pipeline.daily_update
+docker compose exec -T api python -m pipeline.alerts_job --dry-run
+docker compose exec -T api python -m pipeline.bulletin_job --dry-run
 ```
 
-`-T` evita pedir una TTY desde cron. Los logs no contienen la llave de FIRMS, el token de Telegram ni el `chat_id`.
+Los logs no deben contener la llave de FIRMS, el token de Telegram ni el `chat_id`.
+
+## Activar Telegram y MCP público
+
+1. En Telegram abre **@BotFather**, manda `/newbot`, elige nombre y un usuario terminado en `bot`. Guarda el token que devuelve como contraseña; agrégalo solo a `.env` del servidor como `TELEGRAM_BOT_TOKEN=...`.
+2. Configura `FIRELY_PUBLIC_API_URL=https://tu-dominio/api` para que los enlaces del bot sean públicos. Configura `FIRELY_MCP_ALLOWED_HOSTS=tu-dominio,localhost,localhost:*,127.0.0.1,127.0.0.1:*` (o la IP pública). Si usas otro origen para el cliente MCP, añade `FIRELY_MCP_ALLOWED_ORIGINS`.
+3. Ejecuta `docker compose up -d --build bot mcp scheduler web`. Escribe `/start` al bot para recibir tu `chat_id`. Las alertas solo salen para suscripciones aprobadas por el operador y llevan la marca **EJERCICIO / PRUEBA**.
+
+`/mcp` queda accesible mediante el mismo nginx. Para uso en internet se recomienda HTTPS en el proxy externo; las herramientas son de lectura y nginx limita solicitudes por IP.
 
 ## Riesgo próximo (GFWED)
 

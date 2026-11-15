@@ -1,6 +1,6 @@
 # Firely MCP server
 
-Expone la API de Firely como herramientas MCP (stdio):
+Expone la API de Firely como herramientas MCP (stdio local o HTTP streamable público):
 
 | Pregunta | Herramientas |
 |---|---|
@@ -16,6 +16,12 @@ Expone la API de Firely como herramientas MCP (stdio):
 Todas las cifras vienen de la API (serie armonizada); el modelo no calcula. Cada resultado incluye `attribution` (NASA FIRMS), `methodology_version` y `data_cutoff`.
 
 Requisitos: `.venv/bin/pip install mcp` y la API corriendo (`FIRELY_API_URL`, por defecto `http://127.0.0.1:8000`).
+
+## HTTP público
+
+`docker compose up -d --build mcp web` expone las herramientas en `https://tu-dominio/mcp` a través de nginx. Configura `FIRELY_MCP_ALLOWED_HOSTS` con el dominio público y, para pruebas locales, `localhost,localhost:*,127.0.0.1,127.0.0.1:*`. La validación de Host está siempre activa para evitar DNS rebinding. `FIRELY_MCP_ALLOWED_ORIGINS` permite declarar orígenes adicionales de clientes basados en navegador. El endpoint `/healthz` solo existe en la red interna de Docker. Nginx limita llamadas por IP y el servidor no conserva sesiones.
+
+Las herramientas hacen consultas de solo lectura a la API interna. Publica el sitio tras un proxy HTTPS; el transporte MCP HTTP no usa contraseña por defecto.
 
 ## Claude Code
 

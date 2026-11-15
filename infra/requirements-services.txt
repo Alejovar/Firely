@@ -1,0 +1,11 @@
+# Runtime dependencies of the firely-services image (Telegram bot + public MCP server).
+# Both only talk to the Firely API over HTTP: no DuckDB, no Parquet, no data volume.
+httpx==0.28.1
+# bot/render.py (calendar PNG)
+matplotlib==3.11.2
+numpy==2.4.6
+# mcp/server.py (streamable HTTP transport)
+mcp==2.3.0
+starlette==1.10.0
+uvicorn==0.54.0
+pydantic==2.14.3

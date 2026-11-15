@@ -115,6 +115,24 @@ def _monthly(files, cells):
         return con.execute(sql, params).fetchall()
 
 
+def _cloud_corrected_months(files, cells):
+    """Optional Coahuila-only view; return NULL when any selected cell lacks cloud coverage."""
+    cloud = db.file_path("context/clear_frac_coahuila.parquet")
+    if not cloud or not files or cells == []:
+        return {}
+    where = "WHERE m.h3_r6 IN (SELECT unnest(?))" if cells is not None else ""
+    params = [files, cloud] + ([cells] if cells is not None else [])
+    sql = f"""SELECT m.year,m.month,
+        CASE WHEN count(*) FILTER (WHERE c.clear_frac IS NULL)=0 THEN
+          sum(m.count_harm / greatest(c.clear_frac,0.30)) ELSE NULL END AS corrected,
+        count(*) FILTER (WHERE c.clear_frac IS NOT NULL)::DOUBLE/nullif(count(*),0) AS coverage
+        FROM {db.table_sql(files)} m
+        LEFT JOIN read_parquet(?) c ON m.h3_r6=c.h3_r6 AND m.year=c.year AND m.month=c.month
+        {where} GROUP BY 1,2"""
+    with db.connection() as con:
+        return {(y,m): (value,coverage) for y,m,value,coverage in con.execute(sql,params).fetchall()}
+
+
 def _context_months(table, cells, fields):
     path = db.file_path(table)
     if not path or cells == []:
@@ -165,23 +183,28 @@ def _burn_cells(cells, burn_type):
 
 def calendar(*, h3_list=None, bbox=None, lat=None, lon=None, radius_km=None,
              geometry=None, admin=None, from_=date(2001, 1, 1), to=None,
-             metric="count", reference="median", burn_type=None):
+             metric="count", reference="median", burn_type=None, cloud_corrected=False):
     if burn_type not in (None, "agricola", "forestal"):
         raise HTTPException(422, "burn_type must be agricola or forestal")
     if to is not None and from_ > to:
         raise HTTPException(422, "from must precede to")
     cells, area = _cells(h3_list, bbox, lat, lon, radius_km, geometry, admin)
     cells = _burn_cells(cells, burn_type)
-    all_rows = _monthly(db.parquet_files("cell_month_harmonized"), cells)
-    cutoff = max((date(y, m, monthrange(y, m)[1]) for y, m, *_ in all_rows), default=None)
+    scientific_rows = _monthly(db.parquet_files("cell_month_harmonized"), cells)
+    sp_month = max(((y,m) for y,m,*_ in scientific_rows),default=None)
+    nrt_rows = [r for r in _monthly(db.parquet_files("cell_month_nrt"), cells)
+                if sp_month is None or (r[0],r[1]) > sp_month]
+    all_rows = scientific_rows + nrt_rows
+    cutoff = max((date(y, m, monthrange(y, m)[1]) for y, m, *_ in scientific_rows), default=None)
     last_full_year = cutoff.year if cutoff and cutoff.month == 12 else (cutoff.year - 1 if cutoff else 0)
     metric_index = 2 if metric == "count" else 5
     refs = {}
-    for row in all_rows:
+    for row in scientific_rows:
         if 2001 <= row[0] <= last_full_year and row[metric_index] is not None:
             refs.setdefault(row[1], []).append(row[metric_index])
     rows = []
     clear_months = _context_months("context/clear_frac_coahuila.parquet", cells, ["clear_frac"])
+    corrected_months = _cloud_corrected_months(db.parquet_files("cell_month_harmonized"), cells) if cloud_corrected else {}
     oni_months = _oni()
     for y, m, count, lo, hi, frp, clear, estimated in all_rows:
         start = date(y, m, 1)
@@ -202,15 +225,27 @@ def calendar(*, h3_list=None, bbox=None, lat=None, lon=None, radius_km=None,
         else:
             ratio = percentile = period = None
         context_clear = clear_months.get((y, m), (None,))[0]
+        cloud_value, cloud_coverage = corrected_months.get((y,m),(None,0))
+        provisional = sp_month is None or (y,m) > sp_month
         rows.append({"year": y, "month": m, "count_harm": count,
                      "count_harm_lo": lo, "count_harm_hi": hi, "frp_harm": frp,
                      "anomaly_ratio": ratio, "percentile": percentile,
                      "return_period_years": period, "clear_frac": context_clear,
-                     "is_estimated": estimated, "enso_phase": oni_months.get((y, m), (None, None))[1]})
+                     "is_estimated": estimated, "source": "NRT" if provisional else "SP",
+                     "is_provisional": provisional,
+                     "enso_phase": oni_months.get((y, m), (None, None))[1],
+                     **({"count_harm_cloudcorr": cloud_value, "cloud_coverage": cloud_coverage} if cloud_corrected else {})})
+    nrt_dates = db.parquet_files("cell_day_nrt")
+    if nrt_rows and nrt_dates:
+        with db.connection() as con:
+            nrt_cutoff = con.execute("SELECT max(date) FROM read_parquet(?)",[nrt_dates]).fetchone()[0]
+        cutoff = max(cutoff,nrt_cutoff) if cutoff and nrt_cutoff else nrt_cutoff or cutoff
     return _envelope(cutoff.isoformat() if cutoff else None, area=area,
                      reference=reference, metric=metric,
+                     nrt_note="NRT es provisional y no está calibrado como la serie científica SP; se muestra solo después del último mes SP." if nrt_rows else None,
                      return_period_formula="percentile = 1 - descending_midrank/(n+1); years = min(50, 1/(1-percentile))",
-                     rows=rows, **({"burn_type_basis": "cobertura del suelo (aproximado): agrícola = cultivo; forestal = vegetación natural (bosque, matorral, pastizal/sabana)"} if burn_type else {}))
+                     rows=rows, **({"cloud_correction": "Vista opcional Coahuila: conteo por celda / max(clear_frac, 0.30); NULL si falta cobertura. No sustituye la serie observada."} if cloud_corrected else {}),
+                     **({"burn_type_basis": "cobertura del suelo (aproximado): agrícola = cultivo; forestal = vegetación natural (bosque, matorral, pastizal/sabana)"} if burn_type else {}))
 
 
 def _hotspot_rows(files, cells, from_, to, min_confidence=None):
@@ -244,6 +279,26 @@ def _hotspot_rows(files, cells, from_, to, min_confidence=None):
 def daily(*, year, month, h3_list=None, bbox=None, lat=None, lon=None,
           radius_km=None, geometry=None, admin=None):
     cells, area = _cells(h3_list, bbox, lat, lon, radius_km, geometry, admin)
+    sp_files = db.parquet_files("cell_month_harmonized")
+    sp_latest = None
+    if sp_files:
+        with db.connection() as con:
+            sp_latest = con.execute(f"SELECT max(year*100+month) FROM {db.table_sql(sp_files)}",[sp_files]).fetchone()[0]
+    provisional = sp_latest is not None and year*100+month > sp_latest
+    table = "cell_day_nrt" if provisional else "cell_day"
+    derived = [f for f in db.parquet_files(table) if f"year={year}/" in f]
+    if derived and cells != []:
+        where = "AND h3_r6 IN (SELECT unnest(?))" if cells is not None else ""
+        params = [derived,year,month] + ([cells] if cells is not None else [])
+        with db.connection() as con:
+            records = con.execute(f"""SELECT date,sum(count_raw_modis+count_raw_viirs)::INTEGER,
+              sum(count_harm),bool_or(is_estimated) FROM {db.table_sql(derived)}
+              WHERE year(date) = ? AND month(date) = ? {where} GROUP BY 1 ORDER BY 1""",params).fetchall()
+        return _envelope(max((r[0] for r in records),default=None).isoformat() if records else None,
+          area=area,year=year,month=month,
+          rows=[{"date":d.isoformat(),"count_raw":raw,"count_harm":harm,
+                 "is_estimated":estimated,"source":"NRT" if provisional else "SP",
+                 "is_provisional":provisional} for d,raw,harm,estimated in records])
     files = db.parquet_files("hotspots")
     first, last = date(year, month, 1), date(year, month, monthrange(year, month)[1])
     cols, records = _hotspot_rows(files, cells, first, last)
@@ -318,15 +373,23 @@ def events(*, h3_list=None, bbox=None, lat=None, lon=None, radius_km=None,
     if min_hotspots < 0:
         raise HTTPException(422, "min_hotspots must be nonnegative")
     cells, area = _cells(h3_list, bbox, lat, lon, radius_km, geometry, admin)
-    files = db.parquet_files("events")
-    if not files or cells == []:
+    sources = [("SP",db.parquet_files("events")),("NRT",db.parquet_files("events_nrt"))]
+    if not any(files for _,files in sources) or cells == []:
         return _envelope(_cutoff(), area=area, rows=[])
-    where = ["n_hotspots_harm >= ?"]
-    params = [files, min_hotspots]
-    if cells is not None:
-        where.append("len(list_intersect(cells, ?)) > 0")
-        params.append(cells)
-    sql = f"""SELECT event_id, start_date, end_date, duration_days, n_hotspots_harm,
+    rows = []
+    names = ("event_id", "start_date", "end_date", "duration_days", "n_hotspots_harm",
+             "frp_total", "area_approx_km2", "night_ratio", "burn_type", "centroid_lat",
+             "centroid_lon", "geometry_wkb_hex", "cells", "rank", "estimated",
+             "area_rank", "duration_rank", "frp_rank", "extent_rank")
+    for source,files in sources:
+        if not files:
+            continue
+        where = ["n_hotspots_harm >= ?"]
+        params = [files, min_hotspots]
+        if cells is not None:
+            where.append("len(list_intersect(cells, ?)) > 0")
+            params.append(cells)
+        sql = f"""SELECT event_id, start_date, end_date, duration_days, n_hotspots_harm,
         frp_total, area_approx_km2, night_ratio, burn_type, centroid_lat,
         centroid_lon, hex(geometry), cells, rank, estimated,
         rank() OVER (ORDER BY n_hotspots_harm DESC) AS area_rank,
@@ -334,25 +397,22 @@ def events(*, h3_list=None, bbox=None, lat=None, lon=None, radius_km=None,
         rank() OVER (ORDER BY frp_total DESC) AS frp_rank,
         rank() OVER (ORDER BY area_approx_km2 DESC) AS extent_rank
         FROM {db.table_sql(files)} WHERE {' AND '.join(where)}"""
-    with db.connection() as con:
-        records = con.execute(sql, params).fetchall()
-    names = ("event_id", "start_date", "end_date", "duration_days", "n_hotspots_harm",
-             "frp_total", "area_approx_km2", "night_ratio", "burn_type", "centroid_lat",
-             "centroid_lon", "geometry_wkb_hex", "cells", "rank", "estimated",
-             "area_rank", "duration_rank", "frp_rank", "extent_rank")
-    rows = []
-    for record in records:
-        event = dict(zip(names, record))
-        if from_ and event["end_date"] < from_ or to and event["start_date"] > to:
-            continue
-        if active_only and event["end_date"] < date.today():
-            continue
-        event["start_date"] = event["start_date"].isoformat()
-        event["end_date"] = event["end_date"].isoformat()
-        rows.append(event)
-    rows.sort(key=lambda e: (e["rank"] if e["rank"] is not None else float("inf"), e["event_id"]))
+        with db.connection() as con:
+            records = con.execute(sql, params).fetchall()
+        for record in records:
+            event = dict(zip(names, record))
+            if from_ and event["end_date"] < from_ or to and event["start_date"] > to:
+                continue
+            if active_only and event["end_date"] < date.today():
+                continue
+            event["start_date"] = event["start_date"].isoformat()
+            event["end_date"] = event["end_date"].isoformat()
+            event["source"] = source
+            event["is_provisional"] = source == "NRT"
+            rows.append(event)
+    rows.sort(key=lambda e: (e["is_provisional"],e["rank"] if e["rank"] is not None else float("inf"),e["event_id"]))
     return _envelope(_cutoff(), area=area, rows=rows,
-                     area_rank_basis="n_hotspots_harm; ranks include all events in the selected area above min_hotspots",
+                     area_rank_basis="n_hotspots_harm; ranks are scoped separately to SP and provisional NRT events in the selected area",
                      area_approx_note="Approximate event extent, not burned area")
 
 

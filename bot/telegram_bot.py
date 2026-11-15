@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 import time
 from pathlib import Path
@@ -18,10 +19,17 @@ from .render import calendar_png
 from . import stt
 
 
-STATE_PATH = ROOT / "data" / "interim" / "bot_state.json"
+def default_state_path() -> Path:
+    """Chat preferences (language, pending choice, last location). In Docker: the writable /state volume."""
+    state_dir = os.environ.get("FIRELY_STATE_DIR")
+    return Path(state_dir) / "bot" / "bot_state.json" if state_dir else ROOT / "data" / "interim" / "bot_state.json"
+
+
+STATE_PATH = default_state_path()
 LANGS = {"es", "en", "pt"}
 WORDS = {
-    "es": {"help": "Comandos: /calendario <lugar> [año], /temporada <lugar>, /incendios <lugar>, /semaforo <lugar>, /hoy <lugar>, /lang es|en|pt, /ayuda. También puedes escribir o mandar una nota de voz (¿cómo va la temporada en Arteaga?) o compartir tu ubicación.",
+    "es": {"start": "Tu chat_id es: {chat_id}\nLo necesitas para suscribirte a las alertas de ejercicio de Firely: en la web (Plataforma › Alertas) o con POST /api/subscriptions indica este chat_id, el área y el umbral. Un operador revisa y aprueba cada suscripción antes de cualquier envío, y todos los mensajes van marcados EJERCICIO / PRUEBA (no son alertas oficiales). Para darte de baja, pide al operador que borre la suscripción.\n",
+           "help": "Comandos: /calendario <lugar> [año], /temporada <lugar>, /incendios <lugar>, /semaforo <lugar>, /hoy <lugar>, /lang es|en|pt, /ayuda. También puedes escribir o mandar una nota de voz (¿cómo va la temporada en Arteaga?) o compartir tu ubicación.",
            "welcome": "Firely: calendario de actividad de quemas.\n", "usage": "Indica un lugar. Ejemplo: /calendario Arteaga 2021",
            "unknown": "Comando no reconocido. Usa /ayuda.", "choice": "Elige un lugar respondiendo con su número:",
            "bad_choice": "Responde con uno de los números de la lista.", "not_found": "No se encontró el lugar.",
@@ -32,7 +40,8 @@ WORDS = {
            "peak": "Mes con mayor actividad", "latest": "Último mes", "anomaly": "anomalía", "return": "periodo de retorno",
            "unavailable": "no disponible", "years": "años", "events": "Incendios principales", "season": "Temporada",
            "simulated": "Datos simulados de la API de desarrollo.", "heard": "Entendí", "no_voice": "No puedo transcribir notas de voz en este servidor. Escribe tu pregunta, por ejemplo: incendios en Arteaga en marzo de 2021.", "voice_error": "No pude descargar o entender la nota de voz. Intenta de nuevo o escribe la pregunta.", "here": "Tu ubicación (±25 km)", "priority": "Prioridad", "recent": "Detecciones de las últimas 24 h", "recent_none": "Sin detecciones en las últimas 24 h.", "recent_off": "La capa de detecciones recientes no está disponible en este servidor.", "no_location": "Indica un lugar o comparte tu ubicación.", "point": "Un punto de calor es una detección satelital, no un incendio confirmado."},
-    "en": {"help": "Commands: /calendario <place> [year], /temporada <place>, /incendios <place>, /semaforo <place>, /hoy <place>, /lang es|en|pt, /ayuda. You can also type or send a voice note (how is the season in Arteaga?) or share your location.",
+    "en": {"start": "Your chat_id is: {chat_id}\nYou need it to subscribe to Firely exercise alerts: on the web (Platform › Alerts) or with POST /api/subscriptions, give this chat_id, the area and the threshold. An operator reviews and approves each subscription before anything is sent, and every message is marked EXERCISE / TEST (not an official alert). To unsubscribe, ask the operator to delete the subscription.\n",
+           "help": "Commands: /calendario <place> [year], /temporada <place>, /incendios <place>, /semaforo <place>, /hoy <place>, /lang es|en|pt, /ayuda. You can also type or send a voice note (how is the season in Arteaga?) or share your location.",
            "welcome": "Firely: fire activity calendar.\n", "usage": "Enter a place. Example: /calendario Arteaga 2021",
            "unknown": "Unknown command. Use /ayuda.", "choice": "Choose a place by replying with its number:",
            "bad_choice": "Reply with a number from the list.", "not_found": "Place not found.",
@@ -43,7 +52,8 @@ WORDS = {
            "peak": "Peak activity month", "latest": "Latest month", "anomaly": "anomaly", "return": "return period",
            "unavailable": "unavailable", "years": "years", "events": "Top fire events", "season": "Season",
            "simulated": "Simulated data from the development API.", "heard": "I understood", "no_voice": "This server cannot transcribe voice notes. Type your question, e.g. fires in Arteaga in March 2021.", "voice_error": "I could not download or understand the voice note. Try again or type the question.", "here": "Your location (±25 km)", "priority": "Priority", "recent": "Detections in the last 24 h", "recent_none": "No detections in the last 24 h.", "recent_off": "The recent-detections layer is not available on this server.", "no_location": "Name a place or share your location.", "point": "A hotspot is a satellite detection, not a confirmed fire."},
-    "pt": {"help": "Comandos: /calendario <lugar> [ano], /temporada <lugar>, /incendios <lugar>, /semaforo <lugar>, /hoy <lugar>, /lang es|en|pt, /ayuda. Você também pode escrever ou mandar um áudio (como está a temporada em Arteaga?) ou compartilhar sua localização.",
+    "pt": {"start": "Seu chat_id é: {chat_id}\nVocê precisa dele para assinar os alertas de exercício do Firely: na web (Plataforma › Alertas) ou com POST /api/subscriptions, informe este chat_id, a área e o limiar. Um operador revisa e aprova cada assinatura antes de qualquer envio, e todas as mensagens são marcadas EXERCÍCIO / TESTE (não são alertas oficiais). Para cancelar, peça ao operador que apague a assinatura.\n",
+           "help": "Comandos: /calendario <lugar> [ano], /temporada <lugar>, /incendios <lugar>, /semaforo <lugar>, /hoy <lugar>, /lang es|en|pt, /ayuda. Você também pode escrever ou mandar um áudio (como está a temporada em Arteaga?) ou compartilhar sua localização.",
            "welcome": "Firely: calendário de atividade do fogo.\n", "usage": "Informe um lugar. Exemplo: /calendario Arteaga 2021",
            "unknown": "Comando desconhecido. Use /ayuda.", "choice": "Escolha um lugar respondendo com o número:",
            "bad_choice": "Responda com um número da lista.", "not_found": "Lugar não encontrado.",
@@ -205,8 +215,13 @@ class Bot:
             self._save()
             self._send(chat_id, WORDS[argument]["lang"])
             return
-        if command in {"start", "ayuda", "help"}:
-            self._send(chat_id, (words["welcome"] if command == "start" else "") + words["help"])
+        if command in {"start", "id", "chatid"}:
+            # The chat id identifies this chat: it is only ever sent back to the same chat, never logged.
+            intro = words["welcome"] if command == "start" else ""
+            self._send(chat_id, intro + words["start"].format(chat_id=chat_id) + "\n" + words["help"])
+            return
+        if command in {"ayuda", "help"}:
+            self._send(chat_id, words["help"])
             return
         if command not in {"calendario", "temporada", "incendios", "semaforo", "hoy"}:
             self._send(chat_id, words["unknown"])
@@ -339,6 +354,7 @@ class Bot:
         self.telegram.set_commands([
             {"command": "start", "description": "Firely"},
             {"command": "ayuda", "description": "Ayuda / Help / Ajuda"},
+            {"command": "id", "description": "Tu chat_id (para suscribirte a alertas)"},
             {"command": "calendario", "description": "Calendario de fuego"},
             {"command": "temporada", "description": "Temporada"},
             {"command": "incendios", "description": "Eventos principales"},
@@ -360,8 +376,9 @@ class Bot:
 def main() -> int:
     token = setting("TELEGRAM_BOT_TOKEN")
     if not token:
-        print("TELEGRAM_BOT_TOKEN is missing. Set it in the environment or repo-root .env to run the bot.")
-        return 1
+        print("TELEGRAM_BOT_TOKEN is missing. Set it in the environment or repo-root .env to run the bot.", flush=True)
+        # In Docker (restart: on-failure) exit cleanly instead of crash-looping while no token is configured.
+        return 0 if os.environ.get("FIRELY_BOT_EXIT_OK_WITHOUT_TOKEN") == "1" else 1
     Bot(TelegramClient(token), FirelyClient()).run()
     return 0
 

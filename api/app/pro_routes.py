@@ -75,7 +75,9 @@ def _views():
     root = db.processed_root()
     views = {"cell_month_harmonized": "cell_month_harmonized/*/year=*/*.parquet",
              "events": "events/*/year=*/*.parquet",
-             "climatology": "climatology/*.parquet"}
+             "climatology": "climatology/*/*.parquet",
+             "cell_day": "cell_day/*/year=*/*.parquet",
+             "cell_stats": "cell_stats/*/*.parquet"}
     return {name: str(root / pattern) for name, pattern in views.items()
             if any(root.glob(pattern))}
 

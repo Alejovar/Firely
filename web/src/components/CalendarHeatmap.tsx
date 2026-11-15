@@ -41,11 +41,11 @@ const s = stylex.create({
   empty: { fontSize: '13px', color: 'var(--color-text-secondary)', padding: '12px 0' },
 });
 
-export default function CalendarHeatmap({ data, loading, error, label }: { data: CalendarResponse | null; loading: boolean; error: string | null; label?: string }) {
+export default function CalendarHeatmap({ data, loading, error, label, cloudCorrected = false }: { data: CalendarResponse | null; loading: boolean; error: string | null; label?: string; cloudCorrected?: boolean }) {
   const app = useApp(), L = app.lang;
   const years = useMemo(() => [...new Set(data?.rows.map(r => r.year) ?? [])].sort((a, b) => b - a), [data]);
   const lookup = useMemo(() => new Map(data?.rows.map(r => [`${r.year}-${r.month}`, r]) ?? []), [data]);
-  const max = Math.max(1, ...(data?.rows.map(r => app.metric === 'frp' ? r.frp_harm ?? 0 : r.count_harm ?? 0) ?? []));
+  const max = Math.max(1, ...(data?.rows.map(r => app.metric === 'frp' ? r.frp_harm ?? 0 : cloudCorrected ? r.count_harm_cloudcorr ?? r.count_harm ?? 0 : r.count_harm ?? 0) ?? []));
   const { gridRef, handleKeyDown, handleFocus } = useGridFocus<HTMLElement>({ columns: 14, cellSelector: '[role="gridcell"]', getFocusTarget: cell => cell.querySelector<HTMLElement>('button'), isCellFocusable: cell => !!cell.querySelector('button'), hasRovingTabIndex: true });
   if (loading) return <Skeleton width="100%" height="27rem" />;
   if (error) return <Banner status="error" title={error} />;
@@ -74,11 +74,11 @@ export default function CalendarHeatmap({ data, loading, error, label }: { data:
                 <Inline xs={s.mark} style={{ backgroundColor: isEst ? 'var(--color-border-emphasized)' : 'transparent' }} />{year}
               </Inline>
               {rows.map((row, i) => {
-                const enc = encodeCell(row, app.mode, app.metric, max, app.scheme);
-                const value = app.metric === 'frp' ? row?.frp_harm : row?.count_harm;
+                const enc = encodeCell(cloudCorrected && row ? { ...row, count_harm: row.count_harm_cloudcorr ?? row.count_harm } : row, app.mode, app.metric, max, app.scheme);
+                const value = app.metric === 'frp' ? row?.frp_harm : cloudCorrected ? row?.count_harm_cloudcorr ?? row?.count_harm : row?.count_harm;
                 const selected = app.selected?.year === year && app.selected.month === i + 1;
                 const cloudy = row?.clear_frac != null && row.clear_frac < CLOUDY_CLEAR_FRAC;
-                const text = `${monthNames[L][i]} ${year}: ${fmt(value, L, value != null && value < 10 ? 1 : 0)} ${unit}${row?.anomaly_ratio != null ? `, ${fmt(row.anomaly_ratio, L, 1)}× ${ref}` : ''}${row?.is_estimated ? (L === 'en' ? ', estimated' : ', estimado') : ''}${cloudy ? `, ${L === 'en' ? 'cloudy' : 'nublado'} (${fmt((1 - (row!.clear_frac as number)) * 100, L)} %)` : ''}`;
+                const text = `${monthNames[L][i]} ${year}: ${fmt(value, L, value != null && value < 10 ? 1 : 0)} ${unit}${cloudCorrected && row?.count_harm_cloudcorr != null ? ` (${L === 'en' ? 'clear-sky estimate; original' : L === 'pt' ? 'estimativa de céu limpo; original' : 'estimación con cielo despejado; original'} ${fmt(row.count_harm, L)})` : ''}${!cloudCorrected && row?.anomaly_ratio != null ? `, ${fmt(row.anomaly_ratio, L, 1)}× ${ref}` : ''}${row?.is_estimated ? (L === 'en' ? ', estimated' : ', estimado') : ''}${cloudy ? `, ${L === 'en' ? 'cloudy' : 'nublado'} (${fmt((1 - (row!.clear_frac as number)) * 100, L)} %)` : ''}`;
                 return <Inline role="gridcell" key={i} xs={s.gc}>
                   <button type="button" disabled={!row} title={row ? text : undefined} aria-label={row ? text : `${monthNames[L][i]} ${year}`} aria-selected={selected}
                     tabIndex={selected || (!app.selected && year === initial.year && i + 1 === initial.month) ? 0 : -1}

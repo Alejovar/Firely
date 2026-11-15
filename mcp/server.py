@@ -1,6 +1,8 @@
-"""Firely MCP server (stdio). Every tool calls the Firely HTTP API; numbers always come from the API.
+"""Firely MCP server. Every tool calls the Firely HTTP API; numbers always come from the API.
 
-Run: FIRELY_API_URL=http://127.0.0.1:8000 .venv/bin/python mcp/server.py
+Local (stdio):        FIRELY_API_URL=http://127.0.0.1:8000 .venv/bin/python mcp/server.py
+Public (HTTP, Docker): python mcp/server.py --transport streamable-http --host 0.0.0.0 --port 8001
+                       -> streamable HTTP at /mcp (stateless, one JSON-RPC exchange per request) and GET /healthz
 """
 from __future__ import annotations
 
@@ -177,5 +179,46 @@ def watch(level: str = "mun", country: str = "Mexico", top: int = 10) -> dict:
     return _call("GET", "/watch", {"level": level, "country": country, "top": top})
 
 
+def http_app(path: str = "/mcp"):
+    """Starlette app for the streamable-HTTP transport (stateless: no per-client session kept on the server).
+
+    DNS-rebinding protection always checks the Host header. Set FIRELY_MCP_ALLOWED_HOSTS to
+    the public domain or IP plus localhost hosts when deploying behind nginx."""
+    from mcp.server.transport_security import TransportSecuritySettings
+    from starlette.responses import JSONResponse
+    from starlette.routing import Route
+
+    split = lambda name: [x.strip() for x in os.environ.get(name, "").split(",") if x.strip()]
+    hosts = split("FIRELY_MCP_ALLOWED_HOSTS") or ["localhost", "localhost:*", "127.0.0.1", "127.0.0.1:*", "54.80.16.144"]
+    security = TransportSecuritySettings(enable_dns_rebinding_protection=True, allowed_hosts=hosts,
+                                         allowed_origins=split("FIRELY_MCP_ALLOWED_ORIGINS"))
+    app = mcp.streamable_http_app(streamable_http_path=path, stateless_http=True, transport_security=security,
+                                  host="0.0.0.0")
+
+    async def healthz(request):
+        return JSONResponse({"ok": True, "transport": "streamable-http", "path": path, "attribution": ATTRIBUTION})
+
+    app.router.routes.append(Route("/healthz", healthz))
+    return app
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+    parser = argparse.ArgumentParser(description="Firely MCP server")
+    parser.add_argument("--transport", choices=("stdio", "streamable-http"),
+                        default=os.environ.get("FIRELY_MCP_TRANSPORT", "stdio"))
+    parser.add_argument("--host", default=os.environ.get("FIRELY_MCP_HOST", "127.0.0.1"))
+    parser.add_argument("--port", type=int, default=int(os.environ.get("FIRELY_MCP_PORT", "8001")))
+    parser.add_argument("--path", default="/mcp")
+    args = parser.parse_args(argv)
+    if args.transport == "stdio":
+        mcp.run()
+        return 0
+    import uvicorn
+    uvicorn.run(http_app(args.path), host=args.host, port=args.port, proxy_headers=False,
+                log_level="info")
+    return 0
+
+
 if __name__ == "__main__":
-    mcp.run()
+    raise SystemExit(main())

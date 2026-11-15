@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "Si usas los agregados armonizados de Firely, cita este software y la fuente original NASA FIRMS."
+title: "Firely: serie armonizada de puntos de calor MODIS–VIIRS"
+type: software
+authors:
+  - name: "Equipo Firely"
+version: "1.2.0-hybrid-biome"
+abstract: "Herramientas reproducibles para armonizar detecciones MODIS y VIIRS, validar la serie y explorar actividad histórica del fuego."
+keywords:
+  - fire
+  - MODIS
+  - VIIRS
+  - NASA FIRMS
+  - harmonization

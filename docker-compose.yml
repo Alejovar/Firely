@@ -1,4 +1,4 @@
-# docker compose up --build        ->  http://localhost:8080
+# docker compose up --build        ->  http://localhost:8080   (MCP: http://localhost:8080/mcp)
 # Data: the API reads Parquet from FIRELY_DATA_PROCESSED (default ./data/processed), mounted read-only.
 services:
   api:
@@ -13,8 +13,9 @@ services:
       FIRMS_MAP_KEY: ${FIRMS_MAP_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       FIRELY_LLM_MODEL: ${FIRELY_LLM_MODEL:-}
-      # daily alerts job (pipeline.alerts_job); without it the job runs in dry-run mode
+      # daily alerts / weekly bulletin jobs (pipeline.alerts_job, pipeline.bulletin_job); without it they run in dry-run mode
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      FIRELY_PUBLIC_URL: ${FIRELY_PUBLIC_URL:-}
       # writable state (CAP drafts approved for exercise, NASA POWER cache); the data stays read-only
       FIRELY_STATE_DIR: /state
     volumes:
@@ -28,6 +29,7 @@ services:
     mem_limit: 3g
     expose:
       - "8000"
+
   web:
     build:
       context: .
@@ -42,5 +44,101 @@ services:
     ports:
       - "${FIRELY_PORT:-8080}:80"
 
+  # Public MCP server (streamable HTTP), reached through nginx at /mcp. Calls the API on the internal network.
+  mcp:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.services
+    image: firely-services:latest
+    restart: unless-stopped
+    command: ["python", "mcp/server.py", "--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8001"]
+    environment:
+      FIRELY_API_URL: http://api:8000
+      # Host allow-list (DNS-rebinding protection); override when changing public hostname.
+      FIRELY_MCP_ALLOWED_HOSTS: ${FIRELY_MCP_ALLOWED_HOSTS:-}
+      FIRELY_MCP_ALLOWED_ORIGINS: ${FIRELY_MCP_ALLOWED_ORIGINS:-}
+    depends_on:
+      api:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    pids_limit: 128
+    expose:
+      - "8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8001/healthz', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  # Telegram bot (long polling). Without TELEGRAM_BOT_TOKEN it prints why and exits with code 0: with
+  # restart: on-failure it then stays stopped (no crash loop). Add the token to .env and `docker compose up -d bot`.
+  bot:
+    image: firely-services:latest
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.services
+    restart: on-failure:5
+    command: ["python", "-m", "bot.telegram_bot"]
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      FIRELY_API_URL: http://api:8000
+      # links in the replies ("Ver datos") must point to the public API, not to http://api:8000
+      FIRELY_PUBLIC_API_URL: ${FIRELY_PUBLIC_API_URL:-}
+      FIRELY_BOT_EXIT_OK_WITHOUT_TOKEN: "1"
+      FIRELY_STATE_DIR: /state
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - firely-bot-state:/state
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 384m
+    pids_limit: 128
+
+  # One UTC scheduler. The API keeps its data mount read-only; only this service updates Parquet.
+  scheduler:
+    image: firely-api:latest
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.api
+    restart: unless-stopped
+    command: ["sh", "-c", "umask 0002; exec python infra/scheduler.py"]
+    environment:
+      FIRELY_API_MODE: real
+      FIRELY_DATA_PROCESSED: /data/processed
+      FIRELY_STATE_DIR: /state
+      FIRELY_API_URL: http://api:8000
+      FIRMS_MAP_KEY: ${FIRMS_MAP_KEY:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      FIRELY_PUBLIC_URL: ${FIRELY_PUBLIC_URL:-}
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ${FIRELY_DATA_PROCESSED:-./data/processed}:/data/processed:rw
+      - firely-state:/state
+    group_add:
+      - "${FIRELY_DATA_GID:-1000}"
+    read_only: true
+    tmpfs:
+      - /tmp:size=1g
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 3g
+    pids_limit: 128
+    healthcheck:
+      disable: true
+
 volumes:
   firely-state:
+  firely-bot-state:

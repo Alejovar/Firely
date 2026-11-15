@@ -1,0 +1,27 @@
+# Firely services: the Telegram bot (bot/) and the public MCP server (mcp/server.py, streamable HTTP).
+# One small image, two compose services with different commands. Neither reads the data: both call the API.
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    MPLCONFIGDIR=/tmp/matplotlib \
+    MPLBACKEND=Agg
+
+WORKDIR /app
+COPY infra/requirements-services.txt ./requirements.txt
+RUN pip install -r requirements.txt
+
+COPY bot ./bot
+COPY mcp ./mcp
+
+RUN useradd --system --uid 10001 --no-create-home firely && mkdir -p /state && chown firely /state
+USER firely
+
+ENV FIRELY_API_URL=http://api:8000 \
+    FIRELY_STATE_DIR=/state
+
+# Default: the MCP server. The bot service overrides the command (python -m bot.telegram_bot).
+EXPOSE 8001
+CMD ["python", "mcp/server.py", "--transport", "streamable-http", "--host", "0.0.0.0", "--port", "8001"]

@@ -126,3 +126,10 @@ export const amberLabel = { bg: 'rgba(224,165,38,.18)', fg: 'light-dark(#7a5200,
 export const PRIORITY_STOPS: [number, string][] = [0, 25, 50, 75, 100].map(v => [v, cividis(v / 100)]);
 /** FWI forecast bars (cividis by value relative to the climatology) and the climatology reference line. */
 export const fwiInk = { climatology: 'var(--color-text-secondary)' } as const;
+
+/** 25-year animation: harmonized activity per H3 cell, t = sqrt(value / fixed top) in 0..1. Cividis from its first
+ *  lifted step (the darkest navy disappears on the dark basemap) to yellow. Zero cells are not drawn at all. */
+export const ANIMATION_RAMP: [number, string][] = [0, 0.25, 0.5, 0.75, 1].map(t => [t, cividis(0.14 + 0.86 * t)]);
+export const ANIMATION_GRADIENT = `linear-gradient(90deg, ${ANIMATION_RAMP.map(([, c]) => c).join(', ')})`;
+/** Burned-in video captions: a dark card with light ink, legible over either basemap. */
+export const videoInk = { card: 'rgba(16,20,18,.78)', text: '#f1f3ef', muted: '#b9c0b7', estimated: '#e0a526' } as const;

@@ -26,6 +26,8 @@ export interface CalendarRow {
   count_harm?: number;
   count_harm_lo?: number;
   count_harm_hi?: number;
+  /** Harmonized count divided by the clear-sky fraction (capped). Only where cloud data exist (Coahuila); null elsewhere. */
+  count_harm_cloudcorr?: number | null;
   frp_harm?: number;
   anomaly_ratio?: number;
   percentile?: number;
@@ -137,8 +139,20 @@ const withArea = (area: Area, extra: Record<string, string | number | undefined>
 };
 
 export type BurnType = 'agricola' | 'forestal';
-export const getCalendar = (area: Area, from: string, to: string, metric: Metric, reference: Reference, signal?: AbortSignal, burnType?: BurnType) =>
-  request<CalendarResponse>(`/calendar?${withArea(area, { from, to, metric, reference, burn_type: burnType })}`, { signal });
+export const getCalendar = (area: Area, from: string, to: string, metric: Metric, reference: Reference, signal?: AbortSignal, burnType?: BurnType, cloudCorrected?: boolean) =>
+  request<CalendarResponse>(`/calendar?${withArea(area, { from, to, metric, reference, burn_type: burnType, cloud_corrected: cloudCorrected ? 'true' : undefined })}`, { signal });
+
+export type AnimationCountry = 'Mexico' | 'Argentina' | 'all';
+/** Monthly harmonized activity per H3 cell for the 25-year animation. values[i][j] = month i, cell j. */
+export interface AnimationFrames extends Envelope {
+  months: string[];
+  cells: string[];
+  values: number[][];
+  max: number;
+  is_estimated_months: string[];
+}
+export const getAnimationFrames = (country: AnimationCountry, res = 4, signal?: AbortSignal) =>
+  request<AnimationFrames>(`/animation/frames?${new URLSearchParams({ country, res: String(res) })}`, { signal });
 export const getDaily = (area: Area, year: number, month: number, signal?: AbortSignal) =>
   request<DailyResponse | DailyRow[]>(`/calendar/daily?${withArea(area, { year, month })}`, { signal });
 export const getSeason = (area: Area, signal?: AbortSignal) => request<SeasonResponse>(`/season?${withArea(area)}`, { signal });

@@ -15,18 +15,19 @@ export default function RightPanel() {
   const [data, setData] = useState<CalendarResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cloudCorrected, setCloudCorrected] = useState(false);
   const areaKey = JSON.stringify(app.area.area);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true); setError(null); setData(null);
-    getCalendar(app.area.area, app.from, app.to, app.metric, app.reference, controller.signal, app.burn === 'all' ? undefined : app.burn)
+    getCalendar(app.area.area, app.from, app.to, app.metric, app.reference, controller.signal, app.burn === 'all' ? undefined : app.burn, true)
       .then(setData).catch(error => { if (!controller.signal.aborted) setError(apiMessage(error, app.lang)); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [areaKey, app.from, app.to, app.metric, app.reference, app.burn, app.lang]);
   return <Box xs={s.root}>
     <Semaforo data={data} loading={loading} error={error} />
-    <CalendarPanel data={data} loading={loading} error={error} />
+    <CalendarPanel data={data} loading={loading} error={error} cloudCorrected={cloudCorrected} onCloudCorrectedChange={setCloudCorrected} />
     <Box as="section" xs={s.section}><AnalysisTabs /></Box>
     <Box as="section" xs={s.section}><Downloads data={data} loading={loading} error={error} /></Box>
   </Box>;

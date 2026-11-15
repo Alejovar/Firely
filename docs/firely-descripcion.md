@@ -66,8 +66,7 @@ Todo lo que distingue a Firely de un dashboard de puntos de calor, agrupado por 
 
 | Diferenciador | Por qué es diferente | Sección |
 |---|---|---|
-| Pares Aqua/S-NPP con el mismo horario de paso | Aísla el efecto de resolución y sensibilidad eliminando la diferencia de horario; la mayoría solo junta los CSV | §5.3 |
-| Quantile mapping por bioma y mes | Corrección estándar en climatología, ajustada a cada tipo de vegetación y temporada | §5.4 |
+| Razón mensual VIIRS/MODIS por grupos de celdas | Calibración por régimen de fuego o bioma, elegida por validación año-fuera frente a un factor fijo | §5.3–5.4 |
 | Dos métricas armonizadas: conteo y FRP | La energía radiativa depende menos de la resolución; si ambas coinciden, se validan entre sí | §5.5 |
 | Corrección por nubes | Distingue "no hubo fuego" de "no se pudo ver" | §5.6 |
 | Superresolución "VIIRS virtual" | Reconstruye 2000–2011 con el detalle del sensor nuevo | §5.7 |
@@ -348,32 +347,32 @@ Los hexágonos tienen vecinos equidistantes y área casi uniforme, lo que facili
 
 Desde 2012 MODIS y VIIRS observan simultáneamente. Ese traslape (2012 en adelante) es el conjunto de entrenamiento.
 
-**Pares casi coincidentes.** Aqua-MODIS y Suomi-NPP VIIRS cruzan aproximadamente a la misma hora local. Calibrar Aqua contra S-NPP en los mismos días y pasos elimina casi por completo el efecto del horario y aísla el efecto de resolución y sensibilidad. Se usan solo pasos en que ambos sensores observaron la celda.
+**Versión implementada (v1.2).** La referencia es un satélite S-NPP VIIRS. La calibración usa los totales mensuales de S-NPP y MODIS Terra+Aqua en el traslape; no requiere pares de pasos casi coincidentes. Por cada mes del año y grupo de celdas calcula la razón entre detecciones de ambos sensores. Los grupos son regímenes de fuego derivados solo de MODIS, biomas IGBP o su combinación, según el país. Los años anteriores a 2012 se estiman con los factores aprendidos de 2012–2021, etapa elegida para limitar el efecto de deriva orbital. La selección del modelo se valida ocultando un año completo a la vez entre 2012 y 2025 y comparando el error anual con una corrección fija simple. Los resultados y limitaciones por país están en [Cómo armonizamos](metodologia-armonizacion.md).
 
-**Terra se calibra por separado**, porque su horario de media mañana capta un momento distinto del ciclo diario del fuego. Su factor de calibración incluye implícitamente ese efecto horario.
+**Terra se calibra por separado para enero de 2001 a julio de 2002**, cuando Aqua todavía no aportaba una serie completa. Desde agosto de 2002, el predictor es Terra+Aqua: tuvo menor error anual que Aqua sola en los seis países evaluados.
 
-**NOAA-20 y NOAA-21** se intercalibran con S-NPP (mismo sensor, misma resolución) para que la serie VIIRS no salte cuando se suman satélites. La referencia es "un VIIRS equivalente": las detecciones se normalizan por número de satélites VIIRS activos o se usa solo S-NPP como referencia de largo plazo, con los demás como apoyo.
+**NOAA-20 y NOAA-21** no se suman a S-NPP en la serie histórica, para evitar saltos al entrar nuevos satélites. Cuando S-NPP ya no está disponible y NOAA-20 sí, NOAA-20 se escala con su razón frente a S-NPP medida en el traslape. NOAA-21 queda como fuente de apoyo; su sustitución requerirá calibración adicional.
 
-**Continuidad tras el apagado de S-NPP.** S-NPP fue la referencia VIIRS de 2012 a noviembre de 2026. Para que la serie no salte al dejar de existir, NOAA-20 se intercalibra contra S-NPP en su periodo común (2018–2026) y toma su lugar como referencia a partir de noviembre de 2026; NOAA-21 se calibra a su vez contra NOAA-20. El mismo procedimiento sirve para cualquier sensor futuro: siempre se calibra el nuevo contra el anterior en su traslape.
+**Continuidad tras el apagado de S-NPP.** S-NPP fue la referencia VIIRS de 2012 a noviembre de 2026. Para que la serie no salte al dejar de existir, NOAA-20 se intercalibra contra S-NPP en su periodo común y toma su lugar como referencia cuando falta S-NPP. NOAA-21 sigue siendo una fuente de apoyo; antes de usarlo como referencia hará falta validar su calibración contra NOAA-20. El mismo procedimiento de traslape puede aplicarse a un sensor futuro.
 
-**Deriva orbital.** En los años recientes, el cambio en la hora de paso de Terra y Aqua altera su relación con VIIRS. La calibración se estima por ventanas de tiempo para detectar y corregir esa deriva, o se restringe a los años de órbita estable si el cambio es significativo.
+**Deriva orbital.** La relación VIIRS/MODIS se revisa por año y la calibración retrospectiva se restringe a 2012–2021. No hay una corrección explícita del cambio de horario de paso; se informa como limitación.
 
-### 5.4 Quantile mapping por bioma y mes
+### 5.4 Razón mensual por grupo de celdas y reparto en dos partes
 
-Para cada combinación de **bioma** (clases IGBP agrupadas: bosque, matorral, pastizal/sabana, cultivo, otros) y **mes**:
+Para cada combinación de **grupo de celdas** y **mes del año**:
 
-1. Se toman los valores por celda-paso (o celda-día) de MODIS y VIIRS en el traslape.
-2. Se construyen las funciones de distribución acumulada empíricas de ambos.
-3. Cada valor MODIS se transforma al valor VIIRS que ocupa el mismo cuantil.
+1. Se calcula la razón de conteos S-NPP/MODIS del grupo durante el traslape.
+2. La actividad MODIS mensual del grupo se multiplica por esa razón para estimar un total en unidades de S-NPP.
+3. Ese total se reparte entre celdas con actividad MODIS, proporcionalmente a sus conteos, y entre celdas con cero MODIS según la actividad del grupo y de sus vecinas H3.
 
-**Tratamiento de ceros.** Los conteos tienen muchísimos ceros (celdas sin fuego). Se usa un enfoque en dos partes:
+**Tratamiento de ceros.** Los conteos tienen muchísimos ceros (celdas sin fuego). El reparto usa dos partes:
 
-- **Ocurrencia:** probabilidad de que VIIRS detecte fuego en una celda dado lo que vio MODIS (incluyendo cuando MODIS vio cero, porque VIIRS detecta fuegos pequeños que MODIS no ve).
-- **Intensidad:** cuando hay fuego, el quantile mapping transforma la magnitud.
+- **Con detección MODIS:** los conteos se ponderan por la razón positiva del grupo.
+- **Sin detección MODIS:** reciben una asignación estimada con el total regional del mes y, cuando aplica, la actividad de las seis celdas vecinas.
 
-El valor armonizado es el valor esperado combinando ambas partes.
+El resultado se normaliza para conservar el total estimado del grupo. No se aplica quantile mapping de distribuciones empíricas: esa era la propuesta inicial, sustituida por el método v1.2 tras la validación.
 
-**Plan B** si no da tiempo: un solo quantile mapping global por mes, sin separar biomas, documentado como versión simplificada.
+Se prueban cuatro agrupaciones: factor mensual por país, régimen de fuego con vecindad, bioma IGBP con vecindad y bioma × régimen con vecindad. Se publica la elegida para cada país y su incertidumbre; el [notebook reproducible](../notebooks/armonizacion-coahuila.ipynb) ejecuta el método y la validación sobre una región de ejemplo.
 
 ### 5.5 Dos métricas armonizadas
 
@@ -1231,11 +1230,11 @@ Arch Linux con shell fish y Python 3.14 del sistema. Las dependencias se instala
 
 ## 15. Ciencia abierta
 
-- **Dataset armonizado** (agregados `cell_month` y `events`, más metadatos) publicado en un repositorio con DOI (por ejemplo, Zenodo, que se integra con GitHub para versionar).
-- **Notebook reproducible** que ejecuta el método completo sobre una región de ejemplo, incluida la validación.
-- **Código abierto** con licencia permisiva.
-- **Cita sugerida** del dataset, junto con la cita oficial de NASA FIRMS.
-- Enlazado desde la página del proyecto, la página "Cómo armonizamos" y `/docs`.
+- **Dataset armonizado:** agregados `cell_month` y `events`, más metadatos de metodología y validación. El depósito en Zenodo y el DOI siguen pendientes de publicación por el titular de la cuenta.
+- **Notebook reproducible:** [armonización y validación sobre una región de ejemplo de Coahuila](../notebooks/armonizacion-coahuila.ipynb). Requiere los puntos FIRMS procesados localmente; usa el mismo código v1.2 del pipeline.
+- **Cita sugerida del software y los agregados:** Equipo Firely. *Firely: serie armonizada de puntos de calor MODIS–VIIRS*, versión `1.2.0-hybrid-biome`. Consulta [CITATION.cff](../CITATION.cff). Añade el DOI cuando se publique el dataset.
+- **Fuente original:** NASA FIRMS (MODIS/VIIRS). Cita también los productos FIRMS específicos usados, sus versiones y fecha de acceso al publicar un análisis.
+- **Licencia:** se definirá con los autores antes de publicar el repositorio y los datos derivados; las fuentes de terceros conservan sus propias condiciones.
 
 ---
 

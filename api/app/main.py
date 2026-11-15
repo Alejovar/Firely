@@ -9,9 +9,12 @@ from pydantic import BaseModel
 from . import mock, real
 
 _real_mode = os.environ.get("FIRELY_API_MODE") == "real"
+_citation = ("Cita sugerida: Equipo Firely (2026). *Firely: serie armonizada de puntos de calor "
+             "MODIS–VIIRS* (método 1.2.0-hybrid-biome). Fuente original: NASA FIRMS. "
+             "El DOI se añadirá tras publicar el dataset.")
 app = FastAPI(title=f"Firely API ({'real' if _real_mode else 'mock'})", version="0.1.0",
-              description=("Datos procesados. Atribución: NASA FIRMS." if _real_mode else
-                           "Respuestas SIMULADAS siguiendo api/openapi.yaml. Atribución: NASA FIRMS."))
+              description=(("Datos procesados. " if _real_mode else
+                            "Respuestas SIMULADAS siguiendo api/openapi.yaml. ") + _citation))
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 if _real_mode:  # registered before the mock routes so /season, /analogs... resolve to the real analyses
@@ -24,6 +27,7 @@ if _real_mode:  # registered before the mock routes so /season, /analogs... reso
     from .weather_routes import router as _weather_router
     from .reports_routes import router as _reports_router
     from .drill_routes import router as _drill_router
+    from .animation_routes import router as _animation_router
     app.include_router(_extra_router)     # /hotspots.geojson, /recurrence, /territory, /risk, /watch
     app.include_router(_ai_router)        # POST /resolve-area, /describe
     app.include_router(_analysis_router)  # /season, /analogs, /return-period, /weekday, /night
@@ -33,6 +37,7 @@ if _real_mode:  # registered before the mock routes so /season, /analogs... reso
     app.include_router(_weather_router)   # /weather (NASA POWER, §8.10)
     app.include_router(_reports_router)   # POST /reports/extract (§11.2)
     app.include_router(_drill_router)     # /drill (escenarios de simulacro, §11.2)
+    app.include_router(_animation_router) # /animation/frames (monthly H3 r4 fire animation)
     from .forecast_routes import router as _forecast_router
     from .priority_routes import router as _priority_router
     from .subscriptions_routes import router as _subscriptions_router
@@ -62,16 +67,16 @@ def area(h3, bbox, lat, lon, radius_km, admin):
 @app.get("/calendar")
 def calendar(h3: Optional[str] = None, bbox: Optional[str] = None, lat: Optional[float] = None,
              lon: Optional[float] = None, radius_km: Optional[float] = None, admin: Optional[str] = None,
-             from_: date = Query(date(2001, 1, 1), alias="from"), to: date = date(2026, 10, 31),
+             from_: date = Query(date(2001, 1, 1), alias="from"), to: Optional[date] = None,
              metric: Literal["count", "frp"] = "count", reference: Literal["median", "mean"] = "median",
              burn_type: Optional[Literal["agricola", "forestal", "otro"]] = None,
-             geometry: Optional[str] = None):
+             geometry: Optional[str] = None, cloud_corrected: bool = False):
     if os.environ.get("FIRELY_API_MODE") == "real":
         return real.calendar(h3_list=h3, bbox=bbox, lat=lat, lon=lon, radius_km=radius_km,
                              admin=admin, geometry=geometry, from_=from_, to=to, metric=metric,
-                             reference=reference, burn_type=burn_type)
+                             reference=reference, burn_type=burn_type, cloud_corrected=cloud_corrected)
     return envelope(area=area(h3, bbox, lat, lon, radius_km, admin), reference=reference, metric=metric,
-                    rows=mock.calendar_rows(from_.year, to.year, metric, reference))
+                    rows=mock.calendar_rows(from_.year, (to or date(2026, 10, 31)).year, metric, reference))
 
 
 @app.get("/calendar/daily")

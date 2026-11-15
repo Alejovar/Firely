@@ -1,11 +1,16 @@
 # Runtime dependencies of the API image (pinned to the versions the test suite ran against).
-# The data pipeline (ingest, H3, harmonize, scikit-learn, rasterio...) is NOT shipped: run it offline.
+# The scheduler runs the incremental NRT pipeline in this image. Historical
+# reprocessing still runs offline; pandas/scipy/scikit-learn support shared modules.
 fastapi==0.163.0
 starlette==1.10.0
 uvicorn[standard]==0.54.0
 pydantic==2.14.3
 duckdb==1.5.6
 numpy==2.4.6
+pandas==3.1.1
+scipy==1.17.1
+scikit-learn==1.9.1
+tzfpy==1.3.3
 h3==4.5.0
 shapely==2.2.0
 requests==2.34.2

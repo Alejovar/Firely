@@ -41,7 +41,11 @@ components:
         percentile: {type: number}
         return_period_years: {type: number}
         clear_frac: {type: number}
+        count_harm_cloudcorr: {type: [number, 'null'], description: 'Vista opcional Coahuila; conteo / max(clear_frac, 0.30). Null si falta cobertura.'}
+        cloud_coverage: {type: number, description: 'Fracción de celdas seleccionadas con dato de nubes.'}
         is_estimated: {type: boolean}
+        source: {type: string, enum: [SP, NRT]}
+        is_provisional: {type: boolean, description: 'True para NRT posterior al último mes científico.'}
         enso_phase: {type: string}
 paths:
   /calendar:
@@ -59,6 +63,7 @@ paths:
         - {$ref: '#/components/parameters/burn_type'}
         - {name: metric, in: query, schema: {type: string, enum: [count, frp], default: count}}
         - {name: reference, in: query, schema: {type: string, enum: [median, mean], default: median}}
+        - {name: cloud_corrected, in: query, schema: {type: boolean, default: false}, description: 'Incluye una vista corregida por nubes donde existe cobertura de Coahuila; conserva count_harm observado.'}
       responses:
         '200':
           description: OK
@@ -71,6 +76,27 @@ paths:
                     properties:
                       reference: {type: string}
                       rows: {type: array, items: {$ref: '#/components/schemas/CalendarRow'}}
+  /animation/frames:
+    get:
+      summary: Fotogramas mensuales de 25 años en celdas H3 r4
+      parameters:
+        - {name: country, in: query, schema: {type: string, enum: [Mexico, Argentina, Uruguay, Chile, Paraguay, Bolivia, all], default: all}}
+        - {name: res, in: query, schema: {type: integer, enum: [4], default: 4}}
+      responses:
+        '200':
+          description: Un arreglo de valores por mes y celda, más escala máxima y meses estimados.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - {$ref: '#/components/schemas/Envelope'}
+                  - type: object
+                    properties:
+                      months: {type: array, items: {type: string}}
+                      cells: {type: array, items: {type: string}}
+                      values: {type: array, items: {type: array, items: {type: number}}}
+                      max: {type: number}
+                      is_estimated_months: {type: array, items: {type: string}}
   /calendar/daily:
     get:
       summary: Valores diarios de un mes

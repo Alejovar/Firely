@@ -16,6 +16,7 @@ COPY pipeline ./pipeline
 COPY ai ./ai
 # bot/client.py: Telegram client used by the daily alerts job (python -m pipeline.alerts_job).
 COPY bot ./bot
+COPY infra/scheduler.py ./infra/scheduler.py
 
 # /state: writable app state (CAP drafts, NASA POWER/GFWED caches, subscriptions, alert log, NRT Parquet); compose mounts a named volume there.
 RUN useradd --system --uid 10001 --no-create-home firely && mkdir -p /tmp/firely-interim /state && chown firely /tmp/firely-interim /state
