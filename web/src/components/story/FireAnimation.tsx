@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as stylex from '@stylexjs/stylex';
 import { Map as MlMap, type GeoJSONSource } from 'maplibre-gl';
-import '../../lib/maplibre';
+import { blueMarbleBrightness, blueMarbleSource } from '../../lib/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { cellToBoundary } from 'h3-js';
 import { Heading, Text } from '@astryxdesign/core/Text';
@@ -18,7 +18,6 @@ import { countryForLat, frameDelay, monthLabel, pickVideoMime, rampT, ringsBbox,
 import { compact } from '../../lib/explorerLabels';
 import { Box, Caption, Inline, OutlineButton, Pills, Segmented } from '../../ui/kit';
 
-const ESRI = (service: string) => `https://server.arcgisonline.com/ArcGIS/rest/services/${service}/MapServer/tile/{z}/{y}/{x}`;
 const SPEEDS = ['0.5', '1', '2'] as const;
 type Speed = typeof SPEEDS[number];
 
@@ -47,9 +46,9 @@ const s = stylex.create({
 });
 
 const copy = {
-  es: { title: '25 años de fuego, mes a mes', lead: `La actividad armonizada de cada celda H3, desde enero de 2001 hasta hoy, en unos ${ANIMATION_SECONDS} segundos. Se ven las temporadas encenderse y apagarse en cada región.`, mx: 'México', ar: 'Argentina', all: 'Seis países', country: 'Cobertura', play: 'Reproducir', pause: 'Pausar', again: 'Volver a empezar', speed: 'Velocidad', video: 'Descargar video', cancel: 'Cancelar', recording: 'Grabando video', recNote: `Se graba la animación completa a velocidad normal, unos ${ANIMATION_SECONDS} segundos. No cambies de pestaña mientras tanto.`, noRec: 'Este navegador no puede grabar video desde la página (falta MediaRecorder con WebM). Prueba con Chrome, Edge o Firefox de escritorio.', recFail: 'No se pudo grabar el video.', est: 'Estimado desde MODIS', obs: 'Observado por VIIRS', more: 'o más puntos al mes por celda', loading: 'Cargando 25 años de celdas', slider: 'Mes de la animación', empty: 'No hay celdas con actividad para este país.', basemap: 'Mapa base: Esri, HERE, Garmin, USGS.', cut: 'datos hasta', method: 'metodología', unit: 'puntos' },
-  en: { title: '25 years of fire, month by month', lead: `Harmonized activity in every H3 cell, from January 2001 to today, in about ${ANIMATION_SECONDS} seconds. Watch the fire seasons light up and fade in each region.`, mx: 'Mexico', ar: 'Argentina', all: 'Six countries', country: 'Coverage', play: 'Play', pause: 'Pause', again: 'Start over', speed: 'Speed', video: 'Download video', cancel: 'Cancel', recording: 'Recording video', recNote: `The full animation is recorded at normal speed, about ${ANIMATION_SECONDS} seconds. Keep this tab in front meanwhile.`, noRec: 'This browser cannot record video from the page (no MediaRecorder with WebM). Try desktop Chrome, Edge or Firefox.', recFail: 'The video could not be recorded.', est: 'Estimated from MODIS', obs: 'Observed by VIIRS', more: 'or more detections per cell and month', loading: 'Loading 25 years of cells', slider: 'Animation month', empty: 'No cells with activity for this country.', basemap: 'Basemap: Esri, HERE, Garmin, USGS.', cut: 'data through', method: 'methodology', unit: 'detections' },
-  pt: { title: '25 anos de fogo, mês a mês', lead: `A atividade harmonizada de cada célula H3, de janeiro de 2001 até hoje, em cerca de ${ANIMATION_SECONDS} segundos. As temporadas acendem e se apagam em cada região.`, mx: 'México', ar: 'Argentina', all: 'Seis países', country: 'Cobertura', play: 'Reproduzir', pause: 'Pausar', again: 'Recomeçar', speed: 'Velocidade', video: 'Baixar vídeo', cancel: 'Cancelar', recording: 'Gravando vídeo', recNote: `A animação completa é gravada em velocidade normal, cerca de ${ANIMATION_SECONDS} segundos. Mantenha esta aba à frente.`, noRec: 'Este navegador não consegue gravar vídeo da página (sem MediaRecorder com WebM). Tente Chrome, Edge ou Firefox no computador.', recFail: 'Não foi possível gravar o vídeo.', est: 'Estimado a partir do MODIS', obs: 'Observado pelo VIIRS', more: 'ou mais focos por célula e mês', loading: 'Carregando 25 anos de células', slider: 'Mês da animação', empty: 'Não há células com atividade para este país.', basemap: 'Mapa base: Esri, HERE, Garmin, USGS.', cut: 'dados até', method: 'metodologia', unit: 'focos' },
+  es: { title: '25 años de fuego, mes a mes', lead: `La actividad armonizada de cada celda H3, desde enero de 2001 hasta hoy, en unos ${ANIMATION_SECONDS} segundos. Se ven las temporadas encenderse y apagarse en cada región.`, mx: 'México', ar: 'Argentina', all: 'Seis países', country: 'Cobertura', play: 'Reproducir', pause: 'Pausar', again: 'Volver a empezar', speed: 'Velocidad', video: 'Descargar video', cancel: 'Cancelar', recording: 'Grabando video', recNote: `Se graba la animación completa a velocidad normal, unos ${ANIMATION_SECONDS} segundos. No cambies de pestaña mientras tanto.`, noRec: 'Este navegador no puede grabar video desde la página (falta MediaRecorder con WebM). Prueba con Chrome, Edge o Firefox de escritorio.', recFail: 'No se pudo grabar el video.', est: 'Estimado desde MODIS', obs: 'Observado por VIIRS', more: 'o más puntos al mes por celda', loading: 'Cargando 25 años de celdas', slider: 'Mes de la animación', empty: 'No hay celdas con actividad para este país.', basemap: 'Mapa base: NASA GIBS, Blue Marble.', cut: 'datos hasta', method: 'metodología', unit: 'puntos' },
+  en: { title: '25 years of fire, month by month', lead: `Harmonized activity in every H3 cell, from January 2001 to today, in about ${ANIMATION_SECONDS} seconds. Watch the fire seasons light up and fade in each region.`, mx: 'Mexico', ar: 'Argentina', all: 'Six countries', country: 'Coverage', play: 'Play', pause: 'Pause', again: 'Start over', speed: 'Speed', video: 'Download video', cancel: 'Cancel', recording: 'Recording video', recNote: `The full animation is recorded at normal speed, about ${ANIMATION_SECONDS} seconds. Keep this tab in front meanwhile.`, noRec: 'This browser cannot record video from the page (no MediaRecorder with WebM). Try desktop Chrome, Edge or Firefox.', recFail: 'The video could not be recorded.', est: 'Estimated from MODIS', obs: 'Observed by VIIRS', more: 'or more detections per cell and month', loading: 'Loading 25 years of cells', slider: 'Animation month', empty: 'No cells with activity for this country.', basemap: 'Basemap: NASA GIBS, Blue Marble.', cut: 'data through', method: 'methodology', unit: 'detections' },
+  pt: { title: '25 anos de fogo, mês a mês', lead: `A atividade harmonizada de cada célula H3, de janeiro de 2001 até hoje, em cerca de ${ANIMATION_SECONDS} segundos. As temporadas acendem e se apagam em cada região.`, mx: 'México', ar: 'Argentina', all: 'Seis países', country: 'Cobertura', play: 'Reproduzir', pause: 'Pausar', again: 'Recomeçar', speed: 'Velocidade', video: 'Baixar vídeo', cancel: 'Cancelar', recording: 'Gravando vídeo', recNote: `A animação completa é gravada em velocidade normal, cerca de ${ANIMATION_SECONDS} segundos. Mantenha esta aba à frente.`, noRec: 'Este navegador não consegue gravar vídeo da página (sem MediaRecorder com WebM). Tente Chrome, Edge ou Firefox no computador.', recFail: 'Não foi possível gravar o vídeo.', est: 'Estimado a partir do MODIS', obs: 'Observado pelo VIIRS', more: 'ou mais focos por célula e mês', loading: 'Carregando 25 anos de células', slider: 'Mês da animação', empty: 'Não há células com atividade para este país.', basemap: 'Mapa base: NASA GIBS, Blue Marble.', cut: 'dados até', method: 'metodologia', unit: 'focos' },
 };
 
 interface Rec { recorder: MediaRecorder; raf: number; cancelled: boolean; stopTimer?: number }
@@ -99,13 +98,11 @@ export default function FireAnimation() {
     const map = new MlMap({
       container: node.current as HTMLDivElement,
       style: { version: 8, sources: {
-        darkBase: { type: 'raster', tiles: [ESRI('Canvas/World_Dark_Gray_Base')], tileSize: 256, maxzoom: 16 },
-        lightBase: { type: 'raster', tiles: [ESRI('Canvas/World_Light_Gray_Base')], tileSize: 256, maxzoom: 16 },
+        earth: blueMarbleSource,
         cells: { type: 'geojson', data: { type: 'FeatureCollection', features: [] } },
       }, layers: [
-        { id: 'base-dark', type: 'raster', source: 'darkBase', paint: { 'raster-opacity': 0.95 } },
-        { id: 'base-light', type: 'raster', source: 'lightBase', layout: { visibility: 'none' } },
-        { id: 'cells', type: 'fill', source: 'cells', paint: {
+        { id: 'earth', type: 'raster', source: 'earth', paint: { 'raster-brightness-max': blueMarbleBrightness(true), 'raster-saturation': -0.15 } },
+                { id: 'cells', type: 'fill', source: 'cells', paint: {
           'fill-color': ['interpolate', ['linear'], ['coalesce', ['feature-state', 't'], 0], ...ANIMATION_RAMP.flat()] as never,
           'fill-opacity': ['case', ['>', ['coalesce', ['feature-state', 't'], 0], 0], 0.92, 0] as never,
           'fill-antialias': false,
@@ -124,8 +121,7 @@ export default function FireAnimation() {
   useEffect(() => {
     const map = mapRef.current; if (!map || !mapReady) return;
     const dark = app.scheme === 'dark';
-    map.setLayoutProperty('base-dark', 'visibility', dark ? 'visible' : 'none');
-    map.setLayoutProperty('base-light', 'visibility', dark ? 'none' : 'visible');
+    map.setPaintProperty('earth', 'raster-brightness-max', blueMarbleBrightness(dark));
   }, [mapReady, app.scheme]);
 
   // Frames for the chosen country.

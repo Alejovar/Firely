@@ -73,9 +73,16 @@ export function encodeCell(row: CalendarRow | undefined, mode: CalendarMode, met
 export const SELECTED_FILL = CIVIDIS[CIVIDIS.length - 1];
 export const SELECTED_INK = '#1a1c1e';
 
-/** Map: fire radiative power. Grey for weak fires, cividis yellow for strong ones. */
-export const FRP_STOPS: [number, string][] = [[0, '#7c7b78'], [5, '#958f78'], [15, '#bcaf6f'], [40, '#fde34a']];
-export const FRP_LEGEND = ['#7c7b78', '#bcaf6f', '#fde34a'] as const;
+/** FRP classes in MW. Blue is a visual encoding of higher radiative power,
+ * not a measurement of flame color or temperature. Last palette is unknown FRP. */
+export const FLAME_PALETTES = [
+  ['#f07836', '#ffba68', '#fff0ba'],
+  ['#f6c945', '#ffe795', '#fff9df'],
+  ['#397df5', '#70cfff', '#e1f7ff'],
+  ['#8e969e', '#bcc4cb', '#edf0f3'],
+] as const;
+export const FRP_STOPS: [number, string][] = [[0, FLAME_PALETTES[0][0]], [15, FLAME_PALETTES[1][0]], [40, FLAME_PALETTES[2][0]]];
+export const FRP_LEGEND = FLAME_PALETTES.slice(0, 3).map(colors => colors[0]);
 /** KML export: the same three FRP classes as the map legend (MW thresholds, colour). */
 export const FRP_CLASSES = [
   { id: 'bajo', label: 'bajo', min: 0, max: 15, color: FRP_LEGEND[0] },
