@@ -24,7 +24,7 @@ from .extra_routes import (MONTHS, _area, _combine, _exposure_value, _files_for_
 from .real import _cutoff, _envelope
 
 router = APIRouter()
-MAX_CELLS = 3000
+MAX_CELLS = 8000  # ~290,000 km² at r6 (~2 s and ~4 MB locally); larger areas ask for a smaller one
 LABELS = {"anomaly": "Anomalía", "recurrence": "Recurrencia", "exposure": "Exposición", "season": "Temporada",
           "fwi": "Peligro meteorológico (FWI)"}
 
@@ -132,7 +132,7 @@ def priority_cells(h3: str | None = None, bbox: str | None = None, lat: float | 
     year, month = period
     features = []
     for cell, s in scores.items():
-        ring = [[lon_, lat_] for lat_, lon_ in h3lib.cell_to_boundary(cell)]
+        ring = [[round(lon_, 5), round(lat_, 5)] for lat_, lon_ in h3lib.cell_to_boundary(cell)]  # ~1 m, lighter payload
         ring.append(ring[0])
         features.append({"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [ring]},
                          "properties": {"h3": cell, **s}})

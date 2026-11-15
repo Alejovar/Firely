@@ -32,9 +32,9 @@ const s = stylex.create({
 });
 
 const T = {
-  es: { fc: 'Riesgo próximo, 8 días', unavailable: 'Pronóstico GFWED no disponible ahora', stale: 'Pronóstico desactualizado', run: 'corrida', clim: 'clima', pr: 'Índice de prioridad por celda', top: 'Las 10 celdas con más prioridad', show: 'Ver en el mapa', hide: 'Ocultar del mapa', pop: 'hab. a 10 km', note: 'No es una probabilidad de incendio.' },
-  en: { fc: 'Coming risk, 8 days', unavailable: 'GFWED forecast unavailable right now', stale: 'Stale forecast', run: 'run', clim: 'clim.', pr: 'Priority index per cell', top: 'Top 10 priority cells', show: 'Show on map', hide: 'Hide from map', pop: 'people within 10 km', note: 'Not a fire probability.' },
-  pt: { fc: 'Risco próximo, 8 dias', unavailable: 'Previsão GFWED indisponível agora', stale: 'Previsão desatualizada', run: 'rodada', clim: 'clima', pr: 'Índice de prioridade por célula', top: 'As 10 células com mais prioridade', show: 'Ver no mapa', hide: 'Ocultar do mapa', pop: 'hab. a 10 km', note: 'Não é uma probabilidade de incêndio.' },
+  es: { tooLarge: 'Área demasiado grande para calcular el índice celda por celda; dibuja o elige un área más pequeña (hasta unos 290,000 km²).', fc: 'Riesgo próximo, 8 días', unavailable: 'Pronóstico GFWED no disponible ahora', stale: 'Pronóstico desactualizado', run: 'corrida', clim: 'clima', pr: 'Índice de prioridad por celda', top: 'Las 10 celdas con más prioridad', show: 'Ver en el mapa', hide: 'Ocultar del mapa', pop: 'hab. a 10 km', note: 'No es una probabilidad de incendio.' },
+  en: { tooLarge: 'Area too large to score cell by cell; draw or pick a smaller area (up to about 290,000 km²).', fc: 'Coming risk, 8 days', unavailable: 'GFWED forecast unavailable right now', stale: 'Stale forecast', run: 'run', clim: 'clim.', pr: 'Priority index per cell', top: 'Top 10 priority cells', show: 'Show on map', hide: 'Hide from map', pop: 'people within 10 km', note: 'Not a fire probability.' },
+  pt: { tooLarge: 'Área grande demais para calcular o índice célula a célula; desenhe ou escolha uma área menor (até cerca de 290.000 km²).', fc: 'Risco próximo, 8 dias', unavailable: 'Previsão GFWED indisponível agora', stale: 'Previsão desatualizada', run: 'rodada', clim: 'clima', pr: 'Índice de prioridade por célula', top: 'As 10 células com mais prioridade', show: 'Ver no mapa', hide: 'Ocultar do mapa', pop: 'hab. a 10 km', note: 'Não é uma probabilidade de incêndio.' },
 };
 const levelVariant = (level: string) => /muy alto|extrema/.test(level) ? 'error' : /alt/.test(level) ? 'warning' : /normal|media/.test(level) ? 'neutral' : 'success';
 
@@ -72,7 +72,7 @@ export function PriorityPanel({ area, lang }: { area: Area; lang: Lang }) {
   const [state, setState] = useState<Load<PriorityCellsResponse> & { key: string }>({ key: '' });
   useEffect(() => { const c = new AbortController(); setState({ key }); getPriorityCells(area, undefined, c.signal).then(data => setState({ key, data })).catch(error => { if (!c.signal.aborted) setState({ key, error }); }); return () => c.abort(); }, [key]);
   if (state.key !== key || (!state.data && !state.error)) return <Skeleton width="100%" height="12rem" />;
-  if (state.error || !state.data) return <Banner status="warning" title={t.pr} description={state.error instanceof ApiError ? `API ${state.error.status}${state.error.code ? `, ${state.error.code}` : ''}` : String(state.error)} />;
+  if (state.error || !state.data) return <Banner status="warning" title={t.pr} description={state.error instanceof ApiError && state.error.code === 'area_too_large' ? t.tooLarge : state.error instanceof ApiError ? `API ${state.error.status}${state.error.code ? `, ${state.error.code}` : ''}` : String(state.error)} />;
   const d = state.data;
   const pop = (h3: string) => d.features.find(f => f.properties.h3 === h3)?.properties.population_10km;
   return <Card padding={5}><VStack gap={3}>
