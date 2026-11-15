@@ -71,6 +71,17 @@ def test_burn_type_uses_land_cover_and_rejects_unknown(client):
     assert exc.value.status_code == 422
 
 
+def test_points_csv_accepts_burn_type_like_the_calendar(client):
+    # regression: the explorer sends burn_type with the points download; it used to answer 422
+    from datetime import date
+    import api.app.real as real
+    args = dict(bbox=BBOX, from_=date(2019, 1, 1), to=date(2023, 12, 31))
+    agri = real.hotspots_csv(burn_type="agricola", **args).body.decode()
+    forest = real.hotspots_csv(burn_type="forestal", **args).body.decode()
+    assert "# burn_type=agricola" in agri
+    assert len(agri.strip().splitlines()) > len(forest.strip().splitlines())
+
+
 def test_watch_floors_the_reference_so_tiny_medians_do_not_explode(client, monkeypatch):
     # August: median of the other years is 0.3 detections; 45 now would be 150x without the floor
     import json

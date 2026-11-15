@@ -147,6 +147,22 @@ def _cutoff():
         return None
 
 
+def _burn_cells(cells, burn_type):
+    """Restrict the area's cells to the land cover of the requested burn type (approximate: agricultural =
+    cropland cells, forest = forest/shrub/savanna cells). Shared by /calendar and /hotspots.csv."""
+    if burn_type is None:
+        return cells
+    paths = sorted((db.processed_root() / "cell_biome").glob("*.parquet"))
+    if not paths:
+        return []
+    with db.connection() as con:
+        where = "WHERE biome IN (4)" if burn_type == "agricola" else "WHERE biome IN (1,2,3)"
+        if cells is not None:
+            where += " AND h3_r6 IN (SELECT unnest(?))"
+        params = [[str(p) for p in paths]] + ([cells] if cells is not None else [])
+        return [r[0] for r in con.execute(f"SELECT DISTINCT h3_r6 FROM read_parquet(?) {where}", params).fetchall()]
+
+
 def calendar(*, h3_list=None, bbox=None, lat=None, lon=None, radius_km=None,
              geometry=None, admin=None, from_=date(2001, 1, 1), to=None,
              metric="count", reference="median", burn_type=None):
@@ -155,18 +171,7 @@ def calendar(*, h3_list=None, bbox=None, lat=None, lon=None, radius_km=None,
     if to is not None and from_ > to:
         raise HTTPException(422, "from must precede to")
     cells, area = _cells(h3_list, bbox, lat, lon, radius_km, geometry, admin)
-    if burn_type is not None:
-        paths = sorted((db.processed_root() / "cell_biome").glob("*.parquet"))
-        if paths:
-            with db.connection() as con:
-                where = "WHERE biome IN (4)" if burn_type == "agricola" else "WHERE biome IN (1,2,3)"
-                if cells is not None:
-                    where += " AND h3_r6 IN (SELECT unnest(?))"
-                params = [[str(p) for p in paths]] + ([cells] if cells is not None else [])
-                cells = [r[0] for r in con.execute(
-                    f"SELECT DISTINCT h3_r6 FROM read_parquet(?) {where}", params).fetchall()]
-        else:
-            cells = []
+    cells = _burn_cells(cells, burn_type)
     all_rows = _monthly(db.parquet_files("cell_month_harmonized"), cells)
     cutoff = max((date(y, m, monthrange(y, m)[1]) for y, m, *_ in all_rows), default=None)
     last_full_year = cutoff.year if cutoff and cutoff.month == 12 else (cutoff.year - 1 if cutoff else 0)
@@ -231,7 +236,8 @@ def _hotspot_rows(files, cells, from_, to, min_confidence=None):
             levels = {"baja": ("baja", "nominal", "alta"), "nominal": ("nominal", "alta"), "alta": ("alta",)}
             where.append("confidence_h IN (SELECT unnest(?))")
             params.append(list(levels[min_confidence]))
-        sql = f"SELECT {', '.join(select)} FROM {db.table_sql(files)} WHERE {' AND '.join(where)} ORDER BY date_local, ts_utc"
+        order = "date_local, ts_utc" if "ts_utc" in cols else "date_local"
+        sql = f"SELECT {', '.join(select)} FROM {db.table_sql(files)} WHERE {' AND '.join(where)} ORDER BY {order}"
         return select, con.execute(sql, params).fetchall()
 
 
@@ -257,14 +263,18 @@ def hotspots_csv(*, h3_list=None, bbox=None, lat=None, lon=None, radius_km=None,
                  min_confidence=None):
     if from_ and to and from_ > to:
         raise HTTPException(422, "from must precede to")
-    if burn_type is not None:
-        raise HTTPException(422, "Burn type is unavailable in this dataset")
+    if burn_type not in (None, "agricola", "forestal"):
+        raise HTTPException(422, "burn_type must be agricola or forestal")
     cells, _ = _cells(h3_list, bbox, lat, lon, radius_km, geometry, admin)
-    cols, records = _hotspot_rows(db.parquet_files("hotspots"), cells, from_, to, min_confidence)
+    cells = _burn_cells(cells, burn_type)
+    cols, records = _hotspot_rows(db.parquet_files("hotspots"), cells, from_, to, min_confidence) if cells != [] else ([], [])
     cutoff = max((r[cols.index("date_local")] for r in records), default=None) if cols else None
     cutoff = cutoff.isoformat() if hasattr(cutoff, "isoformat") else cutoff
     output = io.StringIO()
     output.write(f"# attribution={ATTRIBUTION}\n# methodology_version={VERSION}\n# data_cutoff={cutoff or ''}\n")
+    if burn_type:
+        output.write(f"# burn_type={burn_type} (aproximado por cobertura del suelo de la celda: agricola = cultivo; "
+                     "forestal = bosque, matorral o sabana)\n")
     writer = csv.writer(output)
     writer.writerow(cols or ["h3_r6", "h3_r7", "ts_utc", "date_local", "lat", "lon", "sensor", "platform", "confidence_h", "frp_mw", "daynight"])
     writer.writerows(records)
