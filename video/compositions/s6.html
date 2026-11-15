@@ -1,0 +1,94 @@
+<template>
+<style>@font-face {font-family: 'Atkinson Hyperlegible Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(assets/fonts/AtkinsonHyperlegibleMono-400.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face {font-family: 'Atkinson Hyperlegible Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(assets/fonts/AtkinsonHyperlegibleMono-500.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face {font-family: 'Atkinson Hyperlegible Next';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(assets/fonts/AtkinsonHyperlegibleNext-400_700.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face {font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(assets/fonts/SourceSerif4-400_700.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+
+#root{position:absolute;inset:0;overflow:hidden;background:#1a1f1c;color:#e9ece6;font-family:'Atkinson Hyperlegible Next',sans-serif}
+.serif{font-family:'Source Serif 4',Georgia,serif}
+.mono{font-family:'Atkinson Hyperlegible Mono',monospace}
+.panel{background:#232a26;border:1px solid #3a4540;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.w{display:inline-block}
+
+#s6-phone{position:absolute;left:980px;top:60px;width:640px;height:960px;border-radius:64px;background:#0e1621;border:10px solid #2b332e;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden}
+#s6-head{height:110px;background:#17212b;display:flex;align-items:flex-end;gap:16px;padding:0 26px 18px}
+#s6-head img{width:56px;height:56px;border-radius:50%}
+#s6-head b{display:block;font-size:30px;color:#fff}
+#s6-head span{font-size:20px;color:#7f91a4}
+.s6-msg{position:absolute;max-width:540px;padding:16px 20px;border-radius:16px;font-size:28px;line-height:1.35;color:#fff}
+#s6-out{right:20px;top:150px;background:#2b5278}
+#s6-in{left:20px;top:250px;background:#182533}
+#s6-in .x{color:#ffb37e;font-weight:700}
+#s6-in .t{color:#7f91a4;font-size:18px;display:block;text-align:right;margin-top:6px}
+#s6-g{position:absolute;left:230px;top:200px;width:620px;height:auto}
+#s6-cap{position:absolute;left:1040px;top:1040px;width:520px;text-align:center;font-size:22px;color:#9aa69f}
+</style>
+<div id="root" data-composition-id="s6" data-width="1920" data-height="1080" data-start="0" data-duration="7.02">
+
+<img id="s6-g" class="clip" data-start="0" data-duration="7.02" src="assets/img/bombera.png" alt="Gotita bombera">
+<div id="s6-phone" data-hold data-layout-ignore class="clip" data-start="0" data-duration="7.02">
+  <div id="s6-head"><img src="assets/img/logo.svg" alt=""><div><b>Firely · Gotita</b><span>bot</span></div></div>
+  <div id="s6-out" class="s6-msg">/suscribir Sierra de Arteaga, Coahuila</div>
+  <div id="s6-in" class="s6-msg"><span class="x">[EJERCICIO / PRUEBA]</span> Mensaje de prueba de Firely; no es una alerta oficial.<br><br>Área: Sierra de Arteaga, Coahuila<br>Anomalía de marzo 2021: 84.8× la mediana del mismo mes.<br><br>Fuente: NASA FIRMS<span class="t">7:02</span></div>
+</div>
+
+</div>
+<script>
+(function(){
+
+const FLAME_PATHS=['M1-25C6-14 14-12 12-3c4-1 5-5 5-8 10 12 7 25-3 29C3 23-11 19-15 10c-5-11 2-19 5-27 1 7 5 10 7 10C-5-14 1-17 1-25Z','M2-7c0 7-7 10-6 16 1 6 8 8 12 4C13 8 8 2 7-1 7 3 4 4 4 4 5 0 3-3 2-7Z','M3 5c-1 4-4 5-3 8 1 3 5 3 6 0 1-3-1-5-3-8Z'];
+const FLAME_PALETTES=[['#f07836','#ffba68','#fff0ba'],['#f6c945','#ffe795','#fff9df'],['#397df5','#70cfff','#e1f7ff'],['#8e969e','#bcc4cb','#edf0f3']];
+const FP=FLAME_PATHS.map(p=>new Path2D(p));
+function drawFlame(ctx,x,y,size,level,t,seed){
+  const sway=Math.sin((t+seed)*Math.PI*2/1.7), flick=0.925+0.075*Math.cos((t+seed)*Math.PI*2/1.1);
+  const c=FLAME_PALETTES[level];
+  ctx.save();ctx.translate(x,y);ctx.scale(size/48,size/48);ctx.rotate(sway*0.06);ctx.scale(1,1+sway*0.04);ctx.translate(0,-18);
+  for(let i=0;i<3;i++){ctx.save();if(i===1){ctx.translate(0,17);ctx.scale(flick,flick);ctx.translate(0,-17);}
+    ctx.fillStyle=c[i];ctx.fill(FP[i]);if(i===0){ctx.strokeStyle=c[1];ctx.lineWidth=0.7;ctx.stroke(FP[i]);}ctx.restore();}
+  ctx.restore();
+}
+function flameSVG(level,size){const c=FLAME_PALETTES[level];return `<svg width="${size}" height="${size}" viewBox="-24 -28 52 52">${FLAME_PATHS.map((p,i)=>`<path d="${p}" fill="${c[i]}"/>`).join('')}</svg>`;}
+
+function kf(t,keys){ // keys: [[t,v,ease?],...] ease names from gsap
+  if(t<=keys[0][0])return keys[0][1];
+  for(let i=1;i<keys.length;i++){const [t1,v1,e]=keys[i],[t0,v0]=keys[i-1];
+    if(t<=t1){const p=(t-t0)/Math.max(1e-6,t1-t0);const f=gsap.parseEase(e||'power2.inOut')(p);return v0+(v1-v0)*f;}}
+  return keys[keys.length-1][1];
+}
+function words(sel){document.querySelectorAll(sel).forEach(el=>{if(el.dataset.split)return;el.dataset.split=1;el.innerHTML=el.textContent.trim().split(/\s+/).map(w=>`<span class="w">${w}</span>`).join(' ');});}
+function wordsIn(tl,sel,at,gap=0.07){tl.fromTo(sel+' .w',{opacity:0,filter:'blur(6px)'},{opacity:1,filter:'blur(0px)',duration:0.16,ease:'power2.out',stagger:gap},at);}
+
+const D=7.02;
+
+const tl=gsap.timeline({paused:true});
+tl.fromTo('#s6-phone',{y:140,opacity:0},{y:0,opacity:1,duration:0.8,ease:'expo.out'},0.1);
+tl.fromTo('#s6-g',{x:-300,rotation:-8},{x:0,rotation:0,duration:0.8,ease:'back.out(1.4)'},0.25);
+tl.fromTo('#s6-out',{opacity:0,y:20,scale:0.9,transformOrigin:'100% 100%'},{opacity:1,y:0,scale:1,duration:0.35,ease:'back.out(2)'},0.9);
+tl.fromTo('#s6-in',{opacity:0,y:30,scale:0.9,transformOrigin:'0% 0%'},{opacity:1,y:0,scale:1,duration:0.45,ease:'back.out(1.8)'},2.74);
+tl.to('#s6-g',{y:-18,duration:0.18,ease:'power2.out',yoyo:true,repeat:1},2.8400000000000003);
+tl.to(['#s6-phone','#s6-g'],{opacity:0,filter:'blur(8px)',duration:0.25,ease:'power3.in'},D-0.35);
+window.__timelines['s6']=tl;
+
+})();
+</script>
+</template>

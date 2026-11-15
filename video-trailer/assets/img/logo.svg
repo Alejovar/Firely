@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Firely</title>
+  <rect width="512" height="512" rx="112" fill="#1a1f1c"/>
+  <path d="M256 70 L417 163 Q429 170 429 184 L429 328 Q429 342 417 349 L270 434 Q256 442 242 434 L95 349 Q83 342 83 328 L83 184 Q83 170 95 163 L242 78 Q249 74 256 70 Z" fill="#f26a1b"/>
+  <path d="M256 140 C300 200 344 236 334 310 C326 368 292 398 256 398 C220 398 186 368 178 310 C172 262 204 236 220 196 C228 232 242 250 258 254 C248 214 240 178 256 140 Z" fill="#1a1f1c"/>
+  <path d="M256 300 C276 322 288 338 284 358 C280 376 268 386 256 386 C244 386 232 376 228 358 C225 342 238 326 256 300 Z" fill="#7cc7ff"/>
+  <circle cx="414" cy="92" r="26" fill="#e9ece6"/>
+  <path d="M352 64 A72 72 0 0 1 444 154" fill="none" stroke="#e9ece6" stroke-width="10" stroke-linecap="round" opacity=".55"/>
+</svg>

@@ -1,0 +1,139 @@
+<template>
+<style>@font-face {font-family: 'Atkinson Hyperlegible Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(assets/fonts/AtkinsonHyperlegibleMono-400.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face {font-family: 'Atkinson Hyperlegible Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(assets/fonts/AtkinsonHyperlegibleMono-500.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face {font-family: 'Atkinson Hyperlegible Next';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(assets/fonts/AtkinsonHyperlegibleNext-400_700.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face {font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(assets/fonts/SourceSerif4-400_700.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+
+#root{position:absolute;inset:0;overflow:hidden;background:#1a1f1c;color:#e9ece6;font-family:'Atkinson Hyperlegible Next',sans-serif}
+.serif{font-family:'Source Serif 4',Georgia,serif}
+.mono{font-family:'Atkinson Hyperlegible Mono',monospace}
+.panel{background:#232a26;border:1px solid #3a4540;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.w{display:inline-block}
+
+.chart{position:absolute;left:0;top:0;width:1920px;height:1080px}
+.ttl{position:absolute;left:120px;top:84px;font-size:68px;font-weight:600;letter-spacing:-0.01em;margin:0}
+.sub{position:absolute;left:122px;top:176px;font-size:32px;color:#9aa69f;margin:0}
+.lab{font-family:'Atkinson Hyperlegible Next',sans-serif;font-size:32px;font-weight:700}
+
+#s3-px{position:absolute;inset:0}
+#s3-bg{position:absolute;left:-200px;top:-300px;width:2400px;height:2400px;object-fit:cover}
+#s3-dim{position:absolute;inset:0;background:#1a1f1c;opacity:.55}
+.s3-g{stroke:#67a9cf;stroke-width:4}
+#s3-mlab{position:absolute;left:660px;top:176px;font-size:40px;font-weight:700;color:#e9ece6}
+#s3-vlab{position:absolute;left:1296px;top:270px;font-size:40px;font-weight:700;color:#67a9cf;width:520px}
+#s3-vlab span{display:block;font-size:30px;color:#e9ece6;font-weight:400;margin-top:12px}
+#s3-note{position:absolute;left:660px;top:878px;font-size:28px;color:#c9d1cb}
+#s3-fire{position:absolute;left:880.0px;top:450.0px}
+.s3-sf{position:absolute}
+#s3-chart{position:absolute;inset:0}
+#s3-stat{position:absolute;right:110px;top:250px;width:660px;padding:30px 38px}
+#s3-stat .big{font-size:92px;font-weight:600;line-height:1;color:#e9ece6;white-space:nowrap}
+#s3-stat .big b{color:#f26a1b;font-weight:600}
+#s3-stat p{font-size:30px;color:#c9d1cb;margin:16px 0 0}
+#s3-hl{position:absolute;left:236px;top:604px;font-size:32px;font-weight:700;color:#fde34a}
+</style>
+<div id="root" data-composition-id="s3" data-width="1920" data-height="1080" data-start="0" data-duration="13.68">
+
+<div id="s3-px" class="clip" data-start="0" data-duration="5.74">
+  <img id="s3-bg" src="assets/img/arteaga_bm.jpg" alt="">
+  <div id="s3-dim"></div>
+  <svg class="chart" viewBox="0 0 1920 1080" data-layout-ignore>
+    <rect id="s3-sq" x="660" y="250" width="600" height="600" fill="rgba(26,31,28,.35)" stroke="#e9ece6" stroke-width="6"/>
+    <g id="s3-grid"><line class="s3-g" x1="885.0" x2="885.0" y1="250" y2="850"/><line class="s3-g" x1="1110.0" x2="1110.0" y1="250" y2="850"/><line class="s3-g" x1="660" x2="1260" y1="475.0" y2="475.0"/><line class="s3-g" x1="660" x2="1260" y1="700.0" y2="700.0"/></g>
+  </svg>
+  <div id="s3-mlab">1 píxel MODIS = 1 km</div>
+  <div id="s3-fire"></div>
+  <div class="s3-sf" id="s3-sf0" style="left:720px;top:302px"></div><div class="s3-sf" id="s3-sf1" style="left:946px;top:752px"></div><div class="s3-sf" id="s3-sf2" style="left:1170px;top:528px"></div><div class="s3-sf" id="s3-sf3" style="left:720px;top:752px"></div>
+  <div id="s3-vlab">VIIRS = 375 m</div>
+  <div id="s3-note">Esquema</div>
+</div>
+<div id="s3-chart" class="clip" data-start="5.24" data-duration="8.44">
+  <h1 id="s3-t" class="ttl serif">La misma historia, en una sola serie</h1>
+  <p class="sub">Armonizada a un VIIRS S-NPP, México por año</p>
+  <svg class="chart" viewBox="0 0 1920 1080" data-layout-ignore>
+    <rect x="230" y="300" width="643" height="600" fill="#e9ece6" opacity=".05"/>
+    <text x="240" y="336" fill="#9aa69f" font-size="26" font-family="Atkinson Hyperlegible Next">2001–2011: estimado desde MODIS</text>
+    <g id="s3-axes"><line x1="230" x2="1700" y1="900" y2="900" stroke="#3a4540" stroke-width="2"/><text x="208" y="910" text-anchor="end" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">0</text><line x1="230" x2="1700" y1="750" y2="750" stroke="#3a4540" stroke-width="1"/><text x="208" y="760" text-anchor="end" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">200 mil</text><line x1="230" x2="1700" y1="600" y2="600" stroke="#3a4540" stroke-width="1"/><text x="208" y="610" text-anchor="end" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">400 mil</text><line x1="230" x2="1700" y1="450" y2="450" stroke="#3a4540" stroke-width="1"/><text x="208" y="460" text-anchor="end" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">600 mil</text><line x1="230" x2="1700" y1="300" y2="300" stroke="#3a4540" stroke-width="1"/><text x="208" y="310" text-anchor="end" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">800 mil</text><text x="230" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2001</text><text x="475" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2005</text><text x="720" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2009</text><text x="904" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2012</text><text x="1210" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2017</text><text x="1455" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2021</text><text x="1700" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2025</text></g>
+    <g id="s3-raw"><path d="M230.0,882.4 L291.2,874.6 L352.5,840.9 L413.8,866.9 L475.0,838.0 L536.2,856.4 L597.5,856.3 L658.8,851.9 L720.0,848.8 L781.2,862.8 L842.5,825.0 L903.8,855.3 L965.0,844.2 L1026.2,873.2 L1087.5,863.1 L1148.8,856.5 L1210.0,843.3 L1271.2,860.0 L1332.5,842.2 L1393.8,856.2 L1455.0,858.4 L1516.2,862.4 L1577.5,853.0 L1638.8,848.5 L1700.0,861.0" fill="none" stroke="#9aa69f" stroke-width="6"/><path d="M903.8,717.2 L965.0,687.2 L1026.2,800.5 L1087.5,769.9 L1148.8,730.5 L1210.0,671.4 L1271.2,598.2 L1332.5,451.1 L1393.8,577.8 L1455.0,570.2 L1516.2,593.5 L1577.5,378.0 L1638.8,325.7 L1700.0,448.3" fill="none" stroke="#67a9cf" stroke-width="6"/></g>
+    <path id="s3-harm" d="M230.0,753.5 L291.2,701.1 L352.5,670.5 L413.8,775.1 L475.0,652.4 L536.2,731.8 L597.5,729.0 L658.8,711.7 L720.0,700.3 L781.2,753.7 L842.5,588.8 L903.8,715.0 L965.0,687.2 L1026.2,800.5 L1087.5,769.9 L1148.8,730.5 L1210.0,671.4 L1271.2,731.8 L1332.5,673.8 L1393.8,737.4 L1455.0,733.7 L1516.2,746.1 L1577.5,716.0 L1638.8,711.7 L1700.0,745.6" pathLength="100" fill="none" stroke="#fde34a" stroke-width="8" stroke-linejoin="round" stroke-dasharray="100 120" stroke-dashoffset="110"/>
+  </svg>
+  <div id="s3-hl">Serie armonizada</div>
+  <div id="s3-stat" class="panel" data-hold>
+    <div class="big serif"><b>−32 %</b> error</div>
+    <p>Validación dejando un año fuera, 2012–2025, contra un factor fijo.</p>
+    <p class="mono">México 4.1% → 2.8%<br>Argentina 5.9% → 4.1%</p>
+  </div>
+</div>
+
+</div>
+<script>
+(function(){
+
+const FLAME_PATHS=['M1-25C6-14 14-12 12-3c4-1 5-5 5-8 10 12 7 25-3 29C3 23-11 19-15 10c-5-11 2-19 5-27 1 7 5 10 7 10C-5-14 1-17 1-25Z','M2-7c0 7-7 10-6 16 1 6 8 8 12 4C13 8 8 2 7-1 7 3 4 4 4 4 5 0 3-3 2-7Z','M3 5c-1 4-4 5-3 8 1 3 5 3 6 0 1-3-1-5-3-8Z'];
+const FLAME_PALETTES=[['#f07836','#ffba68','#fff0ba'],['#f6c945','#ffe795','#fff9df'],['#397df5','#70cfff','#e1f7ff'],['#8e969e','#bcc4cb','#edf0f3']];
+const FP=FLAME_PATHS.map(p=>new Path2D(p));
+function drawFlame(ctx,x,y,size,level,t,seed){
+  const sway=Math.sin((t+seed)*Math.PI*2/1.7), flick=0.925+0.075*Math.cos((t+seed)*Math.PI*2/1.1);
+  const c=FLAME_PALETTES[level];
+  ctx.save();ctx.translate(x,y);ctx.scale(size/48,size/48);ctx.rotate(sway*0.06);ctx.scale(1,1+sway*0.04);ctx.translate(0,-18);
+  for(let i=0;i<3;i++){ctx.save();if(i===1){ctx.translate(0,17);ctx.scale(flick,flick);ctx.translate(0,-17);}
+    ctx.fillStyle=c[i];ctx.fill(FP[i]);if(i===0){ctx.strokeStyle=c[1];ctx.lineWidth=0.7;ctx.stroke(FP[i]);}ctx.restore();}
+  ctx.restore();
+}
+function flameSVG(level,size){const c=FLAME_PALETTES[level];return `<svg width="${size}" height="${size}" viewBox="-24 -28 52 52">${FLAME_PATHS.map((p,i)=>`<path d="${p}" fill="${c[i]}"/>`).join('')}</svg>`;}
+
+function kf(t,keys){ // keys: [[t,v,ease?],...] ease names from gsap
+  if(t<=keys[0][0])return keys[0][1];
+  for(let i=1;i<keys.length;i++){const [t1,v1,e]=keys[i],[t0,v0]=keys[i-1];
+    if(t<=t1){const p=(t-t0)/Math.max(1e-6,t1-t0);const f=gsap.parseEase(e||'power2.inOut')(p);return v0+(v1-v0)*f;}}
+  return keys[keys.length-1][1];
+}
+function words(sel){document.querySelectorAll(sel).forEach(el=>{if(el.dataset.split)return;el.dataset.split=1;el.innerHTML=el.textContent.trim().split(/\s+/).map(w=>`<span class="w">${w}</span>`).join(' ');});}
+function wordsIn(tl,sel,at,gap=0.07){tl.fromTo(sel+' .w',{opacity:0,filter:'blur(6px)'},{opacity:1,filter:'blur(0px)',duration:0.16,ease:'power2.out',stagger:gap},at);}
+
+const D=13.68;
+
+document.getElementById('s3-fire').innerHTML=flameSVG(0,170);
+[0, 1, 0, 0].forEach((l,i)=>document.getElementById('s3-sf'+i).innerHTML=flameSVG(l,104));
+const tl=gsap.timeline({paused:true});
+tl.fromTo('#s3-bg',{scale:1.0},{scale:1.08,duration:5.74,ease:'none'},0);
+tl.fromTo('#s3-sq',{opacity:0,scale:0.6,transformOrigin:'50% 50%'},{opacity:1,scale:1,duration:0.7,ease:'expo.out'},0.15);
+tl.fromTo('#s3-mlab',{opacity:0,filter:'blur(6px)'},{opacity:1,filter:'blur(0px)',duration:0.2},0.4);
+tl.fromTo('#s3-fire',{opacity:0,scale:0.4,transformOrigin:'50% 90%'},{opacity:1,scale:1,duration:0.5,ease:'back.out(2)'},0.6);
+tl.fromTo('.s3-g',{opacity:0},{opacity:1,duration:0.2,stagger:0.12},3.34);
+tl.to('#s3-fire',{opacity:0,scale:0.5,duration:0.25,ease:'power3.in'},3.84);
+tl.fromTo('.s3-sf',{opacity:0,scale:0.3,transformOrigin:'50% 90%'},{opacity:1,scale:1,duration:0.4,ease:'back.out(2.2)',stagger:0.14},3.94);
+tl.fromTo('#s3-vlab',{opacity:0,x:-20},{opacity:1,x:0,duration:0.5,ease:'expo.out'},3.7399999999999998);
+tl.to(['#s3-px svg','#s3-mlab','#s3-vlab','.s3-sf','#s3-note'],{opacity:0,filter:'blur(8px)',duration:0.22,ease:'power3.in'},5.09);
+tl.fromTo('#s3-chart',{opacity:0,scale:1.04},{opacity:1,scale:1,duration:0.45,ease:'expo.out'},5.24);
+tl.fromTo('#s3-raw',{opacity:1},{opacity:0.28,duration:0.8},5.74);
+tl.fromTo('#s3-harm',{strokeDashoffset:110},{strokeDashoffset:0,duration:2.0,ease:'power1.inOut'},5.74);
+tl.fromTo('#s3-hl',{opacity:0},{opacity:1,duration:0.3},6.34);
+tl.fromTo('#s3-stat',{opacity:0,y:30},{opacity:1,y:0,duration:0.7,ease:'expo.out'},7.79);
+tl.fromTo('#s3-stat .big',{scale:1.25,transformOrigin:'0% 50%'},{scale:1,duration:0.35,ease:'power4.out'},9.59);
+tl.to('#s3-chart',{opacity:0,filter:'blur(8px)',duration:0.25,ease:'power3.in'},D-0.35);
+window.__timelines['s3']=tl;
+
+})();
+</script>
+</template>

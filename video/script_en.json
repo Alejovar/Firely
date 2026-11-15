@@ -1,0 +1,9 @@
+{
+ "s1": "March 2021. The Sierra de Arteaga, in Coahuila, Mexico, burned for more than two weeks. Was it the worst fire in twenty years? To find out, we have to look back.",
+ "s2": "But the past is misleading. Since 2012, a new satellite, VIIRS, sees fire with pixels almost three times finer than MODIS. In the raw data, fire seems to multiply overnight. That jump is fake.",
+ "s3": "Firely translates twenty-five years of MODIS onto the VIIRS scale, cell by cell and month by month. We tested it year by year: the error drops by about thirty percent.",
+ "s4": "The result is a fire calendar for any place. Now we can compare: March 2021 was almost eighty-five times normal. Something like that happens once every twenty-six years.",
+ "s5": "And Gotita explains it your way: curious, firefighter or scientist. No made-up numbers: they all come from the harmonized series.",
+ "s6": "If your area is running above normal, Gotita alerts you on Telegram.",
+ "s7": "Firely. Twenty-five years of fire, in a single series."
+}

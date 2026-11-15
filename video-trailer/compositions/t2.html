@@ -1,0 +1,76 @@
+<template>
+<style>@font-face {font-family: 'Atkinson Hyperlegible Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(assets/fonts/AtkinsonHyperlegibleMono-400.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face {font-family: 'Atkinson Hyperlegible Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(assets/fonts/AtkinsonHyperlegibleMono-500.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face {font-family: 'Atkinson Hyperlegible Next';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(assets/fonts/AtkinsonHyperlegibleNext-400_700.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face {font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url(assets/fonts/SourceSerif4-400_700.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+
+#root{position:absolute;inset:0;overflow:hidden;background:#1a1f1c;color:#e9ece6;font-family:'Atkinson Hyperlegible Next',sans-serif}
+.serif{font-family:'Source Serif 4',Georgia,serif}
+.mono{font-family:'Atkinson Hyperlegible Mono',monospace}
+.w{display:inline-block}
+.laptop{position:absolute;background:#0b0e0c;border:14px solid #0b0e0c;border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.55);overflow:hidden}
+.laptop img{display:block;width:100%;height:100%;object-fit:cover}
+.base{position:absolute;height:22px;background:#2b332e;border-radius:0 0 18px 18px}
+.phone{position:absolute;background:#0b0e0c;border:12px solid #0b0e0c;border-radius:58px;box-shadow:0 30px 80px rgba(0,0,0,.55);overflow:hidden}
+.phone img{display:block;width:100%;height:100%;object-fit:cover;object-position:top;border-radius:44px}
+.tag{position:absolute;font-size:30px;font-weight:700;color:#e9ece6;letter-spacing:.02em}
+.tag b{color:#f26a1b}
+
+#t2-h{position:absolute;left:120px;top:90px;font-size:84px;font-weight:600;margin:0}
+#t2-st{position:absolute;left:1040px;top:430px;padding:14px 30px;border:8px solid #f26a1b;color:#f26a1b;border-radius:10px;font-size:92px;font-weight:700;letter-spacing:.05em;background:rgba(26,31,28,.9)}
+#t2-shake{position:absolute;inset:0}
+</style>
+<div id="root" data-composition-id="t2" data-width="1920" data-height="1080" data-start="0" data-duration="4.86">
+
+<div id="t2-shake" class="clip" data-start="0" data-duration="4.86"><svg id="t2-CH" viewBox="0 0 1920 1080" style="position:absolute;inset:0;width:1920px;height:1080px" data-layout-ignore>
+  <rect x="260" y="300" width="612" height="600" fill="#e9ece6" opacity=".045"/>
+  <line x1="260" x2="1660" y1="900" y2="900" stroke="#3a4540" stroke-width="2"/><text x="240" y="910" text-anchor="end" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">0</text><line x1="260" x2="1660" y1="750" y2="750" stroke="#3a4540" stroke-width="1"/><text x="240" y="760" text-anchor="end" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">200k</text><line x1="260" x2="1660" y1="600" y2="600" stroke="#3a4540" stroke-width="1"/><text x="240" y="610" text-anchor="end" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">400k</text><line x1="260" x2="1660" y1="450" y2="450" stroke="#3a4540" stroke-width="1"/><text x="240" y="460" text-anchor="end" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">600k</text><line x1="260" x2="1660" y1="300" y2="300" stroke="#3a4540" stroke-width="1"/><text x="240" y="310" text-anchor="end" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">800k</text><text x="260" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2001</text><text x="493" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2005</text><text x="727" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2009</text><text x="902" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2012</text><text x="1193" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2017</text><text x="1427" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2021</text><text x="1660" y="946" text-anchor="middle" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Mono">2025</text>
+  <line x1="902" x2="902" y1="300" y2="900" stroke="#9aa69f" stroke-width="2" stroke-dasharray="6 7"/>
+  <text x="914" y="330" fill="#9aa69f" font-size="28" font-family="Atkinson Hyperlegible Next">VIIRS starts</text>
+  <path id="t2-RAW" d="M260.0,882.4 L318.3,874.6 L376.7,840.9 L435.0,866.9 L493.3,838.0 L551.7,856.4 L610.0,856.3 L668.3,851.9 L726.7,848.8 L785.0,862.8 L843.3,825.0 L901.7,717.2 L960.0,687.2 L1018.3,800.5 L1076.7,769.9 L1135.0,730.5 L1193.3,671.4 L1251.7,598.2 L1310.0,451.1 L1368.3,577.8 L1426.7,570.2 L1485.0,593.5 L1543.3,378.0 L1601.7,325.7 L1660.0,448.3" pathLength="100" fill="none" stroke="#c9d1cb" stroke-width="6" stroke-dasharray="100 120" stroke-dashoffset="110" stroke-linejoin="round"/>
+  <text id="t2-RAWL" x="1676" y="458" fill="#c9d1cb" font-size="32" font-weight="700" font-family="Atkinson Hyperlegible Next">Raw</text>
+</svg></div>
+<h1 id="t2-h" class="serif clip" data-start="0" data-duration="4.86">Then the satellite changed</h1>
+<div id="t2-st" class="serif clip" data-start="3.6300000000000003" data-duration="1.2300000000000002">FAKE JUMP</div>
+
+</div>
+<script>
+(function(){
+
+function words(sel){document.querySelectorAll(sel).forEach(el=>{if(el.dataset.split)return;el.dataset.split=1;el.innerHTML=el.textContent.trim().split(/\s+/).map(w=>`<span class="w">${w}</span>`).join(' ');});}
+function wordsIn(tl,sel,at,gap=0.06){tl.fromTo(sel+' .w',{opacity:0,filter:'blur(8px)',y:10},{opacity:1,filter:'blur(0px)',y:0,duration:0.18,ease:'power3.out',stagger:gap},at);}
+
+const D=4.86;
+const tl=gsap.timeline({paused:true});
+
+words('#t2-h');wordsIn(tl,'#t2-h',0.05);
+tl.fromTo('#t2-RAW',{strokeDashoffset:110},{strokeDashoffset:0,duration:3.2800000000000002,ease:'power1.in'},0.2);
+tl.fromTo('#t2-RAWL',{opacity:0},{opacity:1,duration:0.2},3.3800000000000003);
+tl.set('#t2-shake',{x:14,y:-8},3.680);tl.set('#t2-shake',{x:-12,y:6},3.713);tl.set('#t2-shake',{x:9,y:5},3.746);tl.set('#t2-shake',{x:-6,y:-4},3.779);tl.set('#t2-shake',{x:3,y:2},3.812);tl.set('#t2-shake',{x:0,y:0},3.845);
+tl.fromTo('#t2-st',{opacity:0,scale:1.9,rotation:-16},{opacity:1,scale:1,rotation:-8,duration:0.18,ease:'power4.in'},3.6300000000000003);
+tl.to(['#t2-h','#t2-st'],{opacity:0,filter:'blur(8px)',duration:0.2,ease:'power3.in'},D-0.22);
+
+window.__timelines['t2']=tl;
+})();
+</script>
+</template>
