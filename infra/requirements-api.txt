@@ -19,3 +19,5 @@ urllib3==2.8.0
 anthropic==2.8.0
 # Telegram client of the daily alerts job (bot/client.py)
 httpx==0.28.1
+# Story narration (/tts): offline neural text-to-speech; voices are downloaded on first use into FIRELY_STATE_DIR
+piper-tts==1.8.0

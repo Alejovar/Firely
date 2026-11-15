@@ -38,11 +38,11 @@ const GOTITA: Record<Profile, { src: string; name: Record<Lang, string>; tagline
 };
 const curiousLabel: Record<Lang, string> = { es: 'Curioso', en: 'Curious', pt: 'Curioso' };
 const askGotita: Record<Lang, string> = { es: 'Pregunta a Gotita', en: 'Ask Gotita', pt: 'Pergunte à Gotita' };
-function GotitaFigure({ profile, lang }: { profile: Profile; lang: Lang }) {
+function GotitaFigure({ profile, lang, busy = false }: { profile: Profile; lang: Lang; busy?: boolean }) {
   const g = GOTITA[profile], c = gotitaCopy[lang];
   return <VStack gap={3} xstyle={styles.stage}>
     <Box xs={styles.glow} aria-hidden="true" style={{ backgroundImage: gotitaGlow[profile] }} />
-    <img {...stylex.props(styles.figure, styles.above)} src={`${import.meta.env.BASE_URL}${g.src}`} alt={g.name[lang]} />
+    <Box key={profile} xs={[styles.above, motion.pop]}><img {...stylex.props(styles.figure, busy ? motion.talking : motion.idle)} src={`${import.meta.env.BASE_URL}${g.src}`} alt={g.name[lang]} /></Box>
     <VStack gap={1} xstyle={[styles.above, styles.stageText]}><Heading level={2}>{c.hello(g.name[lang])}</Heading><Text>{g.tagline[lang]}</Text><Text type="supporting">{c.help}</Text></VStack>
   </VStack>;
 }
@@ -86,6 +86,23 @@ const queryListLabel: Record<Lang, string> = { es: 'Consultas exactas usadas', e
 const copyLabel: Record<Lang, string> = { es: 'Copiar consulta', en: 'Copy query', pt: 'Copiar consulta' };
 const futureLabel: Record<Lang, string> = { es: 'Consultando pronóstico…', en: 'Reading the outlook…', pt: 'Consultando a previsão…' };
 const contextError: Record<Lang, string> = { es: 'No se pudo cargar el contexto mensual.', en: 'Monthly context could not be loaded.', pt: 'Não foi possível carregar o contexto mensal.' };
+// Gotita moves: floats while idle, bounces and sways while it searches and answers, pops in when the mode changes.
+// Users who asked their system for reduced motion get a still Gotita.
+const floatKf = stylex.keyframes({ '0%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' }, '100%': { transform: 'translateY(0)' } });
+const talkKf = stylex.keyframes({
+  '0%': { transform: 'translateY(0) rotate(0deg) scale(1, 1)' },
+  '20%': { transform: 'translateY(-16px) rotate(-5deg) scale(0.97, 1.04)' },
+  '45%': { transform: 'translateY(0) rotate(0deg) scale(1.05, 0.95)' },
+  '70%': { transform: 'translateY(-9px) rotate(5deg) scale(0.98, 1.02)' },
+  '100%': { transform: 'translateY(0) rotate(0deg) scale(1, 1)' },
+});
+const popKf = stylex.keyframes({ '0%': { transform: 'scale(0.8)', opacity: 0 }, '70%': { transform: 'scale(1.06)', opacity: 1 }, '100%': { transform: 'scale(1)', opacity: 1 } });
+const motion = stylex.create({
+  idle: { animationName: { default: floatKf, '@media (prefers-reduced-motion: reduce)': 'none' }, animationDuration: '4.5s', animationIterationCount: 'infinite', animationTimingFunction: 'ease-in-out' },
+  talking: { animationName: { default: talkKf, '@media (prefers-reduced-motion: reduce)': 'none' }, animationDuration: '0.9s', animationIterationCount: 'infinite', animationTimingFunction: 'ease-in-out', transformOrigin: '50% 90%' },
+  pop: { animationName: { default: popKf, '@media (prefers-reduced-motion: reduce)': 'none' }, animationDuration: '0.45s', animationTimingFunction: 'ease-out' },
+  avatarWrap: { display: 'inline-flex', transformOrigin: '50% 90%' },
+});
 const styles = stylex.create({
   chat: { flex: 1, minHeight: 0, width: '100%' },
   page: { width: '100%', minWidth: 0, height: '100%', overflow: 'hidden' },
@@ -308,6 +325,8 @@ export default function Assistant() {
   </HStack>;
   const composer = <VStack gap={2} width="100%">{quickActions}<ChatComposer onSubmit={submit} value={draft} onChange={setDraft} placeholder={t.ask} input={<ChatComposerInput label={t.send} pasteAsToken={false} />} /><Text type="supporting">{t.limit}</Text></VStack>;
   const transcript = turns.length > 0;
+  const turnBusy = (turn: Turn) => turn.resolveStatus === 'running' || turn.calendarStatus === 'running' || turn.future?.status === 'running' || turn.contextStatus === 'running';
+  const busy = turns.some(turnBusy);
   const resultCard = latestTurn && <Result turn={latestTurn} lang={lang} profile={profile} onProfile={value => updateProfile(value, latestTurn)} onMap={() => app.patch({ area: latestTurn.selected!, from: latestTurn.from!, to: latestTurn.to!, page: 'explorar' })} onMethod={() => app.navigate('metodo')} />;
   return <Layout height="fill" content={<LayoutContent padding={0} isScrollable={false}><VStack xstyle={styles.page}>
     <VStack gap={3} xstyle={styles.header}>
@@ -322,7 +341,7 @@ export default function Assistant() {
             const options = resolved?.candidates.filter(candidate => candidateArea(candidate) !== null) ?? [];
             return <VStack key={turn.id} gap={3}>
               <ChatMessage sender="user"><ChatMessageBubble>{turn.prompt}</ChatMessageBubble></ChatMessage>
-              <ChatMessage sender="assistant" avatar={<GotitaAvatar profile={profile} lang={lang} />} name={GOTITA[profile].name[lang]}>
+              <ChatMessage sender="assistant" avatar={<Box xs={[motion.avatarWrap, turnBusy(turn) && motion.talking]}><GotitaAvatar profile={profile} lang={lang} /></Box>} name={GOTITA[profile].name[lang]}>
                 <ChatToolCalls defaultIsExpanded calls={[{ name: t.resolving, status: turn.resolveStatus }, ...(turn.calendarStatus ? [{ name: t.calendar, status: turn.calendarStatus }] : []), ...(turn.future ? [{ name: futureLabel[lang], status: turn.future.status }] : [])]} />
                 {turn.resolveStatus === 'running' && <ChatMessageBubble variant="ghost"><Skeleton width="75%" height="var(--spacing-6)" /></ChatMessageBubble>}
                 {resolved && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={3}>
@@ -342,7 +361,7 @@ export default function Assistant() {
           })}
         </ChatMessageList></ChatLayout> : <Center axis="both" width="100%" height="100%"><VStack gap={4} width="100%" maxWidth={760}>{composer}<VStack gap={2}><Text type="label" color="secondary">{gotitaCopy[lang].try}</Text><HStack gap={2} wrap="wrap">{SUGGESTIONS[profile].map(suggestion => <Button key={suggestion} label={suggestion} variant="secondary" size="sm" onClick={() => void submit(suggestion)} />)}</HStack></VStack></VStack></Center>}
       </VStack>
-      <VStack gap={3} xstyle={styles.resultColumn}>{resultCard ? <>{resultCard}<img {...stylex.props(styles.backdrop)} src={`${import.meta.env.BASE_URL}${GOTITA[profile].src}`} alt="" aria-hidden="true" /></> : <GotitaFigure profile={profile} lang={lang} />}</VStack>
+      <VStack gap={3} xstyle={styles.resultColumn}>{resultCard ? <>{resultCard}<img {...stylex.props(styles.backdrop, busy ? motion.talking : motion.idle)} src={`${import.meta.env.BASE_URL}${GOTITA[profile].src}`} alt="" aria-hidden="true" /></> : <GotitaFigure profile={profile} lang={lang} busy={busy} />}</VStack>
     </Grid>
   </VStack></LayoutContent>} />;
 }

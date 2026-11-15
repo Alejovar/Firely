@@ -56,6 +56,8 @@ if _real_mode:  # registered before the mock routes so /season, /analogs... reso
     app.include_router(_subscriptions_router)  # /subscriptions (alertas por suscripción, §10.1)
     from .outlook_routes import router as _outlook_router
     app.include_router(_outlook_router)        # /forecast (perspectiva de actividad 1-3 meses por celda)
+    from .tts_routes import router as _tts_router
+    app.include_router(_tts_router)            # /tts (narración de Historia con Piper, sin depender de voces del sistema)
 
 
 def envelope(**extra):

@@ -30,10 +30,12 @@ export function kmlFromHotspots(data: HotspotsGeoJson, meta: { label?: string; f
 export function csvFromHotspots(data: HotspotsGeoJson): string {
   return ['date,sensor,platform,frp_mw,confidence,daynight,lon,lat',...data.features.map(f=>[f.properties.date,f.properties.sensor,f.properties.platform,f.properties.frp_mw??'',f.properties.confidence_h,f.properties.daynight,...f.geometry.coordinates].join(','))].join('\n');
 }
-export function playCalendar(rows: CalendarRow[], onMonth:(year:number,month:number)=>void):()=>void {
+/** Play the calendar as notes. Pass an AudioContext created inside the click handler: a context created later
+ *  (in an effect) can stay suspended under the browsers' autoplay rules, which made this silent. */
+export function playCalendar(rows: CalendarRow[], onMonth:(year:number,month:number)=>void, context?: AudioContext, onDone?: ()=>void):()=>void {
   const AudioContextClass = window.AudioContext;
-  if (!AudioContextClass) return ()=>{};
-  const ctx = new AudioContextClass();
+  if (!context && !AudioContextClass) return ()=>{};
+  const ctx = context ?? new AudioContextClass();
   void ctx.resume(); // created after the click, but some browsers start it suspended
   let stopped=false;
   const ordered=[...rows].sort((a,b)=>a.year-b.year||a.month-b.month);
@@ -46,6 +48,6 @@ export function playCalendar(rows: CalendarRow[], onMonth:(year:number,month:num
     if((r.anomaly_ratio??0)>=2) tone(370,.08);
     window.setTimeout(()=>{if(!stopped)onMonth(r.year,r.month)},i*120);
   });
-  const timer=window.setTimeout(()=>ctx.close(),ordered.length*120+200);
+  const timer=window.setTimeout(()=>{void ctx.close();onDone?.()},ordered.length*120+200);
   return ()=>{stopped=true;window.clearTimeout(timer);void ctx.close()};
 }
