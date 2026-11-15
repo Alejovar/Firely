@@ -9,7 +9,7 @@ const s = stylex.create({
   root: { display: 'flex', alignItems: 'center', gap: '12px' },
   code: { display: 'block', width: '96px', height: '96px', padding: '6px', backgroundColor: '#ffffff', borderRadius: '6px', flexShrink: 0 },
   text: { display: 'flex', flexDirection: 'column', gap: '4px', maxWidth: '14rem' },
-  url: { fontFamily: '"IBM Plex Mono", ui-monospace, monospace', fontSize: '10px', color: 'var(--color-text-secondary)', overflowWrap: 'anywhere' },
+  url: { fontVariantNumeric: 'tabular-nums', fontSize: '10px', color: 'var(--color-text-secondary)', overflowWrap: 'anywhere' },
 });
 
 /** QR code that opens the live explorer with the same area, dates and selected month as this page. */

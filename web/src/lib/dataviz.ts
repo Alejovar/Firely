@@ -9,7 +9,7 @@ import type { CalendarMode, } from '../state/hash';
 export type Scheme = 'dark' | 'light';
 
 /** Zero or missing cells recede into the surface. */
-export const EMPTY_CELL = 'light-dark(#e6e4de, #1c2024)';
+export const EMPTY_CELL = 'light-dark(#e3e8e1, #1f2622)';
 
 /** Cividis, sampled. 0 detections -> #00204D, maximum -> #FDE34A. */
 export const CIVIDIS = ['#00204d', '#1f3a6e', '#4a5470', '#6f6f72', '#958f78', '#c0b26d', '#fde34a'] as const;
@@ -83,9 +83,9 @@ export const mapInk = {
   otherLocality: '#8a9097',
   goes: '#67a9cf',
   semaphore: { red: '#b2182b', redGlow: 'rgba(178,24,43,.8)', amber: '#e0a526', green: '#4f9d69' },
-  alertLabel: { bg: 'rgba(178,24,43,.16)', fg: '#e5707e' },
-  nina: '#67a9cf',
-  nino: '#ef8a62',
+  alertLabel: { bg: 'rgba(178,24,43,.16)', fg: 'light-dark(#9c1426, #e5707e)' },
+  nina: 'light-dark(#2a6a96, #67a9cf)',
+  nino: 'light-dark(#ad4422, #ef8a62)',
 } as const;
 
 /** Star-chart series: the harmonized series is THE point (accent), raw series are neutral context told apart by dash. */
@@ -108,13 +108,13 @@ export const categorical = [
 export const chartInk = {
   axis: 'var(--color-text-secondary)',
   grid: 'var(--color-border-subtle, var(--color-background-muted))',
-  tick: { fontSize: 11, fill: 'var(--color-text-secondary)', fontFamily: '"IBM Plex Mono", ui-monospace, monospace' },
+  tick: { fontSize: 11.5, fill: 'var(--color-text-secondary)', fontFamily: '"Atkinson Hyperlegible Next", system-ui, sans-serif' },
 } as const;
 
 /** A month is drawn hatched ("cloudy") when less than this share of the area was seen clear (MYD08 cloud fraction). */
 export const CLOUDY_CLEAR_FRAC = 0.35;
 /** Semaphore tag for the amber level. */
-export const amberLabel = { bg: 'rgba(224,165,38,.16)', fg: '#e0a526' } as const;
+export const amberLabel = { bg: 'rgba(224,165,38,.18)', fg: 'light-dark(#7a5200, #e0a526)' } as const;
 
 /** Priority index (0–100) per H3 cell: cividis, so "more urgent" is brighter, never the ember accent. */
 export const PRIORITY_STOPS: [number, string][] = [0, 25, 50, 75, 100].map(v => [v, cividis(v / 100)]);

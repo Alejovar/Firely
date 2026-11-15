@@ -15,25 +15,25 @@ const s = stylex.create({
   wrap: { position: 'relative', flexGrow: 1, minWidth: 0 },
   field: {
     display: 'flex', alignItems: 'center', gap: '10px', height: '44px', padding: '0 6px 0 14px', borderWidth: '1px', borderStyle: 'solid',
-    borderColor: { default: 'var(--color-border-emphasized)', ':focus-within': 'var(--color-text-disabled)' }, borderRadius: '10px', backgroundColor: 'light-dark(#ffffff, #0f1214)', minWidth: 0,
+    borderColor: { default: 'var(--color-border-emphasized)', ':focus-within': 'var(--color-text-secondary)' }, borderRadius: '6px', backgroundColor: 'var(--color-background-body)', minWidth: 0,
   },
   icon: { flexShrink: 0, color: 'var(--color-text-secondary)' },
-  input: { flexGrow: 1, flexShrink: 1, width: '6rem', minWidth: '5rem', borderWidth: 0, outline: 'none', backgroundColor: 'transparent', color: 'var(--color-text-primary)', fontFamily: 'inherit', fontSize: '15px', '::placeholder': { color: 'var(--color-text-disabled)' }, '::-webkit-search-cancel-button': { display: 'none' } },
+  input: { flexGrow: 1, flexShrink: 1, width: '6rem', minWidth: '5rem', borderWidth: 0, outline: 'none', backgroundColor: 'transparent', color: 'var(--color-text-primary)', fontFamily: 'inherit', fontSize: '15px', '::placeholder': { color: 'var(--color-text-secondary)' }, '::-webkit-search-cancel-button': { display: 'none' } },
   chips: { flexShrink: 1, display: { default: 'flex', '@media (max-width: 1180px)': 'none' }, gap: '5px', minWidth: 0, overflow: 'hidden' },
   chip: {
-    padding: '3px 7px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', borderRadius: '5px', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontSize: '11px', fontWeight: 500,
+    padding: '3px 7px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', borderRadius: '4px', fontFamily: 'inherit', fontSize: '12.5px', fontWeight: 500,
     color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '15rem', backgroundColor: 'transparent', cursor: 'pointer',
     ':hover': { color: 'var(--color-text-primary)' }, ':focus-visible': { outline: '2px solid var(--color-accent)' },
   },
   chipFixed: { flexShrink: 0, maxWidth: 'none' },
-  mic: { flexShrink: 0, width: '34px', height: '34px', borderRadius: '8px', borderWidth: 0, backgroundColor: 'var(--color-accent)', color: 'var(--color-on-accent)', display: 'grid', placeItems: 'center', cursor: 'pointer', ':focus-visible': { outline: '2px solid var(--color-text-primary)', outlineOffset: '2px' }, ':disabled': { opacity: 0.5, cursor: 'not-allowed' } },
+  mic: { flexShrink: 0, width: '34px', height: '34px', borderRadius: '4px', borderWidth: 0, backgroundColor: 'var(--color-accent)', color: 'var(--color-on-accent)', display: 'grid', placeItems: 'center', cursor: 'pointer', ':focus-visible': { outline: '2px solid var(--color-text-primary)', outlineOffset: '2px' }, ':disabled': { opacity: 0.5, cursor: 'not-allowed' } },
   micOn: { boxShadow: '0 0 0 4px color-mix(in srgb, var(--color-accent) 35%, transparent)' },
   menu: {
     position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 40, display: 'flex', flexDirection: 'column', padding: '6px', gap: '2px', maxHeight: '50vh', overflowY: 'auto',
-    borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', borderRadius: '10px', backgroundColor: 'var(--color-background-surface)', boxShadow: '0 12px 32px rgba(0,0,0,.35)',
+    borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', borderRadius: '6px', backgroundColor: 'var(--color-background-popover)', boxShadow: 'var(--shadow-med)',
   },
-  option: { display: 'flex', justifyContent: 'space-between', gap: '12px', textAlign: 'left', padding: '8px 10px', borderRadius: '6px', borderWidth: 0, backgroundColor: { default: 'transparent', ':hover': 'var(--color-background-muted)', ':focus-visible': 'var(--color-background-muted)' }, color: 'var(--color-text-primary)', fontFamily: 'inherit', fontSize: '13px', cursor: 'pointer' },
-  optionMeta: { fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontSize: '10.5px', color: 'var(--color-text-disabled)', whiteSpace: 'nowrap' },
+  option: { display: 'flex', justifyContent: 'space-between', gap: '12px', textAlign: 'left', padding: '8px 10px', borderRadius: '4px', borderWidth: 0, backgroundColor: { default: 'transparent', ':hover': 'var(--color-background-muted)', ':focus-visible': 'var(--color-background-muted)' }, color: 'var(--color-text-primary)', fontFamily: 'inherit', fontSize: '13px', cursor: 'pointer' },
+  optionMeta: { fontSize: '12px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' },
   status: { padding: '6px 10px', fontSize: '12px', color: 'var(--color-text-secondary)' },
 });
 
@@ -76,9 +76,9 @@ export default function AreaSearch() {
     setLoading(true); setNotice(''); setOpen(true);
     resolveArea(query, L, controller.signal).then(result => {
       setIntent(result.intent);
-      if (!result.candidates.length) { setNotice(L === 'es' ? 'No se encontraron lugares' : L === 'pt' ? 'Nenhum lugar encontrado' : 'No places found'); return; }
+      if (!result.candidates.length) { setNotice(L === 'es' ? 'No encontramos ese lugar. Prueba con el nombre del municipio o del estado.' : L === 'pt' ? 'Lugar não encontrado. Tente o nome do município ou do estado.' : 'Place not found. Try the municipality or state name.'); return; }
       if (result.ambiguous || result.candidates.length > 1) { setCandidates(result.candidates); setOpen(true); } else apply(result.candidates[0], result.intent);
-    }).catch(e => { if (!controller.signal.aborted) setNotice(e instanceof ApiError ? `Error ${e.status}${e.code ? ` · ${e.code}` : ''}` : (L === 'en' ? 'Could not search' : 'No se pudo buscar el lugar')); })
+    }).catch(e => { if (!controller.signal.aborted) setNotice(e instanceof ApiError ? (L === 'en' ? `The search failed (error ${e.status}). Try again in a moment.` : `La búsqueda falló (error ${e.status}). Inténtalo de nuevo en un momento.`) : (L === 'en' ? 'The search service is not responding. Check your connection and try again.' : 'El servicio de búsqueda no responde. Revisa tu conexión e inténtalo de nuevo.')); })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
   };
   const dictate = () => {
@@ -86,7 +86,7 @@ export default function AreaSearch() {
     const recognition = new SpeechClass(); recognition.lang = L === 'pt' ? 'pt-BR' : L === 'en' ? 'en-US' : 'es-MX';
     setListening(true);
     recognition.onresult = e => { const transcript = e.results[0]?.[0]?.transcript?.trim(); if (transcript) { setText(transcript); submit(transcript); } };
-    recognition.onerror = () => { setListening(false); setNotice(L === 'en' ? 'Speech unavailable' : 'Voz no disponible'); setOpen(true); };
+    recognition.onerror = () => { setListening(false); setNotice(L === 'en' ? 'Dictation is not available in this browser. Type the place instead.' : 'El dictado no está disponible en este navegador. Escribe el lugar.'); setOpen(true); };
     recognition.onend = () => setListening(false);
     recognition.start();
   };
@@ -99,8 +99,8 @@ export default function AreaSearch() {
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" {...stylex.props(s.icon)}><circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.5" /><path d="M11 11l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
         <input type="search" aria-label={nav[L].search} placeholder={nav[L].search} value={text} onChange={e => { setText(e.target.value); setCandidates([]); setNotice(''); }} onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') setOpen(false); }} onFocus={() => shown.length && setOpen(true)} {...stylex.props(s.input)} />
         <Inline xs={s.chips}>
-          <button type="button" title={L === 'en' ? 'Reset area' : 'Restablecer área'} onClick={() => { app.setArea(DEFAULT_AREA); setIntent(undefined); }} {...stylex.props(s.chip)}>{L === 'en' ? 'place' : L === 'pt' ? 'lugar' : 'lugar'}: {placeChip}</button>
-          <button type="button" title={L === 'en' ? 'Reset dates' : 'Restablecer fechas'} onClick={() => { app.setRange('2001-01-01', new Date().toISOString().slice(0, 10)); setIntent(undefined); }} {...stylex.props(s.chip, s.chipFixed)}>{L === 'en' ? 'dates' : L === 'pt' ? 'datas' : 'fechas'}: {dateChip(app)}</button>
+          <button type="button" title={L === 'en' ? 'Reset area' : 'Restablecer área'} onClick={() => { app.setArea(DEFAULT_AREA); setIntent(undefined); }} {...stylex.props(s.chip)}>{placeChip}</button>
+          <button type="button" title={L === 'en' ? 'Reset dates' : 'Restablecer fechas'} onClick={() => { app.setRange('2001-01-01', new Date().toISOString().slice(0, 10)); setIntent(undefined); }} {...stylex.props(s.chip, s.chipFixed)}>{dateChip(app)}</button>
         </Inline>
         <button type="button" title={L === 'en' ? 'Dictate' : L === 'pt' ? 'Ditar' : 'Dictar'} aria-label={L === 'en' ? 'Dictate' : L === 'pt' ? 'Ditar' : 'Dictar'} disabled={!SpeechClass} onClick={dictate} {...stylex.props(s.mic, listening && s.micOn)}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="5.5" y="1.5" width="5" height="8.5" rx="2.5" stroke="currentColor" strokeWidth="1.5" /><path d="M3 8a5 5 0 0010 0M8 13v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
@@ -109,7 +109,7 @@ export default function AreaSearch() {
       {showMenu && <Box xs={s.menu} role="listbox" aria-label={L === 'en' ? 'Places' : 'Lugares'}>
         {loading && <Inline xs={s.status}>{L === 'en' ? 'Searching…' : L === 'pt' ? 'Buscando…' : 'Buscando…'}</Inline>}
         {notice && <Inline xs={s.status} aria-live="polite">{notice}</Inline>}
-        {shown.map((c, i) => <button key={`${c.label}-${i}`} type="button" role="option" aria-selected={false} onClick={() => apply(c, intent)} {...stylex.props(s.option)}><Inline>{c.label}</Inline><Inline xs={s.optionMeta}>{[c.kind, c.country].filter(Boolean).join(' · ')}</Inline></button>)}
+        {shown.map((c, i) => <button key={`${c.label}-${i}`} type="button" role="option" aria-selected={false} onClick={() => apply(c, intent)} {...stylex.props(s.option)}><Inline>{c.label}</Inline><Inline xs={s.optionMeta}>{[c.kind, c.country].filter(Boolean).join(', ')}</Inline></button>)}
       </Box>}
     </Box>
   );

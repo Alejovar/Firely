@@ -11,20 +11,20 @@ import CellPanel from './CellPanel';
 import { Box, Inline, OutlineButton, Pills, Segmented } from '../../ui/kit';
 
 const s = stylex.create({
-  root: { padding: '16px 22px 18px', display: 'flex', flexDirection: 'column', gap: '12px', '@media (max-width: 720px)': { padding: '14px 16px' } },
+  root: { padding: '20px 22px 22px', display: 'flex', flexDirection: 'column', gap: '14px', '@media (max-width: 720px)': { padding: '14px 16px' } },
   head: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' },
-  titles: { display: 'flex', flexDirection: 'column', gap: '2px', flex: '1 1 180px', minWidth: 0 },
-  title: { fontWeight: 600, fontSize: '15px' },
-  sub: { fontSize: '12px', color: 'var(--color-text-secondary)' },
+  titles: { display: 'flex', flexDirection: 'column', gap: '4px', flex: '1 1 300px', minWidth: 0 },
+  title: { fontFamily: 'var(--font-family-heading)', fontWeight: 600, fontSize: '22px', lineHeight: 1.15, fontVariationSettings: '"opsz" 36' },
+  sub: { fontSize: '13px', color: 'var(--color-text-secondary)' },
   actions: { display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flexShrink: 0 },
   filters: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px 12px', flexWrap: 'wrap' },
-  filter: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--color-text-secondary)' },
-  compare: { display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px 14px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', borderRadius: '10px' },
+  filter: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', color: 'var(--color-text-secondary)' },
+  compare: { display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px 14px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border)', borderRadius: '6px' },
 });
 const labels = {
-  es: { title: 'Calendario de actividad', sub: 'Puntos de calor armonizados por mes', listen: 'Escuchar', stop: '■ Detener', compare: 'Comparar', count: 'Conteo', anomaly: 'Anomalía', type: 'Tipo', all: 'Todas', farm: 'Agrícola', forest: 'Forestal', reference: 'Referencia', median: 'Mediana', mean: 'Promedio', metric: 'Métrica', points: 'Puntos', note: 'Sonificación: cada mes es una nota; más fuego, nota más aguda; sobre P90 suena disonante.', land: 'Por cobertura del suelo (aprox.): agrícola = celdas de cultivo; forestal = bosque y matorral.', frpSub: 'Poder radiativo armonizado por mes' },
-  en: { title: 'Activity calendar', sub: 'Harmonized hotspots by month', listen: 'Listen to', stop: '■ Stop', compare: 'Compare', count: 'Count', anomaly: 'Anomaly', type: 'Type', all: 'All', farm: 'Agricultural', forest: 'Forest', reference: 'Reference', median: 'Median', mean: 'Mean', metric: 'Metric', points: 'Points', note: 'Sonification: each month is a note; more fire, higher note; above P90 it turns dissonant.', land: 'Land-cover proxy: agricultural = cropland cells; forest = forest and shrub cells.', frpSub: 'Harmonized radiative power by month' },
-  pt: { title: 'Calendário de atividade', sub: 'Pontos de calor harmonizados por mês', listen: 'Ouvir', stop: '■ Parar', compare: 'Comparar', count: 'Contagem', anomaly: 'Anomalia', type: 'Tipo', all: 'Todas', farm: 'Agrícola', forest: 'Florestal', reference: 'Referência', median: 'Mediana', mean: 'Média', metric: 'Métrica', points: 'Pontos', note: 'Sonificação: cada mês é uma nota; mais fogo, nota mais aguda; acima de P90 soa dissonante.', land: 'Por cobertura do solo (aprox.): agrícola = cultivo; florestal = floresta e arbustos.', frpSub: 'Poder radiativo harmonizado por mês' },
+  es: { title: 'Calendario de actividad', sub: 'Puntos de calor armonizados por mes, de', listen: 'Escuchar', stop: 'Detener', compare: 'Comparar', count: 'Conteo', anomaly: 'Anomalía', type: 'Tipo', all: 'Todas', farm: 'Agrícola', forest: 'Forestal', reference: 'Referencia', median: 'Mediana', mean: 'Promedio', metric: 'Métrica', points: 'Puntos', note: 'Cada mes suena como una nota: más fuego, nota más aguda. Los meses muy por encima de lo normal suenan disonantes.', land: 'Por cobertura del suelo (aprox.): agrícola = celdas de cultivo; forestal = bosque y matorral.', frpSub: 'Poder radiativo armonizado por mes, de' },
+  en: { title: 'Activity calendar', sub: 'Harmonized hotspots by month,', listen: 'Listen to', stop: 'Stop', compare: 'Compare', count: 'Count', anomaly: 'Anomaly', type: 'Type', all: 'All', farm: 'Agricultural', forest: 'Forest', reference: 'Reference', median: 'Median', mean: 'Mean', metric: 'Metric', points: 'Points', note: 'Sonification: each month is a note; more fire, higher note; above P90 it turns dissonant.', land: 'Land-cover proxy: agricultural = cropland cells; forest = forest and shrub cells.', frpSub: 'Harmonized radiative power by month,' },
+  pt: { title: 'Calendário de atividade', sub: 'Pontos de calor harmonizados por mês, de', listen: 'Ouvir', stop: 'Parar', compare: 'Comparar', count: 'Contagem', anomaly: 'Anomalia', type: 'Tipo', all: 'Todas', farm: 'Agrícola', forest: 'Florestal', reference: 'Referência', median: 'Mediana', mean: 'Média', metric: 'Métrica', points: 'Pontos', note: 'Sonificação: cada mês é uma nota; mais fogo, nota mais aguda; acima de P90 soa dissonante.', land: 'Por cobertura do solo (aprox.): agrícola = cultivo; florestal = floresta e arbustos.', frpSub: 'Poder radiativo harmonizado por mês, de' },
 };
 export default function CalendarPanel({ data, loading, error }: { data: CalendarResponse | null; loading: boolean; error: string | null }) {
   const app = useApp(), t = labels[app.lang];
@@ -42,9 +42,9 @@ export default function CalendarPanel({ data, loading, error }: { data: Calendar
   return (
     <Box as="section" xs={s.root} aria-label={t.title}>
       <Box xs={s.head}>
-        <Box xs={s.titles}><Inline xs={s.title}>{t.title}</Inline><Inline xs={s.sub}>{app.metric === 'frp' ? t.frpSub : t.sub} · {app.from.slice(0, 4)}–{app.to.slice(0, 4)}</Inline></Box>
+        <Box xs={s.titles}><Inline xs={s.title}>{t.title}</Inline><Inline xs={s.sub}>{app.metric === 'frp' ? t.frpSub : t.sub} {app.from.slice(0, 4)} {app.lang === 'en' ? 'to' : 'a'} {app.to.slice(0, 4)}</Inline></Box>
         <Box xs={s.actions}>
-          <OutlineButton title={t.note} onClick={toggleAudio} isOn={playing} disabled={!data?.rows.some(r => r.year === year)}>{playing ? t.stop : `♪ ${t.listen} ${year}`}</OutlineButton>
+          <OutlineButton title={t.note} onClick={toggleAudio} isOn={playing} disabled={!data?.rows.some(r => r.year === year)}>{playing ? t.stop : `${t.listen} ${year}`}</OutlineButton>
           <OutlineButton isOn={comparing} aria-pressed={comparing} onClick={() => { if (comparing) app.setCompare(null); setComparing(!comparing); }}>{t.compare}</OutlineButton>
           <Segmented label={t.title} value={app.mode} onChange={v => app.setMode(v)} options={[{ value: 'count', label: t.count }, { value: 'anomaly', label: t.anomaly }]} />
         </Box>

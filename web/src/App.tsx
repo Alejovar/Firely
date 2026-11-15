@@ -27,15 +27,15 @@ const s = stylex.create({
   logo: { alignSelf: 'center', width: '26px', height: '26px', display: { default: 'grid', '@media (max-width: 720px)': 'none' }, gridTemplateColumns: 'repeat(3, 1fr)', gap: '2px', marginBottom: '16px', flexShrink: 0 },
   sq: { backgroundColor: 'var(--color-border-emphasized)' },
   sqDim: { opacity: 0.6 },
-  sqEmber: { backgroundColor: 'var(--color-accent)', boxShadow: '0 0 10px var(--color-accent)' },
+  sqEmber: { backgroundColor: 'var(--color-accent)' },
   navItem: {
-    padding: '9px 4px', borderRadius: '8px', borderWidth: 0, backgroundColor: { default: 'transparent', ':hover': 'var(--color-background-muted)' },
-    color: { default: 'var(--color-text-secondary)', ':hover': 'var(--color-text-primary)' }, fontFamily: 'inherit', fontSize: '11px', fontWeight: 500, lineHeight: 1.25,
+    padding: '9px 4px', borderRadius: '4px', borderWidth: 0, backgroundColor: { default: 'transparent', ':hover': 'var(--color-background-muted)' },
+    color: { default: 'var(--color-text-secondary)', ':hover': 'var(--color-text-primary)' }, fontFamily: 'inherit', fontSize: '12px', fontWeight: 500, lineHeight: 1.25,
     textAlign: 'center', cursor: 'pointer', flexShrink: 0, whiteSpace: { default: 'normal', '@media (max-width: 720px)': 'nowrap' }, paddingInline: { default: '4px', '@media (max-width: 720px)': '10px' },
     ':focus-visible': { outline: '2px solid var(--color-accent)', outlineOffset: '-2px' },
   },
-  navMinor: { fontSize: '10.5px', color: { default: 'var(--color-text-disabled)', ':hover': 'var(--color-text-primary)' } },
-  navOn: { backgroundColor: 'var(--color-background-muted)', color: { default: 'var(--color-text-primary)', ':hover': 'var(--color-text-primary)' }, boxShadow: 'inset 2px 0 0 var(--color-accent)' },
+  navMinor: { fontSize: '11.5px', color: { default: 'var(--color-text-disabled)', ':hover': 'var(--color-text-primary)' } },
+  navOn: { backgroundColor: 'var(--color-background-muted)', color: { default: 'var(--color-text-primary)', ':hover': 'var(--color-text-primary)' }, boxShadow: { default: 'inset 2px 0 0 var(--color-accent)', '@media (max-width: 720px)': 'inset 0 -2px 0 var(--color-accent)' } },
   divider: { height: { default: '1px', '@media (max-width: 720px)': '18px' }, width: { default: 'auto', '@media (max-width: 720px)': '1px' }, flexShrink: 0, backgroundColor: 'var(--color-border)', margin: { default: '10px 6px', '@media (max-width: 720px)': '0 4px' } },
   body: { display: { default: 'grid', '@media (max-width: 720px)': 'contents' }, gridTemplateRows: '68px minmax(0, 1fr)', minWidth: 0, minHeight: 0 },
   header: {
@@ -43,21 +43,20 @@ const s = stylex.create({
     borderBottomWidth: '1px', borderBottomStyle: 'solid', borderBottomColor: 'var(--color-border)', backgroundColor: 'var(--color-background-surface)', minWidth: 0, order: 0,
   },
   brand: { display: 'flex', flexDirection: 'column', lineHeight: 1.05, flexShrink: 0, gap: '3px', cursor: 'pointer', borderWidth: 0, padding: 0, backgroundColor: 'transparent', color: 'inherit', textAlign: 'left', fontFamily: 'inherit' },
-  brandName: { fontWeight: 600, fontSize: '17px', letterSpacing: '-0.01em' },
-  brandSub: { fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontWeight: 500, fontSize: '9.5px', color: 'var(--color-text-disabled)', letterSpacing: '0.06em' },
+  brandName: { fontFamily: 'var(--font-family-heading)', fontWeight: 600, fontSize: '21px', fontVariationSettings: '"opsz" 32' },
+  brandSub: { fontSize: '11.5px', color: 'var(--color-text-secondary)' },
   center: { flexGrow: 1, minWidth: 0, maxWidth: '900px', display: { default: 'flex', '@media (max-width: 720px)': 'none' } },
   end: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 },
   alerts: {
     display: { default: 'flex', '@media (max-width: 720px)': 'none' }, alignItems: 'center', gap: '6px', height: '32px', paddingInline: '10px', borderWidth: '1px', borderStyle: 'solid',
-    borderColor: 'var(--color-border-emphasized)', borderRadius: '8px', backgroundColor: 'transparent', color: 'var(--color-text-primary)', fontFamily: 'inherit', fontSize: '12.5px', cursor: 'pointer',
+    borderColor: 'var(--color-border-emphasized)', borderRadius: '6px', backgroundColor: 'transparent', color: 'var(--color-text-primary)', fontFamily: 'inherit', fontSize: '13px', cursor: 'pointer',
     ':focus-visible': { outline: '2px solid var(--color-accent)' },
   },
-  count: { minWidth: '18px', height: '18px', borderRadius: '9px', backgroundColor: 'var(--color-accent)', color: 'var(--color-on-accent)', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontWeight: 600, fontSize: '11px', display: 'grid', placeItems: 'center', paddingInline: '4px' },
-  langs: { display: 'flex', alignItems: 'center', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', borderRadius: '5px', paddingInline: '4px', height: '24px', lineHeight: 1 },
-  lang: { borderWidth: 0, backgroundColor: 'transparent', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontSize: '11px', fontWeight: 500, color: { default: 'var(--color-text-disabled)', ':hover': 'var(--color-text-primary)' }, paddingInline: '3px', paddingBlock: 0, lineHeight: 1, height: '20px', cursor: 'pointer', ':focus-visible': { outline: '2px solid var(--color-accent)' } },
-  langOn: { color: 'var(--color-text-primary)' },
-  dot: { lineHeight: 1, fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontSize: '11px', color: 'var(--color-text-disabled)' },
-  theme: { width: '32px', height: '32px', borderRadius: '8px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', backgroundColor: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center', cursor: 'pointer', ':focus-visible': { outline: '2px solid var(--color-accent)' } },
+  count: { minWidth: '18px', height: '18px', borderRadius: '9px', backgroundColor: 'var(--color-accent)', color: 'var(--color-on-accent)', fontWeight: 700, fontSize: '11px', display: 'grid', placeItems: 'center', paddingInline: '4px' },
+  langs: { display: 'flex', alignItems: 'center', gap: '2px', height: '32px', lineHeight: 1 },
+  lang: { borderWidth: 0, borderBottomWidth: '2px', borderBottomStyle: 'solid', borderBottomColor: 'transparent', backgroundColor: 'transparent', fontFamily: 'inherit', fontSize: '12.5px', fontWeight: 500, color: { default: 'var(--color-text-secondary)', ':hover': 'var(--color-text-primary)' }, paddingInline: '5px', paddingBlock: 0, lineHeight: 1, height: '26px', cursor: 'pointer', ':focus-visible': { outline: '2px solid var(--color-accent)' } },
+  langOn: { color: 'var(--color-text-primary)', borderBottomColor: 'var(--color-accent)' },
+  theme: { width: '32px', height: '32px', borderRadius: '6px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', backgroundColor: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center', cursor: 'pointer', ':focus-visible': { outline: '2px solid var(--color-accent)' } },
   main: { order: 2, minWidth: 0, minHeight: 0, overflowY: { default: 'auto', '@media (max-width: 720px)': 'visible' }, overflowX: 'hidden' },
   fallback: { padding: '24px' },
 });
@@ -112,7 +111,7 @@ function Shell() {
           <Box xs={s.end}>
             <button type="button" onClick={() => app.navigate('plataforma')} {...stylex.props(s.alerts)}>{app.lang === 'en' ? 'Alerts' : 'Alertas'}{alerts > 0 && <Inline xs={s.count}>{alerts}</Inline>}</button>
             <Box role="radiogroup" aria-label={t.language} xs={s.langs}>
-              {(['es', 'en', 'pt'] as Lang[]).map((l, i) => <Inline key={l}>{i > 0 && <Inline xs={s.dot} aria-hidden="true"> · </Inline>}<button type="button" role="radio" aria-checked={app.lang === l} onClick={() => app.setLang(l)} {...stylex.props(s.lang, app.lang === l && s.langOn)}>{l.toUpperCase()}</button></Inline>)}
+              {(['es', 'en', 'pt'] as Lang[]).map(l => <button key={l} type="button" role="radio" aria-checked={app.lang === l} onClick={() => app.setLang(l)} {...stylex.props(s.lang, app.lang === l && s.langOn)}>{l.toUpperCase()}</button>)}
             </Box>
             <button type="button" onClick={app.toggleScheme} title={app.scheme === 'dark' ? t.light : t.dark} aria-label={app.scheme === 'dark' ? t.light : t.dark} {...stylex.props(s.theme)}>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.4" /><path d="M8 2.5a5.5 5.5 0 010 11z" fill="currentColor" /></svg>
@@ -138,7 +137,7 @@ function Shell() {
 
 function ThemedShell() {
   const { scheme } = useApp();
-  useEffect(() => { document.documentElement.dataset.theme = scheme; document.documentElement.style.backgroundColor = scheme === 'dark' ? '#0d0f11' : '#efeee9'; }, [scheme]);
+  useEffect(() => { document.documentElement.dataset.theme = scheme; document.documentElement.style.backgroundColor = scheme === 'dark' ? '#1a1f1c' : '#f4f6f1'; }, [scheme]);
   return <Theme theme={themes.firely} mode={scheme}><ShellRoot /></Theme>;
 }
 function ShellRoot() { return <Shell />; }

@@ -26,7 +26,7 @@ export function StarChart({ country, mode, setMode, lang }: { country: Country; 
       <HStack hAlign="between" vAlign="center" gap={3} wrap="wrap">
         <VStack gap={1}>
           <Heading level={3}>{lang === 'es' ? 'El salto que creó el sensor' : lang === 'pt' ? 'O salto criado pelo sensor' : 'The jump the sensor created'}</Heading>
-          <Text type="supporting" color="secondary">{country.label} · {lang === 'es' ? 'puntos de calor anuales' : lang === 'pt' ? 'pontos de calor anuais' : 'annual hot spots'}</Text>
+          <Text type="supporting" color="secondary">{country.label}, {lang === 'es' ? 'puntos de calor anuales' : lang === 'pt' ? 'pontos de calor anuais' : 'annual hot spots'}</Text>
         </VStack>
         <SegmentedControl label={lang === 'es' ? 'Comparar series' : 'Compare series'} value={mode} onChange={setMode}>
           <SegmentedControlItem value="raw" label={lang === 'es' ? 'Cruda pegada' : lang === 'pt' ? 'Bruta unida' : 'Raw'} />
@@ -44,17 +44,17 @@ export function StarChart({ country, mode, setMode, lang }: { country: Country; 
             <ReferenceArea x1={2001} x2={2011} fill={chartInk.grid} fillOpacity={0.35} label={{ value: 'años estimados 2001–2011', fill: chartInk.axis, position: 'insideTopLeft' }} />
             <ReferenceLine x={2012} stroke={chartInk.axis} strokeDasharray="3 3" label={{ value: 'inicio VIIRS', fill: chartInk.axis, position: 'insideTopRight' }} />
             <Tooltip cursor={{ stroke: chartInk.axis, strokeDasharray: '3 3' }} content={({ active, payload, label }) => active && payload?.length ? <Card padding={3}><VStack gap={1}><Text type="label">{String(label ?? '')}</Text>{payload.map(entry => <Text type="supporting" key={String(entry.dataKey)}>{String(entry.name)}: {typeof entry.value === 'number' ? fmt(entry.value, lang) : String(entry.value ?? '')}</Text>)}</VStack></Card> : null} />
-            {showRaw && <Line dataKey="raw_concat" name="Cruda pegada · MODIS → VIIRS" stroke={emphasisSeries.modisRaw.stroke} strokeWidth={2} strokeDasharray="6 4" dot={false} activeDot={{ r: 4 }} isAnimationActive={false}><LabelList dataKey="rawEndLabel" position="right" fill={emphasisSeries.modisRaw.stroke} /></Line>}
-            {showHarmonized && <Line dataKey="harmonized" name="FIRELY armonizada" stroke={emphasisSeries.harmonized.stroke} strokeWidth={emphasisSeries.harmonized.strokeWidth} dot={false} activeDot={{ r: 5 }} isAnimationActive={false}><LabelList dataKey="harmonizedEndLabel" position="right" fill={emphasisSeries.harmonized.stroke} /></Line>}
+            {showRaw && <Line dataKey="raw_concat" name="Cruda, MODIS y luego VIIRS" stroke={emphasisSeries.modisRaw.stroke} strokeWidth={2} strokeDasharray="6 4" dot={false} activeDot={{ r: 4 }} isAnimationActive={false}><LabelList dataKey="rawEndLabel" position="right" fill={emphasisSeries.modisRaw.stroke} /></Line>}
+            {showHarmonized && <Line dataKey="harmonized" name="Firely armonizada" stroke={emphasisSeries.harmonized.stroke} strokeWidth={emphasisSeries.harmonized.strokeWidth} dot={false} activeDot={{ r: 5 }} isAnimationActive={false}><LabelList dataKey="harmonizedEndLabel" position="right" fill={emphasisSeries.harmonized.stroke} /></Line>}
           </LineChart>
         </ResponsiveContainer>
       </VStack>
       <HStack gap={4} wrap="wrap" aria-label="Leyenda y valores finales">
-        {showRaw && <HStack gap={2} vAlign="center"><VStack xstyle={sx.rawKey}/><Text type="supporting">Cruda pegada · MODIS → VIIRS · {last?.year}: {fmt(last?.raw_concat ?? 0, lang)}</Text></HStack>}
-        {showHarmonized && <HStack gap={2} vAlign="center"><VStack xstyle={sx.harmonizedKey}/><Text type="supporting" color="accent">FIRELY armonizada · {last?.year}: {fmt(last?.harmonized ?? 0, lang)}</Text></HStack>}
+        {showRaw && <HStack gap={2} vAlign="center"><VStack xstyle={sx.rawKey}/><Text type="supporting">Cruda, MODIS y luego VIIRS, {last?.year}: {fmt(last?.raw_concat ?? 0, lang)}</Text></HStack>}
+        {showHarmonized && <HStack gap={2} vAlign="center"><VStack xstyle={sx.harmonizedKey}/><Text type="supporting" color="accent">Firely armonizada, {last?.year}: {fmt(last?.harmonized ?? 0, lang)}</Text></HStack>}
       </HStack>
       <Collapsible trigger={lang === 'es' ? 'Ver tabla de datos del gráfico' : lang === 'pt' ? 'Ver tabela de dados' : 'View chart data table'} defaultIsOpen={false}>
-        <Table aria-label={`${country.label}: MODIS, VIIRS y serie armonizada por año`} data={rows.map(row => ({ year: row.year, raw: row.raw_concat === null ? '—' : fmt(row.raw_concat, lang), modis: fmt(row.modis_raw, lang), viirs: row.viirs_raw === null ? '—' : fmt(row.viirs_raw, lang), harmonized: fmt(row.harmonized, lang) }))} columns={[{ key: 'year', header: 'Año' }, { key: 'raw', header: 'Cruda pegada' }, { key: 'modis', header: 'MODIS' }, { key: 'viirs', header: 'VIIRS' }, { key: 'harmonized', header: 'FIRELY' }]} idKey="year" density="compact" />
+        <Table aria-label={`${country.label}: MODIS, VIIRS y serie armonizada por año`} data={rows.map(row => ({ year: row.year, raw: row.raw_concat === null ? '—' : fmt(row.raw_concat, lang), modis: fmt(row.modis_raw, lang), viirs: row.viirs_raw === null ? '—' : fmt(row.viirs_raw, lang), harmonized: fmt(row.harmonized, lang) }))} columns={[{ key: 'year', header: 'Año' }, { key: 'raw', header: 'Cruda pegada' }, { key: 'modis', header: 'MODIS' }, { key: 'viirs', header: 'VIIRS' }, { key: 'harmonized', header: 'Firely' }]} idKey="year" density="compact" />
       </Collapsible>
     </VStack>
   </Card>;

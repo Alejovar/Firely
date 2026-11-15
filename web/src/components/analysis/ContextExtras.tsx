@@ -39,7 +39,7 @@ function useApi<T>(load: (signal: AbortSignal) => Promise<T>, deps: unknown[]) {
   return state;
 }
 
-const errText = (e: unknown) => e instanceof ApiError ? `${e.status}${e.code ? ` · ${e.code}` : ''}` : String(e);
+const errText = (e: unknown) => e instanceof ApiError ? `${e.status}${e.code ? `, ${e.code}` : ''}` : String(e);
 const loading = <Card padding={5}><VStack gap={3}><Skeleton width="40%" height="var(--spacing-6)" /><Skeleton width="100%" height="var(--spacing-10)" /></VStack></Card>;
 
 // ------------------------------------------------------------------ NASA POWER
@@ -71,15 +71,15 @@ export function WeatherPanel({ area, from, to, lang }: { area: Area; from: strin
     <Collapsible trigger={t.table} defaultIsOpen={false}><Table density="compact" idKey="id"
       data={rows.map(r => ({ id: `${r.year}-${r.month}`, month: r.label, precip: formatNumber(r.precip_anom_mm_day, lang, 2), temp: formatNumber(r.temp_anom_c, lang, 1), fire: formatNumber(r.fire_anomaly_ratio, lang, 1) }))}
       columns={[{ key: 'month', header: t.month }, { key: 'precip', header: t.precip }, { key: 'temp', header: t.temp }, { key: 'fire', header: t.fire }]} /></Collapsible>
-    <Text type="supporting" color="secondary">{data.note} {data.method} · {data.source} · ({formatNumber(data.centroid.lat, lang, 2)}, {formatNumber(data.centroid.lon, lang, 2)})</Text>
+    <Text type="supporting" color="secondary">{data.note} {data.method}, {data.source}, ({formatNumber(data.centroid.lat, lang, 2)}, {formatNumber(data.centroid.lon, lang, 2)})</Text>
   </VStack></Card>;
 }
 
 // ------------------------------------------------------------------ adjustable priority weights
 const rw = {
-  es: { title: 'Ajusta los pesos del índice', lead: 'Los pesos son transparentes: cámbialos según lo que tu equipo considera más importante y el índice se recalcula con los mismos datos.', anomaly: 'Anomalía', recurrence: 'Recurrencia', exposure: 'Exposición', season: 'Temporada', fwi: 'Peligro meteorológico (FWI)', reset: 'Restablecer', index: 'Índice', custom: 'PESOS PROPIOS', missing: 'sin datos en esta área' },
-  en: { title: 'Adjust the index weights', lead: 'Weights are transparent: change them to match what your team considers most important; the index is recomputed from the same data.', anomaly: 'Anomaly', recurrence: 'Recurrence', exposure: 'Exposure', season: 'Season', fwi: 'Fire weather (FWI)', reset: 'Reset', index: 'Index', custom: 'CUSTOM WEIGHTS', missing: 'no data for this area' },
-  pt: { title: 'Ajuste os pesos do índice', lead: 'Os pesos são transparentes: mude-os conforme o que sua equipe considera mais importante; o índice é recalculado com os mesmos dados.', anomaly: 'Anomalia', recurrence: 'Recorrência', exposure: 'Exposição', season: 'Temporada', fwi: 'Perigo meteorológico (FWI)', reset: 'Restaurar', index: 'Índice', custom: 'PESOS PRÓPRIOS', missing: 'sem dados nesta área' },
+  es: { title: 'Ajusta los pesos del índice', lead: 'Los pesos son transparentes: cámbialos según lo que tu equipo considera más importante y el índice se recalcula con los mismos datos.', anomaly: 'Anomalía', recurrence: 'Recurrencia', exposure: 'Exposición', season: 'Temporada', fwi: 'Peligro meteorológico (FWI)', reset: 'Restablecer', index: 'Índice', custom: 'Pesos propios', missing: 'sin datos en esta área' },
+  en: { title: 'Adjust the index weights', lead: 'Weights are transparent: change them to match what your team considers most important; the index is recomputed from the same data.', anomaly: 'Anomaly', recurrence: 'Recurrence', exposure: 'Exposure', season: 'Season', fwi: 'Fire weather (FWI)', reset: 'Reset', index: 'Index', custom: 'Custom weights', missing: 'no data for this area' },
+  pt: { title: 'Ajuste os pesos do índice', lead: 'Os pesos são transparentes: mude-os conforme o que sua equipe considera mais importante; o índice é recalculado com os mesmos dados.', anomaly: 'Anomalia', recurrence: 'Recorrência', exposure: 'Exposição', season: 'Temporada', fwi: 'Perigo meteorológico (FWI)', reset: 'Restaurar', index: 'Índice', custom: 'Pesos próprios', missing: 'sem dados nesta área' },
 } as const;
 const DEFAULT_WEIGHTS: RiskWeights = { anomaly: 35, recurrence: 25, exposure: 25, season: 15, fwi: 15 };
 
@@ -101,7 +101,7 @@ export function RiskWeightsPanel({ area, lang }: { area: Area; lang: Lang }) {
         onChange={(v: number) => setDraft(d => ({ ...d, [k]: v }))} onChangeEnd={(v: number) => setApplied(a => ({ ...a, [k]: v }))} />)}</Grid>
     <HStack gap={2}><Button label={t.reset} size="sm" variant="ghost" isDisabled={isDefault} onClick={() => { setDraft(DEFAULT_WEIGHTS); setApplied(DEFAULT_WEIGHTS); }} /></HStack>
     {busy ? <Skeleton width="100%" height="var(--spacing-8)" /> : error ? <Banner status="error" title={errText(error)} /> : data && <VStack gap={2}>
-      <Heading level={4}>{t.index}: {formatNumber(data.index, lang, 1)} / 100 · {data.level}</Heading>
+      <Heading level={4}>{t.index}: {formatNumber(data.index, lang, 1)} / 100, {data.level}</Heading>
       <ProgressBar label={t.index} value={Math.max(0, Math.min(100, data.index))} max={100} />
       <Text type="supporting" color="secondary">{data.method}</Text>
       {data.disclaimer && <Text type="supporting" color="secondary">{data.disclaimer}</Text>}
@@ -124,7 +124,7 @@ export function WindPanel({ area, lang }: { area: Area; lang: Lang }) {
   const deg = data.direction.toward_deg;
   // Compass arrow; the rotation carries the information, the text repeats it (never encoding-only).
   return <Card padding={5}><VStack gap={4}>
-    <HStack gap={2} wrap="wrap" vAlign="center"><Heading level={3}>{t.title}</Heading><Badge label="INDICATIVO" variant="warning" /></HStack>
+    <HStack gap={2} wrap="wrap" vAlign="center"><Heading level={3}>{t.title}</Heading><Badge label="Orientativo" variant="warning" /></HStack>
     <Text type="supporting">{t.lead}</Text>
     <HStack gap={5} wrap="wrap" vAlign="center">
       <svg width="72" height="72" viewBox="-36 -36 72 72" role="img" aria-label={`${t.toward} ${data.direction.toward_compass} (${Math.round(deg)}°)`}>
@@ -133,7 +133,7 @@ export function WindPanel({ area, lang }: { area: Area; lang: Lang }) {
         <g transform={`rotate(${deg})`}><path d="M0 -26 L7 6 L0 1 L-7 6 Z" fill="var(--color-accent)" /></g>
       </svg>
       <VStack gap={1}><Text>{t.toward} <strong>{data.direction.toward_compass}</strong> ({formatNumber(deg, lang, 0)}°)</Text>
-        <Text type="supporting">{t.speed}: {formatNumber(data.wind.speed_kmh, lang, 1)} km/h · {t.reach}: {formatNumber(data.reach_km, lang, 1)} km · {data.wind.source}</Text></VStack>
+        <Text type="supporting">{t.speed}: {formatNumber(data.wind.speed_kmh, lang, 1)} km/h, {t.reach}: {formatNumber(data.reach_km, lang, 1)} km, {data.wind.source}</Text></VStack>
     </HStack>
     <Heading level={4}>{t.localities}</Heading>
     {data.localities.length ? <Table density="compact" idKey="id" data={data.localities.slice(0, 10).map((l, i) => ({ id: `${l.name}-${i}`, name: l.name, pop: formatNumber(l.pop, lang), dist: formatNumber(l.distance_km, lang, 1) }))}

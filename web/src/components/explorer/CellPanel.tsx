@@ -10,22 +10,23 @@ import { useApp } from '../../state/AppState';
 import { monthNames } from '../../i18n';
 import { SELECTED_FILL, SELECTED_INK, dailyBar, encodeCell } from '../../lib/dataviz';
 import { apiMessage, calendarQuery, fmt, monthRank } from '../../lib/explorerLabels';
-import { Box, Caption, Inline, LinkButton } from '../../ui/kit';
+import { Box, Figure, Inline, LinkButton } from '../../ui/kit';
 
 const s = stylex.create({
-  card: { display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px 14px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', borderRadius: '10px', backgroundColor: 'var(--color-background-muted)', position: 'relative' },
+  card: { display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '14px', borderTopWidth: '2px', borderTopStyle: 'solid', borderTopColor: 'var(--color-text-primary)', position: 'relative' },
   top: { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: '14px', alignItems: 'center' },
-  text: { display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0 },
+  text: { display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0 },
+  month: { fontFamily: 'var(--font-family-heading)', fontWeight: 600, fontSize: '18px', lineHeight: 1.2 },
   sentence: { fontSize: '14.5px', lineHeight: 1.4, textWrap: 'pretty' },
-  bold: { fontWeight: 600 },
-  meta: { fontSize: '12px', color: 'var(--color-text-secondary)' },
-  badge: { display: 'grid', placeItems: 'center', minWidth: '64px', height: '48px', paddingInline: '8px', borderRadius: '8px', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontWeight: 600, fontSize: '15px' },
-  close: { position: 'absolute', top: '6px', right: '8px', borderWidth: 0, backgroundColor: 'transparent', color: 'var(--color-text-disabled)', cursor: 'pointer', fontSize: '14px', lineHeight: 1, ':hover': { color: 'var(--color-text-primary)' } },
+  bold: { fontWeight: 700 },
+  meta: { display: 'flex', flexWrap: 'wrap', columnGap: '14px', rowGap: '2px', fontSize: '12.5px', color: 'var(--color-text-secondary)' },
+  badge: { display: 'grid', placeItems: 'center', minWidth: '68px', height: '48px', paddingInline: '8px', borderRadius: '2px', fontSize: '20px' },
+  close: { position: 'absolute', top: '8px', right: 0, width: '28px', height: '28px', borderWidth: 0, borderRadius: '4px', backgroundColor: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: '18px', lineHeight: 1, ':hover': { color: 'var(--color-text-primary)' }, ':focus-visible': { outline: '2px solid var(--color-accent)' } },
   daily: { display: 'flex', flexDirection: 'column', gap: '4px' },
-  dailyHead: { display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '11px', color: 'var(--color-text-disabled)' },
+  dailyHead: { display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '12px', color: 'var(--color-text-secondary)' },
   bars: { display: 'flex', alignItems: 'flex-end', gap: '2px', height: '44px' },
   bar: { flexGrow: 1, flexBasis: 0, minHeight: '2px', borderRadius: '1px', borderWidth: 0, padding: 0, cursor: 'pointer', ':focus-visible': { outline: '2px solid var(--color-accent)', outlineOffset: '1px' } },
-  ticks: { display: 'flex', justifyContent: 'space-between', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontSize: '10px', color: 'var(--color-text-disabled)' },
+  ticks: { display: 'flex', justifyContent: 'space-between', fontVariantNumeric: 'tabular-nums', fontSize: '11px', color: 'var(--color-text-secondary)' },
   note: { fontSize: '11px', color: 'var(--color-text-disabled)' },
 });
 interface ObservedDailyRow extends DailyRow { count_raw?: number | null }
@@ -56,24 +57,23 @@ export default function CellPanel({ data, loading, error }: { data: CalendarResp
   const badgeBg = app.mode === 'count' && isTop ? SELECTED_FILL : encodeCell(row, 'anomaly', app.metric, max, app.scheme).background;
   const badgeFg = app.mode === 'count' && isTop ? SELECTED_INK : encodeCell(row, 'anomaly', app.metric, max, app.scheme).color;
   const query = calendarQuery(app.area.area, app.from, app.to, app.metric, app.reference, app.burn);
-  const provenance = `${data.attribution || 'NASA FIRMS'} · ${data.methodology_version} · ${data.data_cutoff}`;
   const unit = app.metric === 'frp' ? 'MW FRP' : L === 'en' ? 'detections' : 'puntos';
   const ref = app.reference === 'median' ? (L === 'en' ? 'median' : 'mediana') : (L === 'en' ? 'mean' : L === 'pt' ? 'média' : 'media');
   const rankText = rank?.rank === 1 ? (L === 'es' ? `El ${name} más activo desde ${data.rows[0]?.year ?? 2001}.` : L === 'pt' ? `O ${name} mais ativo desde ${data.rows[0]?.year ?? 2001}.` : `The most active ${name} since ${data.rows[0]?.year ?? 2001}.`) : rank ? (L === 'en' ? `#${rank.rank} of ${rank.total} ${name}s.` : `${rank.rank}º de ${rank.total} ${name}s.`) : '';
-  const sourceText = row?.is_estimated ? (L === 'en' ? 'Estimated from MODIS' : 'Estimado desde MODIS') : 'MODIS + VIIRS';
+  const sourceText = row?.is_estimated ? (L === 'en' ? 'Estimated from MODIS' : 'Estimado desde MODIS') : (L === 'en' ? 'Observed by VIIRS' : 'Observado por VIIRS');
   return (
     <Box as="section" xs={s.card} aria-label={L === 'en' ? 'Selected cell' : 'Celda seleccionada'}>
       <button type="button" aria-label={L === 'en' ? 'Close' : 'Cerrar'} onClick={() => app.setSelected(null)} {...stylex.props(s.close)}>×</button>
       <Box xs={s.top}>
         <Box xs={s.text}>
-          <Caption>{L === 'en' ? 'Selected cell' : L === 'pt' ? 'Célula selecionada' : 'Celda seleccionada'} · {name} {sel.year}</Caption>
+          <Inline xs={s.month}>{name[0].toUpperCase() + name.slice(1)} {L === 'en' ? '' : 'de '}{sel.year}</Inline>
           <Inline xs={s.sentence}><Box as="b" xs={s.bold}>{fmt(value, L, value != null && value < 10 ? 1 : 0)} {unit}</Box>{ratio != null ? `, ${fmt(ratio, L, 1)}× ${L === 'en' ? 'the' : 'la'} ${ref} ${L === 'en' ? 'for' : 'de'} ${name}.` : '.'} {rankText}</Inline>
-          <Inline xs={s.meta}>{sourceText}{rp?.return_period_years != null ? ` · ${L === 'en' ? 'once every' : '1 vez cada'} ${fmt(rp.return_period_years, L, 1)} ${L === 'en' ? 'years' : 'años'}` : ''} · <Popover label="Consulta" content={<VStack gap={2}><Text type="supporting">GET {query}</Text><Text type="supporting">{provenance}</Text></VStack>}><LinkButton>{L === 'en' ? 'view data' : 'ver datos'}</LinkButton></Popover></Inline>
+          <Box xs={s.meta}><Inline>{sourceText}</Inline>{rp?.return_period_years != null && <Inline>{L === 'en' ? 'Once every' : '1 vez cada'} {fmt(rp.return_period_years, L, 1)} {L === 'en' ? 'years' : 'años'}</Inline>}<Popover label={L === 'en' ? 'Query' : 'Consulta'} content={<VStack gap={2}><Text type="code">GET {query}</Text><Text type="supporting">{data.attribution || 'NASA FIRMS'}<br />{L === 'en' ? 'Method' : 'Método'} {data.methodology_version}<br />{L === 'en' ? 'Data until' : 'Datos hasta'} {data.data_cutoff}</Text></VStack>}><LinkButton>{L === 'en' ? 'View data' : 'Ver datos'}</LinkButton></Popover></Box>
         </Box>
-        {ratio != null && <Inline xs={s.badge} style={{ backgroundColor: badgeBg, color: badgeFg }}>{fmt(ratio, L, 1)}×</Inline>}
+        {ratio != null && <Figure xs={s.badge} style={{ backgroundColor: badgeBg, color: badgeFg }}>{fmt(ratio, L, 1)}×</Figure>}
       </Box>
       <Box xs={s.daily}>
-        <Box xs={s.dailyHead}><Inline>{L === 'en' ? 'Daily breakdown (observed) · click a day to see it on the map' : L === 'pt' ? 'Detalhamento diário (observado) · clique em um dia para vê-lo no mapa' : 'Desglose diario (observado) · clic en un día para verlo en el mapa'}</Inline>{app.selectedDay && <LinkButton onClick={() => app.setSelectedDay(null)}>{L === 'en' ? 'all days' : 'todos los días'}</LinkButton>}</Box>
+        <Box xs={s.dailyHead}><Inline>{L === 'en' ? 'Detections per day (observed). Choose a day to see it on the map.' : L === 'pt' ? 'Focos por dia (observados). Escolha um dia para vê-lo no mapa.' : 'Puntos por día (observados). Elige un día para verlo en el mapa.'}</Inline>{app.selectedDay && <LinkButton onClick={() => app.setSelectedDay(null)}>{L === 'en' ? 'All days' : 'Todos los días'}</LinkButton>}</Box>
         {pending ? <Skeleton width="100%" height="44px" /> : dailyError ? <Banner status="error" title={dailyError} /> : <>
           <Box xs={s.bars} role="group" aria-label={L === 'en' ? 'Detections per day' : 'Detecciones por día'}>
             {days.map(d => { const on = app.selectedDay === d.date; return <button key={d.date} type="button" aria-pressed={on} aria-label={`${d.day} ${name}: ${d.count}`} title={`${d.day} ${name}: ${d.count}`} onClick={() => app.setSelectedDay(on ? null : d.date)} {...stylex.props(s.bar)} style={{ height: `${Math.max(4, (d.count / peak) * 100)}%`, backgroundColor: on ? dailyBar.picked : d.count ? dailyBar.base : 'var(--color-border-emphasized)', opacity: app.selectedDay && !on ? 0.45 : 1 }} />; })}

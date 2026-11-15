@@ -20,11 +20,11 @@ import { ForecastPanel, PriorityPanel } from './analysis/ForecastPriority';
 
 const sx = stylex.create({
   head: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' },
-  title: { fontWeight: 600, fontSize: '15px' },
-  subtitle: { fontSize: '11.5px', color: 'var(--color-text-disabled)' },
-  tabs: { display: 'flex', flexWrap: 'wrap', gap: '4px', paddingBottom: '10px', borderBottomWidth: '1px', borderBottomStyle: 'solid', borderBottomColor: 'var(--color-border)' },
-  tab: { height: '28px', paddingInline: '10px', borderRadius: '7px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'transparent', backgroundColor: 'transparent', color: { default: 'var(--color-text-secondary)', ':hover': 'var(--color-text-primary)' }, fontFamily: 'inherit', fontSize: '12.5px', fontWeight: 500, cursor: 'pointer', ':focus-visible': { outline: '2px solid var(--color-accent)' } },
-  tabOn: { borderColor: 'var(--color-border-emphasized)', backgroundColor: 'var(--color-background-muted)', color: { default: 'var(--color-text-primary)', ':hover': 'var(--color-text-primary)' } },
+  title: { fontFamily: 'var(--font-family-heading)', fontWeight: 600, fontSize: '20px', lineHeight: 1.2 },
+  subtitle: { fontSize: '12.5px', color: 'var(--color-text-secondary)' },
+  tabs: { display: 'flex', flexWrap: 'wrap', columnGap: '16px', borderBottomWidth: '1px', borderBottomStyle: 'solid', borderBottomColor: 'var(--color-border)' },
+  tab: { height: '34px', paddingInline: 0, marginBottom: '-1px', borderRadius: 0, borderWidth: 0, borderBottomWidth: '2px', borderStyle: 'solid', borderColor: 'transparent', backgroundColor: 'transparent', color: { default: 'var(--color-text-secondary)', ':hover': 'var(--color-text-primary)' }, fontFamily: 'inherit', fontSize: '13.5px', fontWeight: 500, cursor: 'pointer', ':focus-visible': { outline: '2px solid var(--color-accent)' } },
+  tabOn: { borderBottomColor: 'var(--color-accent)', fontWeight: 700, color: { default: 'var(--color-text-primary)', ':hover': 'var(--color-text-primary)' } },
 });
 const labels = {
   es: ['Este incendio', 'Años parecidos', 'Temporada', 'Contexto', 'Riesgo', 'Patrones', 'Territorio'],
@@ -86,9 +86,9 @@ export default function AnalysisTabs() {
   const data = state.key === key ? state.data : undefined;
   const error = state.key === key ? state.error : undefined;
   const c = {
-    es: { title: 'Análisis', subtitle: 'Cifras de la serie armonizada · redacción automática', unavailable: 'No disponible en este servidor', unavailableDetail: 'Este análisis aún no está disponible para el área seleccionada en este servidor.', error: 'No se pudo cargar este análisis', retry: 'Revisa la conexión con el API o cambia el área.', choose: 'Elige un estado o municipio mexicano para comparar reportes CONAFOR.', admin: 'Estado o municipio de México', method: 'Método', cutoff: 'Datos hasta' },
-    en: { title: 'Analysis', subtitle: 'Harmonized series · automatic narrative', unavailable: 'Unavailable on this server', unavailableDetail: 'This analysis is not available for the selected area on this server yet.', error: 'This analysis could not load', retry: 'Check the API connection or change the area.', choose: 'Choose a Mexican state or municipality to compare CONAFOR reports.', admin: 'Mexican state or municipality', method: 'Method', cutoff: 'Data through' },
-    pt: { title: 'Análise', subtitle: 'Série harmonizada · texto automático', unavailable: 'Indisponível neste servidor', unavailableDetail: 'Esta análise ainda não está disponível para a área selecionada neste servidor.', error: 'Não foi possível carregar esta análise', retry: 'Verifique a conexão com a API ou mude a área.', choose: 'Escolha um estado ou município mexicano para comparar relatórios CONAFOR.', admin: 'Estado ou município do México', method: 'Método', cutoff: 'Dados até' },
+    es: { title: 'Análisis', subtitle: 'Cifras de la serie armonizada; el texto se redacta automáticamente.', unavailable: 'No disponible en este servidor', unavailableDetail: 'Este análisis aún no está disponible para el área seleccionada en este servidor.', error: 'No se pudo cargar este análisis', retry: 'Revisa la conexión con el API o cambia el área.', choose: 'Elige un estado o municipio mexicano para comparar reportes CONAFOR.', admin: 'Estado o municipio de México', method: 'Método', cutoff: 'Datos hasta' },
+    en: { title: 'Analysis', subtitle: 'Figures from the harmonized series; the text is written automatically.', unavailable: 'Unavailable on this server', unavailableDetail: 'This analysis is not available for the selected area on this server yet.', error: 'This analysis could not load', retry: 'Check the API connection or change the area.', choose: 'Choose a Mexican state or municipality to compare CONAFOR reports.', admin: 'Mexican state or municipality', method: 'Method', cutoff: 'Data through' },
+    pt: { title: 'Análise', subtitle: 'Números da série harmonizada; o texto é redigido automaticamente.', unavailable: 'Indisponível neste servidor', unavailableDetail: 'Esta análise ainda não está disponível para a área selecionada neste servidor.', error: 'Não foi possível carregar esta análise', retry: 'Verifique a conexão com a API ou mude a área.', choose: 'Escolha um estado ou município mexicano para comparar relatórios CONAFOR.', admin: 'Estado ou município do México', method: 'Método', cutoff: 'Dados até' },
   }[app.lang];
   const fallback = (err: unknown) => unavailable(err) ? <EmptyState title={c.unavailable} description={c.unavailableDetail} /> : <Banner status="error" title={c.error} description={`${c.retry}${err instanceof ApiError ? ` (${err.status}${err.code ? `: ${err.code}` : ''})` : ''}`} />;
   const footer = data ? envelope(data) : undefined;

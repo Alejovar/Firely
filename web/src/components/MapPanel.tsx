@@ -22,62 +22,62 @@ import { Box, Caption, Inline, LinkButton, OutlineButton, Toggle, kit } from '..
 setWorkerUrl(workerUrl);
 
 const s = stylex.create({
-  root: { position: 'relative', width: '100%', height: '100%', minHeight: 0, overflow: 'hidden', backgroundColor: 'light-dark(#e4e2dc, #111518)' },
+  root: { position: 'relative', width: '100%', height: '100%', minHeight: 0, overflow: 'hidden', backgroundColor: 'var(--color-background-body)' },
   canvas: { position: 'absolute', inset: 0 },
   svg: { position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 },
   overlay: { position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1, overflow: 'hidden' },
-  basemap: { position: 'absolute', left: '50%', top: '14px', transform: 'translateX(-50%)', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontSize: '10px', fontWeight: 500, color: 'var(--color-text-disabled)', letterSpacing: '0.08em', whiteSpace: 'nowrap', zIndex: 2, pointerEvents: 'none', textTransform: 'uppercase', display: { default: 'block', '@media (max-width: 720px)': 'none' } },
-  tick: { position: 'absolute', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontSize: '10px', color: 'var(--color-text-disabled)', whiteSpace: 'nowrap', textShadow: '0 0 3px light-dark(#e4e2dc, #111518)' },
+  basemap: { display: 'none' },
+  tick: { position: 'absolute', fontSize: '10.5px', fontVariantNumeric: 'tabular-nums', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', textShadow: '0 0 3px var(--color-background-body), 0 0 2px var(--color-background-body)' },
   tickLat: { left: '6px', transform: 'translateY(-120%)' },
   tickLon: { bottom: '30px', transform: 'translateX(4px)' },
   loc: { position: 'absolute', display: 'flex', alignItems: 'center', gap: '5px', transform: 'translate(-5px, -5px)', pointerEvents: 'auto', whiteSpace: 'nowrap' },
   locSq: { width: '9px', height: '9px', borderWidth: '1.5px', borderStyle: 'solid', borderColor: 'var(--color-background-body)', flexShrink: 0 },
-  locName: { fontSize: '11px', fontWeight: 500, color: 'var(--color-text-primary)', textShadow: '0 1px 3px var(--color-background-body), 0 0 2px var(--color-background-body)' },
-  anp: { position: 'absolute', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontSize: '10px', fontWeight: 500, whiteSpace: 'nowrap', transform: 'translate(-50%, -50%)', textShadow: '0 0 3px var(--color-background-body)' },
-  coneLabel: { position: 'absolute', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontSize: '10px', fontWeight: 500, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', textShadow: '0 0 3px var(--color-background-body), 0 0 2px var(--color-background-body)' },
-  card: { position: 'absolute', zIndex: 3, borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', borderRadius: '10px', backgroundColor: 'var(--color-background-surface)', boxShadow: '0 8px 24px rgba(0,0,0,.25)' },
-  area: { left: '16px', top: '36px', width: 'min(296px, calc(100% - 32px))', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '6px', '@media (max-width: 720px)': { top: '12px', left: '12px', width: 'calc(100% - 24px)', padding: '10px 12px' } },
-  areaTitle: { fontWeight: 600, fontSize: '17px', lineHeight: 1.2 },
-  areaMeta: { fontSize: '12.5px', color: 'var(--color-text-secondary)', lineHeight: 1.45 },
-  links: { display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '4px', fontSize: '12px' },
+  locName: { fontSize: '12px', fontWeight: 500, color: 'var(--color-text-primary)', textShadow: '0 1px 3px var(--color-background-body), 0 0 2px var(--color-background-body)' },
+  anp: { position: 'absolute', fontFamily: 'var(--font-family-heading)', fontStyle: 'italic', fontSize: '12.5px', fontWeight: 500, whiteSpace: 'nowrap', transform: 'translate(-50%, -50%)', textShadow: '0 0 3px var(--color-background-body), 0 0 2px var(--color-background-body)' },
+  coneLabel: { position: 'absolute', fontSize: '11.5px', fontWeight: 700, color: 'var(--color-text-primary)', whiteSpace: 'nowrap', textShadow: '0 0 3px var(--color-background-body), 0 0 2px var(--color-background-body)' },
+  card: { position: 'absolute', zIndex: 3, borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', borderRadius: '2px', backgroundColor: 'var(--color-background-surface)' },
+  area: { left: '16px', top: '16px', width: 'min(300px, calc(100% - 32px))', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '6px', '@media (max-width: 720px)': { top: '12px', left: '12px', width: 'calc(100% - 24px)', padding: '10px 12px' } },
+  areaTitle: { fontFamily: 'var(--font-family-heading)', fontWeight: 600, fontSize: '20px', lineHeight: 1.2, fontVariationSettings: '"opsz" 32' },
+  areaMeta: { display: 'flex', flexDirection: 'column', fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: 1.45 },
+  links: { display: 'flex', gap: '14px', flexWrap: 'wrap', marginTop: '4px', fontSize: '13px' },
   layers: { right: '16px', bottom: '40px', width: '236px', overflow: 'hidden', maxHeight: 'calc(100% - 96px)', overflowY: 'auto', '@media (max-width: 720px)': { right: '12px', bottom: '36px', width: 'min(236px, calc(100% - 24px))' } },
-  layersHead: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderBottomWidth: '1px', borderBottomStyle: 'solid', borderBottomColor: 'var(--color-border)', width: '100%', borderWidth: 0, backgroundColor: 'transparent', color: 'inherit', cursor: 'pointer', fontFamily: 'inherit' },
-  layer: { padding: '6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', fontSize: '12.5px' },
+  layersHead: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 14px', borderBottomWidth: '1px', borderBottomStyle: 'solid', borderBottomColor: 'var(--color-border)', width: '100%', borderWidth: 0, backgroundColor: 'transparent', color: 'inherit', cursor: 'pointer', fontFamily: 'inherit', fontSize: '13px', fontWeight: 700 },
+  layer: { padding: '6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', fontSize: '13px' },
   layerText: { display: 'flex', flexDirection: 'column', gap: '1px', minWidth: 0 },
-  layerSub: { fontSize: '10.5px', color: 'var(--color-text-disabled)' },
+  layerSub: { fontSize: '11.5px', color: 'var(--color-text-secondary)' },
   hours: { padding: '4px 14px 12px', display: 'flex', gap: '4px' },
-  hourBtn: { flexGrow: 1, height: '24px', borderRadius: '6px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', backgroundColor: 'transparent', color: 'var(--color-text-primary)', fontFamily: 'inherit', fontSize: '11.5px', fontWeight: 500, cursor: 'pointer' },
-  hourOn: { backgroundColor: 'var(--color-background-muted)', borderColor: 'var(--color-text-disabled)' },
+  hourBtn: { flexGrow: 1, height: '26px', borderRadius: '4px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', backgroundColor: 'transparent', color: 'var(--color-text-primary)', fontFamily: 'inherit', fontSize: '12px', fontWeight: 500, cursor: 'pointer' },
+  hourOn: { backgroundColor: 'var(--color-text-primary)', color: 'var(--color-background-surface)', borderColor: 'var(--color-text-primary)' },
   legendRow: { position: 'absolute', left: '16px', bottom: '52px', display: 'flex', alignItems: 'flex-end', gap: '16px', zIndex: 2, '@media (max-width: 720px)': { left: '12px', bottom: '36px', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' } },
-  legend: { padding: '10px 12px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', borderRadius: '8px', backgroundColor: 'var(--color-background-surface)', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11.5px', color: 'var(--color-text-secondary)' },
+  legend: { padding: '8px 11px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', borderRadius: '2px', backgroundColor: 'var(--color-background-surface)', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: 'var(--color-text-secondary)' },
   legendItems: { display: 'flex', alignItems: 'center', gap: '8px' },
   dot: { borderRadius: '50%', flexShrink: 0 },
-  scale: { display: 'flex', flexDirection: 'column', gap: '3px', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontSize: '10px', color: 'var(--color-text-secondary)' },
+  scale: { display: 'flex', flexDirection: 'column', gap: '3px', fontSize: '11px', fontVariantNumeric: 'tabular-nums', color: 'var(--color-text-secondary)', textShadow: '0 0 3px var(--color-background-body)' },
   scaleBar: { height: '5px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-text-secondary)', borderTopWidth: 0 },
-  attribution: { position: 'absolute', left: 0, right: 0, bottom: 0, minHeight: '26px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 14px', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontSize: '10.5px', color: 'var(--color-text-disabled)', backgroundImage: 'linear-gradient(transparent, light-dark(#e4e2dc, #111518))', zIndex: 2, textAlign: 'right', '@media (max-width: 720px)': { fontSize: '9px', padding: '0 8px' } },
-  zoom: { position: 'absolute', right: '16px', top: '36px', zIndex: 3, display: 'flex', flexDirection: 'column', overflow: 'hidden', '@media (max-width: 720px)': { top: 'auto', bottom: '64px', right: 'auto', left: '12px', display: 'none' } },
-  zoomBtn: { width: '32px', height: '32px', borderWidth: 0, backgroundColor: { default: 'transparent', ':hover': 'var(--color-background-muted)' }, color: 'var(--color-text-primary)', fontSize: '16px', cursor: 'pointer', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', ':focus-visible': { outline: '2px solid var(--color-accent)', outlineOffset: '-2px' } },
+  attribution: { position: 'absolute', left: 0, right: 0, bottom: 0, minHeight: '26px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 14px', fontSize: '11px', color: 'var(--color-text-secondary)', backgroundColor: 'color-mix(in srgb, var(--color-background-body) 82%, transparent)', zIndex: 2, textAlign: 'right', '@media (max-width: 720px)': { fontSize: '10px', padding: '2px 8px' } },
+  zoom: { position: 'absolute', right: '16px', top: '16px', zIndex: 3, display: 'flex', flexDirection: 'column', overflow: 'hidden', '@media (max-width: 720px)': { top: 'auto', bottom: '64px', right: 'auto', left: '12px', display: 'none' } },
+  zoomBtn: { width: '32px', height: '32px', borderWidth: 0, backgroundColor: { default: 'transparent', ':hover': 'var(--color-background-muted)' }, color: 'var(--color-text-primary)', fontSize: '17px', cursor: 'pointer', fontFamily: 'inherit', ':focus-visible': { outline: '2px solid var(--color-accent)', outlineOffset: '-2px' } },
   zoomSep: { height: '1px', backgroundColor: 'var(--color-border)' },
-  notices: { position: 'absolute', top: '36px', right: '60px', zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', maxWidth: 'min(22rem, calc(100% - 400px))', pointerEvents: 'none', '@media (max-width: 1280px)': { top: 'auto', bottom: '120px', right: 'auto', left: '16px', alignItems: 'flex-start', maxWidth: 'calc(100% - 290px)' }, '@media (max-width: 720px)': { bottom: 'auto', top: '128px', left: '12px', maxWidth: 'calc(100% - 24px)' } },
-  notice: { padding: '5px 9px', borderRadius: '6px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', backgroundColor: 'var(--color-background-surface)', fontFamily: '"IBM Plex Mono", ui-monospace, Menlo, monospace', fontSize: '10.5px', color: 'var(--color-text-secondary)', letterSpacing: '0.02em', lineHeight: 1.4 },
-  noticeWarn: { borderColor: 'color-mix(in srgb, var(--color-accent) 50%, transparent)' },
-  picked: { position: 'absolute', zIndex: 4, padding: '10px 12px', minWidth: '13rem', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '12px', transform: 'translate(-50%, calc(-100% - 12px))' },
+  notices: { position: 'absolute', top: '16px', right: '60px', zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', maxWidth: 'min(22rem, calc(100% - 400px))', pointerEvents: 'none', '@media (max-width: 1280px)': { top: 'auto', bottom: '120px', right: 'auto', left: '16px', alignItems: 'flex-start', maxWidth: 'calc(100% - 290px)' }, '@media (max-width: 720px)': { bottom: 'auto', top: '150px', left: '12px', maxWidth: 'calc(100% - 24px)' } },
+  notice: { padding: '5px 9px', borderRadius: '2px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', backgroundColor: 'var(--color-background-surface)', fontSize: '12.5px', color: 'var(--color-text-primary)', lineHeight: 1.4 },
+  noticeWarn: { borderColor: 'var(--color-accent)' },
+  picked: { position: 'absolute', zIndex: 4, padding: '10px 12px', minWidth: '13rem', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', transform: 'translate(-50%, calc(-100% - 12px))' },
   pickedRow: { display: 'flex', justifyContent: 'space-between', gap: '12px' },
-  close: { position: 'absolute', top: '4px', right: '6px', borderWidth: 0, backgroundColor: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: '14px' },
-  drawHint: { position: 'absolute', left: '50%', bottom: '64px', transform: 'translateX(-50%)', zIndex: 4, padding: '8px 12px', fontSize: '12.5px' },
+  close: { position: 'absolute', top: '4px', right: '6px', borderWidth: 0, backgroundColor: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', fontSize: '16px' },
+  drawHint: { position: 'absolute', left: '50%', bottom: '64px', transform: 'translateX(-50%)', zIndex: 4, padding: '8px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '10px' },
 });
 
 const empty = (): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: [] });
 const fc = (geometry: GeoJSON.Geometry | null): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: geometry ? [{ type: 'Feature', geometry, properties: {} }] : [] });
 const locale = { es: 'es-MX', en: 'en-US', pt: 'pt-BR' };
 const labels = {
-  es: { area: 'Área seleccionada', edit: 'Editar polígono', dates: 'Cambiar fechas', story: 'Modo historia ▸', layers: 'Capas', hotspots: 'Puntos de calor', recent: 'Detecciones recientes', recentSub: 'FIRMS casi en tiempo real', goes: 'GOES geoestacionario', vision: 'visión · cada 5 min · próximamente', priority: 'Índice de prioridad', prioritySub: 'celdas H3 · 0–100', recurrence: 'Recurrencia', times: 'veces que ha ardido', spread: 'Cono de propagación', active: 'viento + área · orientativo', exposure: 'Exposición', places: 'localidades y ANP', frp: 'Poder radiativo (FRP)', low: 'bajo', high: 'alto', noData: 'Sin puntos de calor en', loading: 'Cargando puntos…', recentNo: 'Sin detecciones recientes', map: 'Mapa de Firely', basemap: 'Mapa base · relieve sombreado', dark: 'oscuro', light: 'claro', drawing: 'Haz clic para trazar el polígono; doble clic para cerrar · Esc cancela', coneNo: 'Cono no disponible (sin viento)', downwind: 'a favor del viento', zoomIn: 'Acercar', zoomOut: 'Alejar', years: 'años con fuego', truncated: 'mostrando los más intensos', admin: 'límite', indicative: 'orientativo, no es pronóstico oficial' },
-  en: { area: 'Selected area', edit: 'Edit polygon', dates: 'Change dates', story: 'Story mode ▸', layers: 'Layers', hotspots: 'Hotspots', recent: 'Recent detections', recentSub: 'FIRMS near real time', goes: 'GOES geostationary', vision: 'vision · every 5 min · coming soon', priority: 'Priority index', prioritySub: 'H3 cells · 0–100', recurrence: 'Recurrence', times: 'times it has burned', spread: 'Spread cone', active: 'wind + area · indicative', exposure: 'Exposure', places: 'localities and protected areas', frp: 'Radiative power (FRP)', low: 'low', high: 'high', noData: 'No hotspots in', loading: 'Loading hotspots…', recentNo: 'No recent detections', map: 'Firely map', basemap: 'Base map · shaded relief', dark: 'dark', light: 'light', drawing: 'Click to trace the polygon; double-click to close · Esc cancels', coneNo: 'Spread cone unavailable (no wind)', downwind: 'downwind', zoomIn: 'Zoom in', zoomOut: 'Zoom out', years: 'years with fire', truncated: 'showing the strongest', admin: 'boundary', indicative: 'indicative, not an official forecast' },
-  pt: { area: 'Área selecionada', edit: 'Editar polígono', dates: 'Alterar datas', story: 'Modo história ▸', layers: 'Camadas', hotspots: 'Pontos de calor', recent: 'Detecções recentes', recentSub: 'FIRMS quase em tempo real', goes: 'GOES geoestacionário', vision: 'visão · a cada 5 min · em breve', priority: 'Índice de prioridade', prioritySub: 'células H3 · 0–100', recurrence: 'Recorrência', times: 'vezes que queimou', spread: 'Cone de propagação', active: 'vento + área · indicativo', exposure: 'Exposição', places: 'localidades e áreas protegidas', frp: 'Poder radiativo (FRP)', low: 'baixo', high: 'alto', noData: 'Sem pontos de calor em', loading: 'Carregando pontos…', recentNo: 'Sem detecções recentes', map: 'Mapa Firely', basemap: 'Mapa base · relevo sombreado', dark: 'escuro', light: 'claro', drawing: 'Clique para traçar o polígono; duplo clique para fechar · Esc cancela', coneNo: 'Cone indisponível (sem vento)', downwind: 'a favor do vento', zoomIn: 'Aproximar', zoomOut: 'Afastar', years: 'anos com fogo', truncated: 'mostrando os mais intensos', admin: 'limite', indicative: 'indicativo, não é previsão oficial' },
+  es: { area: 'Área seleccionada', edit: 'Editar polígono', dates: 'Cambiar fechas', story: 'Ver como historia', layers: 'Capas', hotspots: 'Puntos de calor', recent: 'Detecciones recientes', recentSub: 'FIRMS, casi en tiempo real', goes: 'GOES geoestacionario', vision: 'Cada 5 min, próximamente', priority: 'Índice de prioridad', prioritySub: 'Por celda, de 0 a 100', recurrence: 'Recurrencia', times: 'Veces que ha ardido', spread: 'Cono de propagación', active: 'Según viento y área; orientativo', exposure: 'Exposición', places: 'Localidades y ANP', frp: 'Poder radiativo (FRP)', low: 'bajo', high: 'alto', noData: 'Sin puntos en', pick: 'Elige un mes con actividad en el calendario.', pts: 'puntos', toward: 'hacia', loading: 'Cargando puntos…', recentNo: 'Sin detecciones recientes', map: 'Mapa de Firely', basemap: 'Mapa base · relieve sombreado', dark: 'oscuro', light: 'claro', drawing: 'Haz clic para trazar el polígono y doble clic para cerrarlo.', coneNo: 'No hay cono de propagación porque falta el dato de viento', downwind: 'a favor del viento', zoomIn: 'Acercar', zoomOut: 'Alejar', years: 'años con fuego', truncated: 'se muestran los más intensos', admin: 'Límite:', indicative: 'orientativo, no es pronóstico oficial' },
+  en: { area: 'Selected area', edit: 'Edit polygon', dates: 'Change dates', story: 'View as a story', layers: 'Layers', hotspots: 'Hotspots', recent: 'Recent detections', recentSub: 'FIRMS near real time', goes: 'GOES geostationary', vision: 'Every 5 min, coming soon', priority: 'Priority index', prioritySub: 'Per cell, 0 to 100', recurrence: 'Recurrence', times: 'Times it has burned', spread: 'Spread cone', active: 'From wind and area; indicative', exposure: 'Exposure', places: 'Localities and protected areas', frp: 'Radiative power (FRP)', low: 'low', high: 'high', noData: 'No hotspots in', pick: 'Choose a month with activity in the calendar.', pts: 'hotspots', toward: 'toward', loading: 'Loading hotspots…', recentNo: 'No recent detections', map: 'Firely map', basemap: 'Base map · shaded relief', dark: 'dark', light: 'light', drawing: 'Click to trace the polygon and double-click to close it.', coneNo: 'No spread cone: wind data is missing', downwind: 'downwind', zoomIn: 'Zoom in', zoomOut: 'Zoom out', years: 'years with fire', truncated: 'showing the strongest', admin: 'Boundary:', indicative: 'indicative, not an official forecast' },
+  pt: { area: 'Área selecionada', edit: 'Editar polígono', dates: 'Alterar datas', story: 'Ver como história', layers: 'Camadas', hotspots: 'Pontos de calor', recent: 'Detecções recentes', recentSub: 'FIRMS, quase em tempo real', goes: 'GOES geoestacionário', vision: 'A cada 5 min, em breve', priority: 'Índice de prioridade', prioritySub: 'Por célula, de 0 a 100', recurrence: 'Recorrência', times: 'Vezes que queimou', spread: 'Cone de propagação', active: 'Por vento e área; indicativo', exposure: 'Exposição', places: 'Localidades e áreas protegidas', frp: 'Poder radiativo (FRP)', low: 'baixo', high: 'alto', noData: 'Sem pontos em', pick: 'Escolha um mês com atividade no calendário.', pts: 'pontos', toward: 'para', loading: 'Carregando pontos…', recentNo: 'Sem detecções recentes', map: 'Mapa Firely', basemap: 'Mapa base · relevo sombreado', dark: 'escuro', light: 'claro', drawing: 'Clique para traçar o polígono e duplo clique para fechá-lo.', coneNo: 'Sem cone de propagação: falta o dado de vento', downwind: 'a favor do vento', zoomIn: 'Aproximar', zoomOut: 'Afastar', years: 'anos com fogo', truncated: 'mostrando os mais intensos', admin: 'Limite:', indicative: 'indicativo, não é previsão oficial' },
 };
 type Lang = keyof typeof labels;
 function apiError(e: unknown, lang: Lang) {
-  if (e instanceof ApiError) return e.status === 503 && e.code === 'firms_map_key_missing' ? { es: 'Detecciones recientes: falta la llave FIRMS en el servidor', en: 'Recent detections: the server needs a FIRMS key', pt: 'Detecções recentes: falta a chave FIRMS no servidor' }[lang] : `API ${e.status}${e.code ? ` · ${e.code}` : ''}`;
+  if (e instanceof ApiError) return e.status === 503 && e.code === 'firms_map_key_missing' ? { es: 'Detecciones recientes: falta la llave FIRMS en el servidor', en: 'Recent detections: the server needs a FIRMS key', pt: 'Detecções recentes: falta a chave FIRMS no servidor' }[lang] : { es: `El servidor respondió con un error (${e.status}). Vuelve a intentarlo en un momento.`, en: `The server returned an error (${e.status}). Try again in a moment.`, pt: `O servidor respondeu com erro (${e.status}). Tente de novo em instantes.` }[lang];
   return e instanceof Error ? e.message : String(e);
 }
 function source(map: Map, id: string, data: GeoJSON.FeatureCollection) { (map.getSource(id) as GeoJSONSource | undefined)?.setData(data); }
@@ -252,8 +252,8 @@ export default function MapPanel() {
     const free = (x: number, y: number, text: string) => { const r: [number, number, number, number] = [x - 6, y - 9, x + 16 + text.length * 6.2, y + 9]; if (placed.some(q => r[0] < q[2] && r[2] > q[0] && r[1] < q[3] && r[3] > q[1])) return false; placed.push(r); return true; };
     if (app.layers.exposure) {
       const seen = new Set<string>();
-      for (const l of (wind?.localities ?? []).slice(0, 6)) { const p = inView(l.lon, l.lat); if (p && !seen.has(l.name) && free(p.x, p.y, l.name)) { seen.add(l.name); locs.push({ x: p.x, y: p.y, name: l.name, hot: true, title: `${l.name} · ${t.downwind} · ${l.distance_km} km ${l.compass}${l.pop ? ` · ${new Intl.NumberFormat(locale[lang]).format(l.pop)} hab.` : ''}` }); } }
-      for (const l of [...(territory?.localities ?? [])].sort((a, b) => (b.pop ?? 0) - (a.pop ?? 0)).slice(0, map.getZoom() >= 10 ? 14 : 8)) { const p = inView(l.lon, l.lat); if (p && !seen.has(l.name) && free(p.x, p.y, l.name)) { seen.add(l.name); locs.push({ x: p.x, y: p.y, name: l.name, hot: downwind.has(l.name), title: `${l.name}${l.pop ? ` · ${new Intl.NumberFormat(locale[lang]).format(l.pop)} hab.` : ''}` }); } }
+      for (const l of (wind?.localities ?? []).slice(0, 6)) { const p = inView(l.lon, l.lat); if (p && !seen.has(l.name) && free(p.x, p.y, l.name)) { seen.add(l.name); locs.push({ x: p.x, y: p.y, name: l.name, hot: true, title: `${l.name}, ${t.downwind}, ${l.distance_km} km ${l.compass}${l.pop ? `, ${new Intl.NumberFormat(locale[lang]).format(l.pop)} hab.` : ''}` }); } }
+      for (const l of [...(territory?.localities ?? [])].sort((a, b) => (b.pop ?? 0) - (a.pop ?? 0)).slice(0, map.getZoom() >= 10 ? 14 : 8)) { const p = inView(l.lon, l.lat); if (p && !seen.has(l.name) && free(p.x, p.y, l.name)) { seen.add(l.name); locs.push({ x: p.x, y: p.y, name: l.name, hot: downwind.has(l.name), title: `${l.name}${l.pop ? `, ${new Intl.NumberFormat(locale[lang]).format(l.pop)} hab.` : ''}` }); } }
     }
     const anps = app.layers.exposure ? (territory?.protected_areas.features ?? []).slice(0, 4).map(f => { const c = centroid(f.geometry); const p = c && inView(c[0], c[1]); return p && free(p.x - 60, p.y, f.properties.name) ? { x: p.x, y: p.y, name: f.properties.name } : null; }).filter(Boolean) as { x: number; y: number; name: string }[] : [];
     let cone: { inner?: { x: number; y: number }; outer?: { x: number; y: number }; text: string; title: string } | null = null;
@@ -262,7 +262,7 @@ export default function MapPanel() {
       const po = map.project(destination(o.origin.lat, o.origin.lon, o.reach_km, o.direction.toward_deg));
       const pi = map.project(destination(i.origin.lat, i.origin.lon, i.reach_km * 0.75, i.direction.toward_deg));
       const rate = o.reach_km / Math.max(1, o.hours);
-      cone = { outer: { x: po.x, y: po.y }, inner: { x: pi.x, y: pi.y }, text: `${o.hours} h · ${rate.toFixed(1)} km/h → ${o.direction.toward_compass}`, title: `${o.warning} ${o.method} · ${lang === 'en' ? 'wind' : 'viento'} ${o.wind.speed_kmh} km/h (${o.wind.source})` };
+      cone = { outer: { x: po.x, y: po.y }, inner: { x: pi.x, y: pi.y }, text: `${o.hours} h, ${rate.toFixed(1)} km/h ${t.toward} ${o.direction.toward_compass}`, title: `${o.warning} ${o.method}. ${lang === 'en' ? 'Wind' : 'Viento'} ${o.wind.speed_kmh} km/h (${o.wind.source})` };
     }
     const pickedAt = picked ? map.project([picked.lng, picked.lat]) : null;
     return { w, h, lats, lons, km, px: km * 1000 / mpp, locs, anps, cone, pickedAt };
@@ -273,18 +273,18 @@ export default function MapPanel() {
   const cutoff = hotspots?.data_cutoff || recent?.data_cutoff || territory?.data_cutoff;
   const notices: { key: string; text: string; warn?: boolean }[] = [];
   if (drawError) notices.push({ key: 'draw', text: drawError, warn: true });
-  for (const [key, message] of Object.entries(errors)) if (message && (key === 'territory' || (key === 'hotspots' && app.layers.hotspots) || (key === 'recent' && app.layers.recent) || (key === 'recurrence' && app.layers.recurrence) || (key === 'priority' && app.layers.priority) || (key === 'spread' && app.layers.spread))) notices.push({ key, text: key === 'spread' ? `${t.coneNo} · ${message}` : message, warn: true });
+  for (const [key, message] of Object.entries(errors)) if (message && (key === 'territory' || (key === 'hotspots' && app.layers.hotspots) || (key === 'recent' && app.layers.recent) || (key === 'recurrence' && app.layers.recurrence) || (key === 'priority' && app.layers.priority) || (key === 'spread' && app.layers.spread))) notices.push({ key, text: key === 'spread' ? `${t.coneNo}. ${message}` : message, warn: true });
   if (loading.hotspots) notices.push({ key: 'loading', text: t.loading });
-  if (app.layers.hotspots && hotspots && hotspots.features.length === 0) notices.push({ key: 'empty', text: `${t.noData} ${month}` });
-  if (app.layers.hotspots && hotspots?.truncated) notices.push({ key: 'trunc', text: `${new Intl.NumberFormat(locale[lang]).format(hotspots.n_total)} · ${t.truncated}` });
+  if (app.layers.hotspots && hotspots && hotspots.features.length === 0) notices.push({ key: 'empty', text: `${t.noData} ${monthLong}. ${t.pick}` });
+  if (app.layers.hotspots && hotspots?.truncated) notices.push({ key: 'trunc', text: `${new Intl.NumberFormat(locale[lang]).format(hotspots.n_total)} ${t.pts}; ${t.truncated}` });
   if (app.layers.recent && recent && recent.features.length === 0) notices.push({ key: 'recentNo', text: t.recentNo });
 
   const layerRows: { key: keyof typeof app.layers; label: string; sub: string; disabled?: boolean; title?: string }[] = [
-    { key: 'hotspots', label: t.hotspots, sub: `${month}${hotspots ? ` · ${new Intl.NumberFormat(locale[lang]).format(hotspots.n_total ?? hotspots.features.length)}` : ''}` },
+    { key: 'hotspots', label: t.hotspots, sub: `${monthLong}${hotspots ? `, ${new Intl.NumberFormat(locale[lang]).format(hotspots.n_total ?? hotspots.features.length)} ${t.pts}` : ''}` },
     { key: 'recent', label: t.recent, sub: t.recentSub },
     { key: 'goes', label: t.goes, sub: t.vision, disabled: true },
-    { key: 'recurrence', label: t.recurrence, sub: recurrence && app.layers.recurrence ? `${t.times} · 0–${recurrence.max_years_burned}` : t.times },
-    { key: 'priority', label: t.priority, sub: priority && app.layers.priority ? `${t.prioritySub} · ${priority.period}` : t.prioritySub },
+    { key: 'recurrence', label: t.recurrence, sub: recurrence && app.layers.recurrence ? `${t.times}, 0–${recurrence.max_years_burned}` : t.times },
+    { key: 'priority', label: t.priority, sub: priority && app.layers.priority ? `${t.prioritySub}, ${priority.period}` : t.prioritySub },
     { key: 'spread', label: t.spread, sub: t.active, title: t.indicative },
     { key: 'exposure', label: t.exposure, sub: t.places },
   ];
@@ -307,12 +307,10 @@ export default function MapPanel() {
         {view.cone?.inner && <Inline xs={s.coneLabel} style={{ left: view.cone.inner.x, top: view.cone.inner.y }} title={view.cone.title}>6 h</Inline>}
         {view.cone?.outer && <Inline xs={s.coneLabel} style={{ left: Math.min(view.cone.outer.x + 6, view.w - 170), top: Math.max(view.cone.outer.y - 14, 30) }} title={view.cone.title}>{view.cone.text}</Inline>}
       </Box>}
-      <Inline xs={s.basemap}>{t.basemap} (MapLibre + Esri)</Inline>
 
       <Box xs={[s.card, s.area]}>
-        <Caption>{t.area}</Caption>
-        <Inline xs={s.areaTitle}>{app.area.label}</Inline>
-        <Inline xs={s.areaMeta}>{territory ? `${new Intl.NumberFormat(locale[lang], { maximumFractionDigits: 0 }).format(territory.area_km2)} km² · ${territory.admin?.municipality ? `${t.admin} ${territory.admin.source}` : territory.admin?.source || '—'} · ${monthLong}` : loading.territory ? '…' : monthLong}</Inline>
+        <Inline xs={s.areaTitle} aria-label={`${t.area}: ${app.area.label}`}>{app.area.label}</Inline>
+        <Box xs={s.areaMeta}>{territory ? <><Inline>{new Intl.NumberFormat(locale[lang], { maximumFractionDigits: 0 }).format(territory.area_km2)} km², {monthLong}</Inline>{territory.admin?.source && <Inline>{territory.admin.municipality ? `${t.admin} ${territory.admin.source}` : territory.admin.source}</Inline>}</> : <Inline>{loading.territory ? '…' : monthLong}</Inline>}</Box>
         <Box xs={s.links}>
           <LinkButton onClick={beginDraw}>{t.edit}</LinkButton>
           <Popover label={t.dates} content={<DateRangeInput label={t.dates} value={{ start: app.from as DateRange['start'], end: app.to as DateRange['end'] }} onChange={v => { if (v) app.setRange(v.start, v.end); }} numberOfMonths={1} />}><LinkButton>{t.dates}</LinkButton></Popover>
@@ -329,7 +327,7 @@ export default function MapPanel() {
       {notices.length > 0 && <Box xs={s.notices} aria-live="polite">{notices.map(n => <Inline key={n.key} xs={[s.notice, n.warn && s.noticeWarn]}>{n.text}</Inline>)}</Box>}
 
       <Box xs={[s.card, s.layers]}>
-        <button type="button" aria-expanded={layersOpen} onClick={() => setLayersOpen(v => !v)} {...stylex.props(s.layersHead)}><Caption>{t.layers}</Caption><Caption>{layersOpen ? '−' : '+'}</Caption></button>
+        <button type="button" aria-expanded={layersOpen} onClick={() => setLayersOpen(v => !v)} {...stylex.props(s.layersHead)}><Inline>{t.layers}</Inline><Caption>{layersOpen ? '−' : '+'}</Caption></button>
         {layersOpen && <>
           {layerRows.map(r => <Box key={r.key} xs={s.layer} title={r.title}>
             <Inline xs={s.layerText}><Inline>{r.label}</Inline><Inline xs={s.layerSub}>{r.sub}</Inline></Inline>
@@ -349,19 +347,19 @@ export default function MapPanel() {
 
       {picked && view?.pickedAt && pp && !picked.props.priority && <Box xs={[s.card, s.picked]} style={{ left: view.pickedAt.x, top: view.pickedAt.y }} role="dialog" aria-label={t.hotspots}>
         <button type="button" aria-label="Cerrar" onClick={() => setPicked(null)} {...stylex.props(s.close)}>×</button>
-        <Caption>{pp.sensor || pp.platform || 'FIRMS'} · {pp.platform || ''}</Caption>
+        <Caption>{pp.sensor || pp.platform || 'FIRMS'}{pp.platform && pp.platform !== pp.sensor ? `, ${pp.platform}` : ''}</Caption>
         <Box xs={s.pickedRow}><Inline>{(pp.date || pp.ts_utc || '').slice(0, 16).replace('T', ' ')}</Inline><Inline xs={kit.mono}>{pp.daynight === 'N' ? (lang === 'en' ? 'night' : 'noche') : pp.daynight === 'D' ? (lang === 'en' ? 'day' : 'día') : ''}</Inline></Box>
         <Box xs={s.pickedRow}><Inline>FRP</Inline><Inline xs={kit.mono}>{pp.frp_mw ?? '—'} MW</Inline></Box>
         {pp.confidence_h && <Box xs={s.pickedRow}><Inline>{lang === 'en' ? 'confidence' : 'confianza'}</Inline><Inline xs={kit.mono}>{pp.confidence_h}</Inline></Box>}
       {picked && view?.pickedAt && !!picked.props.priority && <Box xs={[s.card, s.picked]} style={{ left: view.pickedAt.x, top: view.pickedAt.y }} role="dialog" aria-label={t.priority}>
         <button type="button" aria-label="Cerrar" onClick={() => setPicked(null)} {...stylex.props(s.close)}>×</button>
-        <Caption>{t.priority} · {String(picked.props.h3 ?? '')}</Caption>
+        <Caption title={String(picked.props.h3 ?? '')}>{t.priority}</Caption>
         <Box xs={s.pickedRow}><Inline>{String(picked.props.level ?? '')}</Inline><Inline xs={kit.mono}>{Number(picked.props.index ?? 0).toFixed(0)} / 100</Inline></Box>
         {picked.props.population_10km != null && <Box xs={s.pickedRow}><Inline>{lang === 'en' ? 'people ≤10 km' : 'hab. ≤10 km'}</Inline><Inline xs={kit.mono}>{new Intl.NumberFormat(locale[lang]).format(Number(picked.props.population_10km))}</Inline></Box>}
       </Box>}
       </Box>}
 
-      {isDrawing && <Box xs={[s.card, s.drawHint]} role="status">{t.drawing} <OutlineButton size="sm" onClick={() => { drawRef.current?.stop(); drawRef.current = null; drawing.current = false; setIsDrawing(false); }}>Esc</OutlineButton></Box>}
+      {isDrawing && <Box xs={[s.card, s.drawHint]} role="status">{t.drawing}<OutlineButton size="sm" onClick={() => { drawRef.current?.stop(); drawRef.current = null; drawing.current = false; setIsDrawing(false); }}>{lang === 'en' ? 'Cancel (Esc)' : 'Cancelar (Esc)'}</OutlineButton></Box>}
 
       <Box xs={s.attribution}>NASA FIRMS (MODIS C6.1 · VIIRS 375 m) {lang === 'en' ? 'harmonized' : 'armonizados'}{method ? ` · ${method}` : ''}{cutoff ? ` · ${cutoff}` : ''} · Esri, USGS, © OpenStreetMap{territory?.admin?.source ? ` · ${territory.admin.source.split(' ')[0]}` : ''}</Box>
     </Box>

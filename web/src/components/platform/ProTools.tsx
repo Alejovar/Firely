@@ -20,11 +20,11 @@ import {
 } from '../../api/client';
 
 const sx = stylex.create({
-  mono: { fontFamily: 'var(--font-family-mono)', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: '20rem', overflow: 'auto', backgroundColor: 'var(--color-background-muted)', padding: 'var(--spacing-4)', borderRadius: 'var(--radius-2)' },
+  mono: { fontFamily: 'var(--font-family-code)', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: '20rem', overflow: 'auto', backgroundColor: 'var(--color-background-muted)', padding: 'var(--spacing-4)', borderRadius: 'var(--radius-2)' },
   row: { borderTop: '1px solid var(--color-border-subtle)', paddingBlock: 'var(--spacing-3)' },
   scroll: { overflowX: 'auto', width: '100%' },
 });
-const errText = (e: unknown) => e instanceof ApiError ? `${e.status}${e.code ? ` · ${e.code}` : ''}` : String(e);
+const errText = (e: unknown) => e instanceof ApiError ? `${e.status}${e.code ? `, ${e.code}` : ''}` : String(e);
 function download(name: string, body: string, mime: string) {
   const url = URL.createObjectURL(new Blob([body], { type: mime }));
   const a = document.createElement('a'); a.href = url; a.download = name; a.click();
@@ -52,7 +52,7 @@ export function SqlSection() {
   };
   const rows = (result?.rows ?? []).slice(0, 200).map((r, i) => ({ id: String(i), ...Object.fromEntries((result?.columns ?? []).map((c, j) => [c, cell(r[j])])) }));
   return <Card padding={5}><VStack gap={3}>
-    <HStack gap={2} wrap="wrap"><Badge label="SOLO LECTURA" variant="success" /><Badge label="máx. 1000 filas · 15 s" variant="neutral" /></HStack>
+    <HStack gap={2} wrap="wrap"><Badge label="Solo lectura" variant="success" /><Badge label="máx. 1000 filas, 15 s" variant="neutral" /></HStack>
     <Selector label="Ejemplos" value="" placeholder="Elegir un ejemplo…" onChange={v => { const ex = SQL_EXAMPLES.find(e => e.label === v); if (ex) setQuery(ex.query); }} options={SQL_EXAMPLES.map(e => ({ value: e.label, label: e.label }))} />
     <TextArea label="Consulta SQL (DuckDB)" description="Vistas: cell_month_harmonized, events, climatology. Una sola sentencia SELECT, sin ';' ni comentarios." value={query} onChange={setQuery} rows={6} />
     <HStack gap={2}><Button label="Revisar y ejecutar" variant="primary" onClick={run} isLoading={busy} /></HStack>
@@ -79,7 +79,7 @@ export function BulletinSection({ area, label }: { area: Area; label: string }) 
     <HStack gap={2}><Button label="Generar boletín" onClick={load} isLoading={busy} />{data && <Button label="Copiar texto" variant="ghost" onClick={() => void navigator.clipboard?.writeText(text)} />}</HStack>
     {error && <Banner status="error" title="No se pudo generar" description={error} />}
     {data && <VStack gap={3}><Heading level={4}>{data.title}</Heading>{data.sections.map(s => <VStack key={s.heading} gap={1} xstyle={sx.row}>
-      <HStack gap={2} wrap="wrap"><Text type="label">{s.heading}</Text>{s.level && <Badge label={s.level.toUpperCase()} variant={s.level === 'baja' ? 'success' : s.level === 'media' ? 'warning' : 'error'} />}</HStack>
+      <HStack gap={2} wrap="wrap"><Text type="label">{s.heading}</Text>{s.level && <Badge label={s.level[0].toUpperCase() + s.level.slice(1)} variant={s.level === 'baja' ? 'success' : s.level === 'media' ? 'warning' : 'error'} />}</HStack>
       {s.items ? s.items.map(i => <Text key={i.name}><strong>{i.name}:</strong> {i.text}</Text>) : <Text>{s.text}</Text>}
     </VStack>)}<Text type="supporting" color="secondary">{data.generated_by} · {data.generated_at} · {data.attribution} · v{data.methodology_version}</Text></VStack>}
   </VStack></Card>;
@@ -107,20 +107,20 @@ export function CapSection({ area, label, suggestedText }: { area: Area; label: 
     catch (e) { setError(errText(e)); } finally { setBusy(false); }
   };
   return <Card padding={5}><VStack gap={3}>
-    <HStack wrap="wrap" hAlign="between"><Heading level={3}>Borrador CAP 1.2 en el servidor</Heading><Badge label="EXERCISE · NUNCA ACTUAL" variant="warning" /></HStack>
+    <HStack wrap="wrap" hAlign="between"><Heading level={3}>Borrador CAP 1.2 en el servidor</Heading><Badge label="Ejercicio, nunca real" variant="warning" /></HStack>
     <TextArea label="Texto de la alerta" value={text} onChange={setText} rows={3} maxLength={1000} />
     <Selector label="Severidad" value={severity} onChange={setSeverity} options={['Minor', 'Moderate', 'Severe', 'Extreme'].map(v => ({ value: v, label: v }))} />
     <HStack gap={2} wrap="wrap"><Button label="Crear borrador" onClick={create} isLoading={busy} isDisabled={!text.trim()} /><Button label="Feed CAP (aprobados)" variant="ghost" href={`${API_URL}/alerts/cap`} target="_blank" /></HStack>
     {error && <Banner status="error" title="Error" description={error} />}
-    {current && <VStack gap={2}><Text type="label">Borrador {current.id.slice(0, 8)} · {current.approval}</Text>
+    {current && <VStack gap={2}><Text type="label">Borrador {current.id.slice(0, 8)}, {current.approval}</Text>
       {current.xml && <pre {...stylex.props(sx.mono)}>{current.xml}</pre>}
       <HStack gap={2} wrap="wrap">
         <Button label={current.approved_at ? 'Aprobado para ejercicio' : 'Aprobar para ejercicio (revisión humana)'} variant="primary" isDisabled={!!current.approved_at} onClick={() => approve(current.id)} />
         {current.xml && <Button label="Descargar XML" onClick={() => download(`firely-cap-${current.id.slice(0, 8)}.xml`, current.xml ?? '', 'application/xml')} />}
       </HStack></VStack>}
     {drafts.length > 0 && <VStack gap={1}><Text type="label">Borradores recientes</Text>{drafts.slice(0, 6).map(d => <HStack key={d.id} gap={2} wrap="wrap" xstyle={sx.row} hAlign="between">
-      <VStack gap={0}><Text>{d.text.slice(0, 90)}</Text><Text type="supporting">{d.area_desc} · {d.severity} · {d.created_at}</Text></VStack>
-      {d.approved_at ? <Badge label="APROBADO (EJERCICIO)" variant="success" /> : <Button label="Aprobar" size="sm" variant="ghost" onClick={() => approve(d.id)} />}
+      <VStack gap={0}><Text>{d.text.slice(0, 90)}</Text><Text type="supporting">{d.area_desc}, {d.severity}, {d.created_at}</Text></VStack>
+      {d.approved_at ? <Badge label="Aprobado (ejercicio)" variant="success" /> : <Button label="Aprobar" size="sm" variant="ghost" onClick={() => approve(d.id)} />}
     </HStack>)}</VStack>}
     <Text type="supporting" color="secondary">Aprobar no publica nada a la población: el borrador queda en el feed como ejercicio para que otros sistemas lo prueben.</Text>
   </VStack></Card>;
@@ -145,7 +145,7 @@ export function ReportsSection() {
     <HStack gap={2} wrap="wrap"><Button label="Extraer y validar" variant="primary" onClick={run} isLoading={busy} isDisabled={!text.trim()} /><Button label="Usar ejemplo" variant="ghost" onClick={() => setText(SAMPLE_REPORT)} /></HStack>
     {error && <Banner status="error" title="No se pudo extraer" description={error} />}
     {data && <VStack gap={3}>
-      <HStack gap={2} wrap="wrap"><Badge label={data.source === 'llm' ? 'EXTRACCIÓN CON LLM + VALIDACIÓN' : 'EXTRACCIÓN POR REGLAS'} variant="neutral" /><Badge label={`${data.n_records} registros`} variant="neutral" />{data.n_needs_review > 0 && <Badge label={`${data.n_needs_review} por revisar`} variant="warning" />}{data.all_checks_ok != null && <Badge label={data.all_checks_ok ? 'TOTALES CUADRAN' : 'TOTALES NO CUADRAN'} variant={data.all_checks_ok ? 'success' : 'error'} />}</HStack>
+      <HStack gap={2} wrap="wrap"><Badge label={data.source === 'llm' ? 'Extracción con LLM + validación' : 'Extracción por reglas'} variant="neutral" /><Badge label={`${data.n_records} registros`} variant="neutral" />{data.n_needs_review > 0 && <Badge label={`${data.n_needs_review} por revisar`} variant="warning" />}{data.all_checks_ok != null && <Badge label={data.all_checks_ok ? 'Totales cuadran' : 'Totales no cuadran'} variant={data.all_checks_ok ? 'success' : 'error'} />}</HStack>
       {data.warning && <Banner status="warning" title={data.warning} />}
       {rows.length > 0 && <VStack xstyle={sx.scroll}><Table density="compact" idKey="id" data={rows} columns={[{ key: 'line', header: 'Línea' }, { key: 'state', header: 'Entidad' }, { key: 'mun', header: 'Municipio' }, { key: 'period', header: 'Periodo' }, { key: 'fires', header: 'Incendios' }, { key: 'area', header: 'ha' }, { key: 'review', header: 'Revisión' }]} /></VStack>}
       {data.checks.map(c => <Text key={c.check} type="supporting">{c.ok ? '✓' : '✗'} {c.check}: esperado {c.expected}, calculado {c.computed}</Text>)}
@@ -177,11 +177,11 @@ export function DrillSection({ area, label }: { area: Area; label: string }) {
     </HStack>
     {error && <Banner status="warning" title={error} />}
     {data && stage && <VStack gap={3}>
-      <HStack gap={2} wrap="wrap"><Badge label={`ETAPA ${step + 1} DE ${data.stages.length}`} variant="neutral" />{stage.key === 'desenlace' && <Badge label="LO QUE OCURRIÓ" variant="warning" />}</HStack>
+      <HStack gap={2} wrap="wrap"><Badge label={`Etapa ${step + 1} de ${data.stages.length}`} variant="neutral" />{stage.key === 'desenlace' && <Badge label="Lo que ocurrió" variant="warning" />}</HStack>
       <Heading level={3}>{stage.title}</Heading>
       <Text>{stage.situation}</Text>
       {stage.facts.map(f => <Text key={f} type="supporting">• {f}</Text>)}
-      {stage.daily && stage.daily.length > 0 && stage.key === 'evolucion' && <Text type="supporting">{stage.daily.map(d => `${d.date.slice(5)}: ${d.detections}${d.night ? ` (${d.night} noct.)` : ''}`).join(' · ')}</Text>}
+      {stage.daily && stage.daily.length > 0 && stage.key === 'evolucion' && <Text type="supporting">{stage.daily.map(d => `${d.date.slice(5)}: ${d.detections}${d.night ? ` (${d.night} noct.)` : ''}`).join(', ')}</Text>}
       <Banner status="info" title="Para discutir" description={stage.question} />
       <HStack gap={2}><Button label="Anterior" variant="ghost" isDisabled={step === 0} onClick={() => setStep(s => s - 1)} /><Button label={step + 1 < data.stages.length ? 'Siguiente etapa' : 'Fin del ejercicio'} isDisabled={step + 1 >= data.stages.length} onClick={() => setStep(s => s + 1)} /></HStack>
       <Text type="supporting" color="secondary">{data.disclaimer} {data.attribution} · v{data.methodology_version}</Text>
