@@ -353,3 +353,8 @@ export interface OutlookResponse {
   forecasts: OutlookItem[];
 }
 export const getOutlook = (area: Area, signal?: AbortSignal) => request<OutlookResponse>(`/forecast?${withArea(area)}`, { signal });
+
+export interface AssistantReply { attribution: string; mode: 'data' | 'answer'; reply: string; query: string; source: 'llm' | 'rules' }
+export const assistantReply = (body: { message: string; profile: 'curioso' | 'brigadista' | 'cientifico'; lang: string;
+  history: { role: 'user' | 'assistant'; text: string }[]; context: { place?: string; period?: string; summary?: string } }, signal?: AbortSignal) =>
+  request<AssistantReply>('/assistant/reply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal });

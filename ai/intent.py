@@ -59,7 +59,7 @@ REQUEST_WORDS = (
     r'es|sera|seria|probable|probablemente|probabilidad|posible|riesgo|risk|likely|chance|that|there|will|be|is|was|'
     r'how|what|como|cual|cuantos|cuantas|que|qui|haya|habra|hay|hubo|va|vai|ter|tera|un|una|uno|um|uma|an|any|algun|'
     r'alguno|alguna|temporada|season|fue|foi|esta|este|estara|el ano|ano|year|mes|month|proximo|siguiente|next|'
-    r'pronostico|forecast|previsao|perspectiva|outlook'
+    r'pronostico|forecast|previsao|perspectiva|outlook|y|and|hola|hello|hi|ola|oi|buenas'
 )
 
 
