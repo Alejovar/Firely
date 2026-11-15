@@ -74,6 +74,12 @@ export const SELECTED_INK = '#1a1c1e';
 /** Map: fire radiative power. Grey for weak fires, cividis yellow for strong ones. */
 export const FRP_STOPS: [number, string][] = [[0, '#7c7b78'], [5, '#958f78'], [15, '#bcaf6f'], [40, '#fde34a']];
 export const FRP_LEGEND = ['#7c7b78', '#bcaf6f', '#fde34a'] as const;
+/** KML export: the same three FRP classes as the map legend (MW thresholds, colour). */
+export const FRP_CLASSES = [
+  { id: 'bajo', label: 'bajo', min: 0, max: 15, color: FRP_LEGEND[0] },
+  { id: 'medio', label: 'medio', min: 15, max: 40, color: FRP_LEGEND[1] },
+  { id: 'alto', label: 'alto', min: 40, max: Infinity, color: FRP_LEGEND[2] },
+] as const;
 /** Map: recurrence (years burned), cividis from 1 year to the maximum. */
 export const RECURRENCE_STOPS = [0.15, 0.4, 0.65, 0.85, 1].map(cividis);
 /** Map overlays. */

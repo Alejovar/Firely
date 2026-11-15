@@ -91,3 +91,21 @@ def test_mcp_lists_tools():
     spec.loader.exec_module(mod)
     names = {t.name for t in asyncio.run(mod.mcp.list_tools())}
     assert {"calendar", "season", "analogs", "return_period", "risk", "watch", "resolve_area"} <= names
+
+
+def test_kml_explains_each_point(client, monkeypatch):
+    from api.app import export_routes
+    fake = {"type": "FeatureCollection", "truncated": False, "n_total": 2, "data_cutoff": "2026-08-31",
+            "features": [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [-100.3, 25.4]},
+                          "properties": {"date": "2021-03-17", "sensor": "VIIRS", "platform": "SNPP", "frp_mw": 52.4,
+                                         "confidence_h": "alta", "daynight": "N"}},
+                         {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-100.2, 25.5]},
+                          "properties": {"date": "2021-03-18", "sensor": "MODIS", "platform": "Aqua", "frp_mw": 3,
+                                         "confidence_h": "nominal", "daynight": "D"}}]}
+    monkeypatch.setattr(export_routes, "hotspots_geojson", lambda **kw: fake)
+    r = client.get("/export.kml", params={"bbox": "-100.9,25.2,-100.2,25.7", "from": "2021-03-01", "to": "2021-03-31", "limit": 50})
+    assert r.status_code == 200
+    body = r.text
+    assert "No es el contorno de un incendio" in body and "<Folder>" in body
+    assert "Potencia del fuego (FRP)" in body and "#frp-alto" in body and "#frp-bajo" in body
+    assert "17 de marzo de 2021: 1 punto" in body and "VIIRS a bordo de Suomi NPP" in body

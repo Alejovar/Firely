@@ -1,3 +1,4 @@
+import { hotspotsKml } from './export';
 import type { CalendarRow, CalendarResponse, EventsResponse, SeasonResponse, ContextResponse, HotspotsGeoJson } from '../api/client';
 import { monthNames, type Lang } from '../i18n';
 
@@ -23,9 +24,8 @@ export function storySlides(calendar: CalendarResponse, events: EventsResponse, 
     { title: contextRow ? tr(`${months[contextRow.month-1]} de ${contextRow.year}: fase ENSO ${contextRow.enso_phase}.`,`${months[contextRow.month-1]} ${contextRow.year}: ENSO phase ${contextRow.enso_phase}.`,`${months[contextRow.month-1]} de ${contextRow.year}: fase ENSO ${contextRow.enso_phase}.`) : tr('No hay contexto ENSO disponible para esta área y periodo.','No ENSO context is available for this area and period.','Não há contexto ENSO para esta área e período.'), detail: contextRow ? tr(`ONI ${contextRow.oni == null ? 'sin dato' : fmt(contextRow.oni,lang)}. La fase ENSO es contexto, no atribución causal de un incendio.`,`ONI ${contextRow.oni == null ? 'unavailable' : fmt(contextRow.oni,lang)}. ENSO phase is context, not a causal attribution for a fire.`,`ONI ${contextRow.oni == null ? 'sem dados' : fmt(contextRow.oni,lang)}. A fase ENSO é contexto, não atribuição causal de incêndio.`) : tr('La ausencia de contexto se muestra sin inferir una causa.','Missing context does not imply a cause.','A ausência de contexto não implica uma causa.'), year:contextRow?.year, month:contextRow?.month },
   ];
 }
-export function kmlFromHotspots(data: HotspotsGeoJson): string {
-  const esc=(s:string)=>s.replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'}[c]!));
-  return `<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>FIRELY · NASA FIRMS</name><description>${esc(`${data.attribution} · ${data.methodology_version} · ${data.data_cutoff}`)}</description>${data.features.map(f=>`<Placemark><name>${esc(f.properties.date)}</name><description>${esc(`${f.properties.sensor} · FRP ${f.properties.frp_mw ?? 'n/a'} MW`)}</description><Point><coordinates>${f.geometry.coordinates.join(',')},0</coordinates></Point></Placemark>`).join('')}</Document></kml>`;
+export function kmlFromHotspots(data: HotspotsGeoJson, meta: { label?: string; from?: string; to?: string } = {}): string {
+  return hotspotsKml(data, undefined, meta);
 }
 export function csvFromHotspots(data: HotspotsGeoJson): string {
   return ['date,sensor,platform,frp_mw,confidence,daynight,lon,lat',...data.features.map(f=>[f.properties.date,f.properties.sensor,f.properties.platform,f.properties.frp_mw??'',f.properties.confidence_h,f.properties.daynight,...f.geometry.coordinates].join(','))].join('\n');

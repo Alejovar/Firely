@@ -1,5 +1,5 @@
 import type { CalendarResponse, HotspotsGeoJson } from '../api/client';
-import { divergingSteps, encodeCell, sequentialSteps } from './dataviz';
+import { divergingSteps, encodeCell, FRP_CLASSES, sequentialSteps } from './dataviz';
 import { yearPhase } from './explorerLabels';
 export function provenance(data:{attribution?:string;methodology_version?:string;data_cutoff?:string}){return `${data.attribution||'NASA FIRMS'} · methodology_version=${data.methodology_version||'unknown'} · data_cutoff=${data.data_cutoff||'unknown'}`;}
 const csv=(value:unknown)=>`"${String(value??'').replaceAll('"','""')}"`;
@@ -7,7 +7,44 @@ export function calendarCsv(data:CalendarResponse){const columns=['year','month'
 export function geoJsonFile(data:HotspotsGeoJson){return JSON.stringify({...data,attribution:data.attribution||'NASA FIRMS',methodology_version:data.methodology_version,data_cutoff:data.data_cutoff},null,2);}
 const xml=(s:unknown)=>String(s??'').replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'}[c]!));
 export function kmlColor(css:string){const match=css.match(/\d+(?:\.\d+)?/g);if(!match||match.length<3)return 'ffffffff';const [r,g,b]=match.slice(0,3).map(v=>Math.max(0,Math.min(255,Math.round(Number(v)))).toString(16).padStart(2,'0'));return `ff${b}${g}${r}`;}
-export function hotspotsKml(data:HotspotsGeoJson, colors?:{low:string;high:string}){const styles=colors?`<Style id="low"><IconStyle><color>${xml(colors.low)}</color></IconStyle></Style><Style id="high"><IconStyle><color>${xml(colors.high)}</color></IconStyle></Style>`:'';return `<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>FIRELY · NASA FIRMS</name><description>${xml(provenance(data))}</description>${styles}${data.features.map(f=>`<Placemark><name>${xml(f.properties.date)}</name><description>${xml(`${f.properties.sensor} · FRP ${f.properties.frp_mw??'—'} MW · ${provenance(data)}`)}</description>${colors?`<styleUrl>#${(f.properties.frp_mw??0)>=50?'high':'low'}</styleUrl>`:''}<Point><coordinates>${f.geometry.coordinates.join(',')},0</coordinates></Point></Placemark>`).join('')}</Document></kml>`;}
+const PLATFORM: Record<string,{name:string;pixel:string}> = {
+  Terra:{name:'MODIS a bordo de Terra (NASA)',pixel:'1 km'}, Aqua:{name:'MODIS a bordo de Aqua (NASA)',pixel:'1 km'},
+  SNPP:{name:'VIIRS a bordo de Suomi NPP (NASA/NOAA)',pixel:'375 m'}, NOAA20:{name:'VIIRS a bordo de NOAA-20',pixel:'375 m'}, NOAA21:{name:'VIIRS a bordo de NOAA-21',pixel:'375 m'},
+};
+const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const longDate=(iso:string)=>{const [y,m,d]=iso.slice(0,10).split('-').map(Number);return `${d} de ${MONTHS[m-1]} de ${y}`;};
+const frpClass=(frp:number|null)=>FRP_CLASSES.find(c=>(frp??0)>=c.min&&(frp??0)<c.max)??FRP_CLASSES[0];
+const hexKml=(hex:string)=>{const h=hex.replace('#','');return `ff${h.slice(4,6)}${h.slice(2,4)}${h.slice(0,2)}`;};
+/** Google Earth / GIS file of individual detections: one folder per day, one styled point per detection,
+ *  and a plain-language card per point saying what it is. */
+export function hotspotsKml(data:HotspotsGeoJson, _colors?:{low:string;high:string}, meta:{label?:string;from?:string;to?:string}={}){
+  const area=meta.label?`, ${meta.label}`:'';
+  const period=meta.from&&meta.to?` (${meta.from} a ${meta.to})`:'';
+  const intro=`<p><b>Qué contiene.</b> Cada punto es una detección de calor de un satélite: un píxel (375 m en VIIRS, 1 km en MODIS) donde el sensor midió una temperatura anómala al pasar. No es el contorno de un incendio: un mismo incendio produce muchos puntos, y varios satélites pueden ver el mismo fuego el mismo día.</p>
+<p><b>Color.</b> Potencia radiativa del fuego (FRP): gris = baja (&lt; 15 MW), ocre = media (15 a 40 MW), amarillo = alta (40 MW o más). A más FRP, más energía liberada en ese momento.</p>
+<p><b>Organización.</b> Una carpeta por día. Usa la barra de tiempo de Google Earth para recorrer los días.</p>
+<p><b>Nota.</b> Son detecciones individuales de NASA FIRMS con confianza nominal o alta. Las cifras del calendario de Firely son la serie armonizada, que corrige las diferencias entre MODIS y VIIRS; por eso no coinciden con el número de puntos de este archivo.${data.truncated?` Este archivo trae los ${data.features.length} puntos de mayor FRP de ${data.n_total}; acota el periodo para tenerlos todos.`:''}</p>
+<p>${xml(provenance(data))}</p>`;
+  const styles=FRP_CLASSES.map(c=>`<Style id="frp-${c.id}"><IconStyle><color>${hexKml(c.color)}</color><scale>${c.id==='alto'?1:c.id==='medio'?0.8:0.6}</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/shaded_dot.png</href></Icon></IconStyle><LabelStyle><scale>0</scale></LabelStyle></Style>`).join('');
+  const byDay=new Map<string,HotspotsGeoJson['features']>();
+  for(const f of data.features){const d=f.properties.date.slice(0,10);if(!byDay.has(d))byDay.set(d,[]);byDay.get(d)!.push(f);}
+  const folders=[...byDay.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([day,list])=>{
+    const marks=list.map(f=>{const p=f.properties,[lon,lat]=f.geometry.coordinates,cls=frpClass(p.frp_mw),sat=PLATFORM[p.platform]??{name:`${p.sensor} ${p.platform}`,pixel:p.sensor==='MODIS'?'1 km':'375 m'};
+      const frp=p.frp_mw==null?'sin dato':`${p.frp_mw.toLocaleString('es-MX',{maximumFractionDigits:1})} MW (${cls.label})`;
+      const card=`<table>
+<tr><td><b>Qué es</b></td><td>Detección de calor por satélite (posible fuego activo)</td></tr>
+<tr><td><b>Fecha</b></td><td>${longDate(p.date)}</td></tr>
+<tr><td><b>Paso del satélite</b></td><td>${p.daynight==='N'?'De noche':'De día'}</td></tr>
+<tr><td><b>Satélite</b></td><td>${xml(sat.name)}</td></tr>
+<tr><td><b>Tamaño del píxel</b></td><td>${sat.pixel}</td></tr>
+<tr><td><b>Potencia del fuego (FRP)</b></td><td>${frp}</td></tr>
+<tr><td><b>Confianza</b></td><td>${p.confidence_h==='alta'?'Alta':'Nominal'}</td></tr>
+<tr><td><b>Coordenadas</b></td><td>${lat.toFixed(4)}, ${lon.toFixed(4)}</td></tr>
+</table><p>Fuente: NASA FIRMS. Firely ${xml(data.methodology_version)}.</p>`;
+      return `<Placemark><name>${xml(`${p.sensor} ${p.platform}, ${frp}`)}</name><Snippet maxLines="1">${xml(`${longDate(p.date)}, ${p.daynight==='N'?'noche':'día'}`)}</Snippet><description><![CDATA[${card}]]></description><styleUrl>#frp-${cls.id}</styleUrl><TimeStamp><when>${xml(p.date.slice(0,10))}</when></TimeStamp><ExtendedData><Data name="fecha"><value>${xml(p.date)}</value></Data><Data name="sensor"><value>${xml(p.sensor)}</value></Data><Data name="satelite"><value>${xml(p.platform)}</value></Data><Data name="frp_mw"><value>${p.frp_mw??''}</value></Data><Data name="confianza"><value>${xml(p.confidence_h)}</value></Data><Data name="dia_noche"><value>${xml(p.daynight)}</value></Data></ExtendedData><Point><coordinates>${lon},${lat},0</coordinates></Point></Placemark>`;}).join('');
+    return `<Folder><name>${xml(`${longDate(day)}: ${list.length} ${list.length===1?'punto':'puntos'}`)}</name><open>0</open>${marks}</Folder>`;}).join('');
+  return `<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${xml(`Firely: detecciones de calor${area}${period}`)}</name><open>1</open><description><![CDATA[${intro}]]></description>${styles}${folders}</Document></kml>`;
+}
 export function calendarSvg(data:CalendarResponse,title:string,metric:'count'|'frp',mode:'count'|'anomaly',scheme:'dark'|'light',palette:(cssVar:string)=>string){
  const years=[...new Set(data.rows.map(r=>r.year))].sort((a,b)=>b-a);
  const lookup=new Map(data.rows.map(r=>[`${r.year}-${r.month}`,r]));

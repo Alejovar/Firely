@@ -10,3 +10,20 @@ describe('derived story and exports',()=>{
  it('keeps CAP as a private exercise',()=>{const xml=capXml(capDraft('Arteaga',{year:2026,month:3,count_harm:20,percentile:.95},'2026-03-18'));expect(xml).toContain('<status>Exercise</status>');expect(xml).toContain('<scope>Private</scope>');expect(xml).toContain('<onset>2026-03-18T00:00:00Z</onset>')});
  it('creates a two line FIRELY embed',()=>{expect(widgetSnippet('https://firely.example',{lat:25,lon:-100,radius:30,theme:'dark',lang:'pt'}).split('\n')).toHaveLength(2)})
 });
+describe('kml card', () => {
+  it('explains each detection in plain language, grouped by day', () => {
+    const data: HotspotsGeoJson = { attribution: 'NASA FIRMS', methodology_version: 'v1', data_cutoff: '2026-08-31', type: 'FeatureCollection', truncated: false, n_total: 2,
+      features: [
+        { type: 'Feature', geometry: { type: 'Point', coordinates: [-100.3, 25.4] }, properties: { date: '2021-03-17', sensor: 'VIIRS', platform: 'SNPP', frp_mw: 52.4, confidence_h: 'alta', daynight: 'N' } },
+        { type: 'Feature', geometry: { type: 'Point', coordinates: [-100.2, 25.5] }, properties: { date: '2021-03-18', sensor: 'MODIS', platform: 'Aqua', frp_mw: 3, confidence_h: 'nominal', daynight: 'D' } },
+      ] };
+    const kml = kmlFromHotspots(data, { label: 'Sierra de Arteaga', from: '2021-03-01', to: '2021-03-31' });
+    expect(kml).toContain('Firely: detecciones de calor, Sierra de Arteaga (2021-03-01 a 2021-03-31)');
+    expect(kml).toContain('17 de marzo de 2021: 1 punto');
+    expect(kml).toContain('VIIRS a bordo de Suomi NPP');
+    expect(kml).toContain('#frp-alto');
+    expect(kml).toContain('#frp-bajo');
+    expect(kml).toContain('De noche');
+    expect(kml).toContain('No es el contorno de un incendio');
+  });
+});
