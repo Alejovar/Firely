@@ -16,7 +16,9 @@ import { simplifyPolygon } from '../lib/drawnArea';
 import { areaGeometry, geometryBbox, hotspotPeriod } from '../lib/mapVisual';
 import { onMapDraw } from '../lib/mapBus';
 import { monthNames, monthShort } from '../i18n';
-import { FRP_LEGEND, FRP_STOPS, PRIORITY_STOPS, RECURRENCE_STOPS, mapInk } from '../lib/dataviz';
+import { FlameLegend, registerFlameImage } from './map/FlameMarker';
+import { FLAME_ICON } from './map/flameImage';
+import { PRIORITY_STOPS, RECURRENCE_STOPS, mapInk } from '../lib/dataviz';
 import { Box, Caption, Inline, LinkButton, OutlineButton, Toggle, kit } from '../ui/kit';
 
 
@@ -137,6 +139,7 @@ export default function MapPanel() {
     mapRef.current = map;
     const observer = new ResizeObserver(() => map.resize()); observer.observe(node.current);
     let frame = 0;
+    let stopFlames = () => {};
     const bump = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => setTick(v => v + 1)); };
     map.on('move', bump); map.on('resize', bump);
     map.on('load', () => {
@@ -150,12 +153,13 @@ export default function MapPanel() {
       map.addLayer({ id: 'firely-cone-fill', type: 'fill', source: 'firely-cone', paint: { 'fill-color': '#ebe8e3', 'fill-opacity': 0.1 } });
       map.addLayer({ id: 'firely-cone-inner', type: 'fill', source: 'firely-cone-inner', paint: { 'fill-color': '#ebe8e3', 'fill-opacity': 0.14 } });
       map.addLayer({ id: 'firely-cone-line', type: 'line', source: 'firely-cone', paint: { 'line-color': '#ebe8e3', 'line-width': 1.2, 'line-dasharray': [4, 3] } });
-      map.addLayer({ id: 'firely-points', type: 'circle', source: 'firely-points', paint: {
-        'circle-color': ['interpolate', ['linear'], ['coalesce', ['get', 'frp_mw'], 0], ...FRP_STOPS.flat()] as unknown as ExpressionSpecification,
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, ['interpolate', ['linear'], ['coalesce', ['get', 'frp_mw'], 0], 0, 2.5, 40, 5], 10, ['interpolate', ['linear'], ['coalesce', ['get', 'frp_mw'], 0], 0, 3.2, 15, 4.5, 40, 6.5], 13, ['interpolate', ['linear'], ['coalesce', ['get', 'frp_mw'], 0], 0, 4, 15, 6, 40, 8]] as ExpressionSpecification,
-        'circle-opacity': 0.92, 'circle-stroke-width': 1, 'circle-stroke-color': 'rgba(0,0,0,0.4)',
-      } });
-      map.addLayer({ id: 'firely-recent', type: 'circle', source: 'firely-recent', paint: { 'circle-color': 'rgba(255,255,255,0.15)', 'circle-radius': 6, 'circle-stroke-width': 2, 'circle-stroke-color': '#ebe8e3' } });
+      stopFlames = registerFlameImage(map);
+      const flameLayout = {
+        'icon-image': FLAME_ICON, 'icon-allow-overlap': true, 'icon-ignore-placement': true,
+        'icon-size': 0.65,
+      };
+      map.addLayer({ id: 'firely-points', type: 'symbol', source: 'firely-points', layout: flameLayout });
+      map.addLayer({ id: 'firely-recent', type: 'symbol', source: 'firely-recent', layout: flameLayout });
       setReady(true); bump();
     });
     map.on('click', e => {
@@ -168,7 +172,7 @@ export default function MapPanel() {
     });
     map.on('mouseenter', 'firely-points', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'firely-points', () => { map.getCanvas().style.cursor = ''; });
-    return () => { cancelAnimationFrame(frame); observer.disconnect(); drawRef.current?.stop(); drawRef.current = null; map.remove(); mapRef.current = null; };
+    return () => { stopFlames(); cancelAnimationFrame(frame); observer.disconnect(); drawRef.current?.stop(); drawRef.current = null; map.remove(); mapRef.current = null; };
   }, []);
 
   // scheme-dependent paint
@@ -180,10 +184,7 @@ export default function MapPanel() {
     const ink = dark ? '#ebe8e3' : '#1a1c1e', ember = dark ? '#e8803f' : '#c9601f';
     for (const id of ['firely-cone-fill', 'firely-cone-inner']) map.setPaintProperty(id, 'fill-color', ink);
     map.setPaintProperty('firely-cone-line', 'line-color', ink);
-    map.setPaintProperty('firely-recent', 'circle-stroke-color', ink);
-    map.setPaintProperty('firely-recent', 'circle-color', dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)');
     map.setPaintProperty('firely-border', 'line-color', ember); map.setPaintProperty('firely-area-fill', 'fill-color', ember);
-    map.setPaintProperty('firely-points', 'circle-stroke-color', dark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.55)');
   }, [ready, app.scheme]);
 
   useEffect(() => { const map = mapRef.current; if (!ready || !map) return; const g = areaGeometry(app.area); source(map, 'firely-area', fc(g)); const b = app.area.bbox ?? geometryBbox(g); if (b) map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: window.matchMedia('(max-width: 720px)').matches ? { top: 150, bottom: 70, left: 24, right: 24 } : { top: 70, bottom: 60, left: 60, right: 200 }, maxZoom: 11, duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 350 }); }, [areaKey, ready]);
@@ -338,8 +339,8 @@ export default function MapPanel() {
 
       <Box xs={s.legendRow}>
         <Box xs={s.legend}>
-          <Caption>{t.frp}</Caption>
-          <Inline xs={s.legendItems}><Inline xs={s.dot} style={{ width: 6, height: 6, backgroundColor: FRP_LEGEND[0] }} />{t.low}<Inline xs={s.dot} style={{ width: 9, height: 9, backgroundColor: FRP_LEGEND[1] }} /><Inline xs={s.dot} style={{ width: 12, height: 12, backgroundColor: FRP_LEGEND[2] }} />{t.high}</Inline>
+          <Caption>{t.frp} · MW</Caption>
+          <Inline xs={s.legendItems}><FlameLegend level={0} />&lt;15<FlameLegend level={1} />15–&lt;40<FlameLegend level={2} />≥40<FlameLegend level={3} />{lang === 'es' ? 'Sin dato' : lang === 'en' ? 'Unknown' : 'Sem dado'}</Inline>
         </Box>
         {view && <Box xs={s.scale}><Inline xs={s.scaleBar} style={{ width: Math.round(view.px) }} />{fmtKm(view.km)}</Box>}
       </Box>
