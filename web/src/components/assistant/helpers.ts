@@ -100,3 +100,64 @@ export function localSummary(calendar: CalendarResponse, lang: Lang, profile: 'b
   if (lang === 'pt') return `Pico: ${count} detecções harmonizadas em ${peakMonth}; último mês: ${recent} em ${latestMonth}. Percentil: ${percentile ?? 'indisponível'}; referência: ${years ?? 'desconhecida'} anos; anomalia: ${ratio ?? 'indisponível'}; período de retorno estimado: ${period ?? 'indisponível'} anos.${estimated ? ' Alguns anos são estimados pela harmonização dos sensores; considere essa incerteza na comparação.' : ''}`;
   return `Máximo: ${count} detecciones armonizadas en ${peakMonth}; último mes: ${recent} en ${latestMonth}. Percentil: ${percentile ?? 'no disponible'}; referencia: ${years ?? 'desconocida'} años; anomalía: ${ratio ?? 'no disponible'}; periodo de retorno estimado: ${period ?? 'no disponible'} años.${estimated ? ' Algunos años se estimaron mediante armonización de sensores; considera esa incertidumbre al compararlos.' : ''}`;
 }
+
+/** History of one calendar month in an area: how many complete years had at least one harmonized detection, the
+ *  median and the largest month. Pure counting over API rows; years 2001-2011 are MODIS-based estimates. */
+export interface MonthHistory { month: number; years: number; withFire: number; median: number; max?: { year: number; count: number }; firstYear?: number; lastYear?: number }
+export function monthHistory(rows: CalendarRow[], month: number, lastCompleteYear: number): MonthHistory {
+  const sel = rows.filter(r => r.month === month && r.year <= lastCompleteYear && Number.isFinite(r.count_harm));
+  const values = sel.map(r => r.count_harm as number).sort((a, b) => a - b);
+  const mid = values.length ? (values.length % 2 ? values[(values.length - 1) / 2] : (values[values.length / 2 - 1] + values[values.length / 2]) / 2) : 0;
+  const top = sel.reduce<CalendarRow | undefined>((m, r) => !m || (r.count_harm as number) > (m.count_harm as number) ? r : m, undefined);
+  return { month, years: sel.length, withFire: sel.filter(r => (r.count_harm as number) >= 1).length, median: mid,
+    max: top ? { year: top.year, count: top.count_harm as number } : undefined,
+    firstYear: sel.length ? Math.min(...sel.map(r => r.year)) : undefined, lastYear: sel.length ? Math.max(...sel.map(r => r.year)) : undefined };
+}
+
+/** Months (YYYY-MM) between two ISO dates, inclusive. */
+export function monthsBetween(from: string, to: string): string[] {
+  const out: string[] = [];
+  let y = Number(from.slice(0, 4)), m = Number(from.slice(5, 7));
+  const ey = Number(to.slice(0, 4)), em = Number(to.slice(5, 7));
+  while ((y < ey || (y === ey && m <= em)) && out.length < 36) { out.push(`${y}-${String(m).padStart(2, '0')}`); m === 12 ? (y++, m = 1) : m++; }
+  return out;
+}
+
+const FUTURE = {
+  es: { out: (m: string, last: string) => `${m} está fuera del horizonte del pronóstico (llega hasta ${last}).`,
+        hist: (n: number, of: number, m: string, a: number, b: number, med: string) => `Históricamente, en ${m} hubo detecciones en ${n} de ${of} años (${a}-${b}); mediana ${med} detecciones.`,
+        likely: 'Si se repite el patrón histórico, lo más probable es que haya actividad.', unlikely: 'Históricamente ese mes suele no tener detecciones en esta área.',
+        fc: (m: string, e: string, n: string) => `Para ${m} se esperan ~${e} detecciones (normal ${n}).`, clim: (m: string, n: string) => `Para ${m} se muestra lo normal (${n} detecciones): aquí el modelo no supera a la climatología.`,
+        note: 'Detección satelital no es incendio confirmado.' },
+  en: { out: (m: string, last: string) => `${m} is beyond the forecast horizon (it reaches ${last}).`,
+        hist: (n: number, of: number, m: string, a: number, b: number, med: string) => `Historically, ${m} had detections in ${n} of ${of} years (${a}-${b}); median ${med} detections.`,
+        likely: 'If the historical pattern holds, activity is likely.', unlikely: 'Historically that month usually has no detections in this area.',
+        fc: (m: string, e: string, n: string) => `For ${m}, ~${e} detections are expected (normal ${n}).`, clim: (m: string, n: string) => `For ${m} the normal is shown (${n} detections): the model does not beat climatology here.`,
+        note: 'A satellite detection is not a confirmed fire.' },
+  pt: { out: (m: string, last: string) => `${m} está fora do horizonte da previsão (vai até ${last}).`,
+        hist: (n: number, of: number, m: string, a: number, b: number, med: string) => `Historicamente, em ${m} houve detecções em ${n} de ${of} anos (${a}-${b}); mediana ${med} detecções.`,
+        likely: 'Se o padrão histórico se repetir, o mais provável é que haja atividade.', unlikely: 'Historicamente esse mês costuma não ter detecções nesta área.',
+        fc: (m: string, e: string, n: string) => `Para ${m} esperam-se ~${e} detecções (normal ${n}).`, clim: (m: string, n: string) => `Para ${m} mostra-se o normal (${n} detecções): aqui o modelo não supera a climatologia.`,
+        note: 'Detecção de satélite não é incêndio confirmado.' },
+} as const;
+
+export interface FutureItem { target: string; expected: number; normal: number; show: 'forecast' | 'climatology' }
+/** Template answer for a question about future months: forecast where the horizon reaches, history otherwise. */
+export function futureSummary(months: string[], items: FutureItem[], histories: Record<number, MonthHistory>, lang: Lang): string {
+  const t = FUTURE[lang], fmt = (v: number) => formatCount(v, lang);
+  const label = (ym: string) => `${monthNames[lang][Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
+  const lastTarget = items.map(i => i.target).sort().at(-1);
+  const parts: string[] = [];
+  for (const ym of months) {
+    const it = items.find(i => i.target === ym);
+    if (it) { parts.push(it.show === 'forecast' ? t.fc(label(ym), fmt(it.expected), fmt(it.normal)) : t.clim(label(ym), fmt(it.normal))); continue; }
+    if (lastTarget) parts.push(t.out(label(ym), label(lastTarget)));
+    const h = histories[Number(ym.slice(5, 7))];
+    if (h && h.years) {
+      parts.push(t.hist(h.withFire, h.years, monthNames[lang][h.month - 1], h.firstYear!, h.lastYear!, fmt(h.median)));
+      parts.push(h.withFire * 2 > h.years ? t.likely : t.unlikely);
+    }
+  }
+  parts.push(t.note);
+  return parts.join(' ');
+}

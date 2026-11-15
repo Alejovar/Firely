@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from .intent import setting
+from .intent import llm_model, setting
 
 _NUMBER = re.compile(r'(?<![\w])[-+]?\d+(?:[.,]\d+)?(?![\w])')
 TEXT = {
@@ -60,7 +60,7 @@ def describe(kind: str, payload: dict, lang: str = 'es', profile: str = 'brigadi
         if client is None:
             import anthropic
             client = anthropic.Anthropic(api_key=setting('ANTHROPIC_API_KEY'), timeout=5.0)
-        response = client.messages.create(model=setting('FIRELY_LLM_MODEL', 'claude-sonnet-5-5'), max_tokens=180,
+        response = client.messages.create(model=llm_model(), max_tokens=1024, output_config={'effort': 'low'},
             system='Reword this description in the same language. Do not introduce numbers, change facts, or add claims. Return plain text only.',
             messages=[{'role': 'user', 'content': sentence}])
         proposed = ''.join(block.text for block in response.content if getattr(block, 'type', None) == 'text').strip()

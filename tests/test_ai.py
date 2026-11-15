@@ -1,3 +1,4 @@
+import json
 from datetime import date
 from types import SimpleNamespace
 
@@ -45,14 +46,17 @@ class FakeMessages:
 
 def test_llm_tool_and_failure(monkeypatch):
     monkeypatch.setenv('ANTHROPIC_API_KEY', 'fake-test-key')
-    block = SimpleNamespace(type='tool_use', name='extract_intent', input={
+    block = SimpleNamespace(type='text', text=json.dumps({
         'place_text': 'Arteaga', 'date_from': '2021-03-01', 'date_to': '2021-03-31',
-        'granularity': 'month', 'lang': 'es'})
+        'granularity': 'month', 'lang': 'es'}))
     fake = SimpleNamespace(messages=FakeMessages([block]))
     result = intent.extract('Arteaga en marzo de 2021', client=fake)
     assert result['source'] == 'llm'
     assert fake.messages.kwargs['messages'] == [{'role': 'user', 'content': 'Arteaga en marzo de 2021'}]
-    assert 'coordinates' not in fake.messages.kwargs['tools'][0]['input_schema']['properties']
+    fmt = fake.messages.kwargs['output_config']['format']
+    assert fmt['type'] == 'json_schema' and 'coordinates' not in fmt['schema']['properties']
+    assert 'tool_choice' not in fake.messages.kwargs  # forced tool use is rejected by current models
+    assert fake.messages.kwargs['model'] == 'claude-haiku-5-5'
     fake.messages.fail = True
     assert intent.extract('Arteaga en marzo de 2021', client=fake)['source'] == 'rules'
 

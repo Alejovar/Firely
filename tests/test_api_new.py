@@ -142,9 +142,9 @@ def test_extract_route_returns_csv_and_never_stores(data):
 
 def test_llm_output_is_revalidated():
     class Block:
-        type, name = "tool_use", "record_fire_statistics"
-        input = {"records": [{"state": "Coahuila", "municipality": "Arteaga", "year": "2024", "month": 13, "fires": "7",
-                              "area_ha": None, "cause": None, "source_line": 3}], "totals": []}
+        type = "text"
+        text = json.dumps({"records": [{"state": "Coahuila", "municipality": "Arteaga", "year": "2024", "month": 13, "fires": "7",
+                                        "area_ha": None, "cause": None, "source_line": 3}], "totals": []})
 
     class Client:
         class messages:

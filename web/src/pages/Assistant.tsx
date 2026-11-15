@@ -17,12 +17,13 @@ import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/Segme
 import { Popover } from '@astryxdesign/core/Popover';
 import { Skeleton } from '@astryxdesign/core/Skeleton';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
-import { API_URL, ApiError, getAnalogs, getCalendar, getContext, getReturnPeriod, getTerritory, resolveArea, type AreaCandidate, type AnalogsResponse, type CalendarResponse, type ContextResponse, type ResolveAreaResponse, type TerritoryResponse } from '../api/client';
+import { API_URL, ApiError, getAnalogs, getCalendar, getContext, getOutlook, getReturnPeriod, getTerritory, resolveArea, type OutlookResponse, type AreaCandidate, type AnalogsResponse, type CalendarResponse, type ContextResponse, type ResolveAreaResponse, type TerritoryResponse } from '../api/client';
 import { chartInk, emphasisSeries } from '../lib/dataviz';
 import { monthShort, type Lang } from '../i18n';
 import { useApp } from '../state/AppState';
 import type { AreaSel } from '../state/hash';
-import { calendarQuery, candidateArea, contextWindow, formatAnomaly, formatCount, largestLocalities, latestContextRow, latestRow, localSummary, monthIndex, peakRow, returnPeriodQuery } from '../components/assistant/helpers';
+import { calendarQuery, candidateArea, contextWindow, formatAnomaly, formatCount, futureSummary, largestLocalities, latestContextRow, latestRow, localSummary, monthHistory, monthIndex, monthsBetween, peakRow, returnPeriodQuery, type MonthHistory } from '../components/assistant/helpers';
+import { OutlookPanel } from '../components/analysis/OutlookPanel';
 import { Caption } from '../ui/kit';
 
 type Profile = 'brigadista' | 'cientifico';
@@ -31,6 +32,7 @@ type Turn = {
   id: number; prompt: string; resolveStatus: 'running' | 'complete' | 'error';
   calendarStatus?: 'running' | 'complete' | 'error'; resolved?: ResolveAreaResponse;
   selected?: AreaSel; from?: string; to?: string; calendar?: CalendarResponse;
+  future?: { status: 'running' | 'complete' | 'error'; months: string[]; outlook?: OutlookResponse; histories?: Record<number, MonthHistory>; summary?: string };
   query?: string; contextQuery?: string; context?: CalendarResponse; contextStatus?: 'running' | 'complete' | 'error'; returnQuery?: string; referenceYears?: number; error?: string; profile: Profile;
 };
 const messages = {
@@ -42,6 +44,7 @@ const suggestions = ['Incendios en la sierra de Arteaga en marzo de 2021', 'Chil
 const summaryLabel: Record<Lang, string> = { es: 'Resumen automático', en: 'Automatic summary', pt: 'Resumo automático' };
 const queryListLabel: Record<Lang, string> = { es: 'Consultas exactas usadas', en: 'Exact queries used', pt: 'Consultas exatas usadas' };
 const copyLabel: Record<Lang, string> = { es: 'Copiar consulta', en: 'Copy query', pt: 'Copiar consulta' };
+const futureLabel: Record<Lang, string> = { es: 'Consultando pronóstico…', en: 'Reading the outlook…', pt: 'Consultando a previsão…' };
 const contextError: Record<Lang, string> = { es: 'No se pudo cargar el contexto mensual.', en: 'Monthly context could not be loaded.', pt: 'Não foi possível carregar o contexto mensal.' };
 const styles = stylex.create({
   chat: { flex: 1, minHeight: 0, width: '100%' },
@@ -136,8 +139,26 @@ export default function Assistant() {
   const active = useRef<AbortController | null>(null), followUpController = useRef<AbortController | null>(null), nextId = useRef(0), nextFollowUpId = useRef(0);
   const change = (id: number, patch: Partial<Turn>) => setTurns((prev) => prev.map((turn) => turn.id === id ? { ...turn, ...patch } : turn));
   useEffect(() => () => { active.current?.abort(); followUpController.current?.abort(); }, []);
+  async function loadFuture(id: number, selected: AreaSel, from: string, to: string, controller: AbortController) {
+    // A question about months that have not happened: the calendar has no data there. Answer with the 1-3 month
+    // outlook where it reaches and with the history of the same calendar month elsewhere (numbers from the API).
+    const months = monthsBetween(from, to), today = new Date().toISOString().slice(0, 10);
+    change(id, { selected, from, to, future: { status: 'running', months } });
+    const [outlook, history] = await Promise.allSettled([getOutlook(selected.area, controller.signal), getCalendar(selected.area, '2001-01-01', today, 'count', 'median', controller.signal)]);
+    if (controller.signal.aborted) return;
+    if (outlook.status === 'rejected' && history.status === 'rejected') { change(id, { future: { status: 'error', months }, error: readableError(outlook.reason, lang) }); return; }
+    const rows = history.status === 'fulfilled' ? history.value.rows : [];
+    const perYear = new Map<number, number>(); rows.forEach(r => perYear.set(r.year, (perYear.get(r.year) ?? 0) + 1));
+    const complete = [...perYear].filter(([, n]) => n === 12).map(([y]) => y), lastYear = complete.length ? Math.max(...complete) : 0;
+    const histories: Record<number, MonthHistory> = {};
+    for (const m of new Set(months.map(ym => Number(ym.slice(5, 7))))) histories[m] = monthHistory(rows, m, lastYear);
+    const out = outlook.status === 'fulfilled' ? outlook.value : undefined;
+    const items = (out?.forecasts ?? []).map(f => ({ target: f.target, expected: f.expected_detections, normal: f.normal_detections, show: f.show }));
+    change(id, { future: { status: 'complete', months, outlook: out, histories, summary: futureSummary(months, items, histories, lang) } });
+  }
   async function loadCalendar(id: number, selected: AreaSel, resolved: ResolveAreaResponse, controller: AbortController) {
     const from = resolved.intent.date_from || app.from, to = resolved.intent.date_to || app.to, query = calendarQuery(selected, from, to);
+    if (resolved.intent.date_from && resolved.intent.date_from > new Date().toISOString().slice(0, 10)) return loadFuture(id, selected, from, to, controller);
     change(id, { selected, from, to, query, calendarStatus: 'running', error: undefined });
     try {
       const response = await getCalendar(selected.area, from, to, 'count', 'median', controller.signal);
@@ -249,7 +270,7 @@ export default function Assistant() {
             return <VStack key={turn.id} gap={3}>
               <ChatMessage sender="user"><ChatMessageBubble>{turn.prompt}</ChatMessageBubble></ChatMessage>
               <ChatMessage sender="assistant">
-                <ChatToolCalls defaultIsExpanded calls={[{ name: t.resolving, status: turn.resolveStatus }, ...(turn.calendarStatus ? [{ name: t.calendar, status: turn.calendarStatus }] : [])]} />
+                <ChatToolCalls defaultIsExpanded calls={[{ name: t.resolving, status: turn.resolveStatus }, ...(turn.calendarStatus ? [{ name: t.calendar, status: turn.calendarStatus }] : []), ...(turn.future ? [{ name: futureLabel[lang], status: turn.future.status }] : [])]} />
                 {turn.resolveStatus === 'running' && <ChatMessageBubble variant="ghost"><Skeleton width="75%" height="var(--spacing-6)" /></ChatMessageBubble>}
                 {resolved && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={3}>
                   <HStack gap={2} wrap="wrap"><Token label={`${t.place}: ${resolved.intent.place_text || '—'}`} /><Token label={`${t.from}: ${resolved.intent.date_from || app.from}`} /><Token label={`${t.to}: ${resolved.intent.date_to || app.to}`} /><Badge label={resolved.intent.source === 'llm' ? t.ai : t.rules} variant="neutral" /></HStack>
@@ -258,6 +279,8 @@ export default function Assistant() {
                   {!turn.selected && options.length > 0 && <VStack gap={2}><Text weight="semibold">{t.choose}</Text>{options.map((candidate, index) => <SelectableCard key={`${candidate.code || candidate.label}-${index}`} label={`${candidate.label}, ${candidate.kind || ''}, ${candidate.country || ''}${candidate.code ? `, ${candidate.code}` : ''}`} isSelected={false} onChange={() => choose(turn.id, candidate, resolved)} padding={3} width="100%"><VStack gap={0.5}><Text weight="semibold">{candidate.label}</Text><Text type="supporting">{[candidate.kind, candidate.country].filter(Boolean).join(', ')}</Text>{candidate.code && <Text type="code">{candidate.country?.toLowerCase().includes('mex') ? 'INEGI' : 'ID'} {candidate.code}</Text>}</VStack></SelectableCard>)}<HStack gap={2} wrap="wrap"><Button label={ext.other} variant="ghost" size="sm" onClick={() => { setDraft(''); document.querySelector<HTMLElement>('textarea, input[placeholder]')?.focus(); }}/><Button label={ext.draw} variant="ghost" size="sm" onClick={drawOnMap}/></HStack><Text type="supporting">{ext.geometry}</Text></VStack>}
                 </VStack></ChatMessageBubble>}
                 {turn.calendarStatus === 'running' && <ChatMessageBubble variant="ghost" width="100%"><Card width="100%"><VStack gap={3}><Skeleton width="50%" height="var(--spacing-6)" /><Skeleton width="100%" height="var(--spacing-10)" /><Skeleton width="70%" height="var(--spacing-6)" /></VStack></Card></ChatMessageBubble>}
+                {turn.future?.status === 'running' && <ChatMessageBubble variant="ghost" width="100%"><Skeleton width="100%" height="var(--spacing-10)" /></ChatMessageBubble>}
+                {turn.future?.status === 'complete' && turn.selected && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={2}><Text>{turn.future.summary}</Text><OutlookPanel area={turn.selected.area} lang={lang} /></VStack></ChatMessageBubble>}
                 {turn.calendar && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={2}><Text>{localSummary(turn.calendar, lang, profile, turn.referenceYears)}</Text><VStack xstyle={styles.resultMobile}><Result turn={turn} lang={lang} profile={profile} onProfile={value => updateProfile(value, turn)} onMap={() => app.patch({ area: turn.selected!, from: turn.from!, to: turn.to!, page: 'explorar' })} onMethod={() => app.navigate('metodo')} /></VStack></VStack></ChatMessageBubble>}
               </ChatMessage>
               {followUps.filter(item => item.turnId === turn.id).map(item => <ChatMessage key={item.id} sender="assistant"><ChatMessageBubble variant="ghost" width="100%"><FollowUpResult item={item} lang={lang}/></ChatMessageBubble></ChatMessage>)}
