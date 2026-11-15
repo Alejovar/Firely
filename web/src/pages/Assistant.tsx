@@ -88,10 +88,12 @@ const futureLabel: Record<Lang, string> = { es: 'Consultando pronóstico…', en
 const contextError: Record<Lang, string> = { es: 'No se pudo cargar el contexto mensual.', en: 'Monthly context could not be loaded.', pt: 'Não foi possível carregar o contexto mensal.' };
 const styles = stylex.create({
   chat: { flex: 1, minHeight: 0, width: '100%' },
-  page: { width: '100%', minWidth: 0, height: '100%' },
-  body: { width: '100%', minWidth: 0, flex: 1, minHeight: 0 },
-  chatColumn: { minWidth: 0, height: '100%' },
-  resultColumn: { minWidth: 0, overflowY: 'auto', '@media (max-width: 56.25rem)': { display: 'none' } },
+  page: { width: '100%', minWidth: 0, height: '100%', overflow: 'hidden' },
+  // The two columns must be bounded by the viewport: otherwise the chat grows past the screen, the composer ends
+  // up below the fold and nothing scrolls (the page itself is not scrollable). Each column scrolls on its own.
+  body: { width: '100%', minWidth: 0, flex: 1, minHeight: 0, overflow: 'hidden', gridAutoRows: 'minmax(0, 1fr)' },
+  chatColumn: { minWidth: 0, height: '100%', minHeight: 0, overflow: 'hidden' },
+  resultColumn: { minWidth: 0, height: '100%', minHeight: 0, overflowY: 'auto', '@media (max-width: 56.25rem)': { display: 'none' } },
   resultMobile: { width: '100%', '@media (min-width: 56.251rem)': { display: 'none' } },
   header: { padding: 'var(--spacing-4)', borderBottom: 'thin solid var(--color-border)', width: '100%' },
   // Gotita's stage: the large figure melts into the page (radial mask + soft glow of the mode's colour)

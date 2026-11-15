@@ -55,6 +55,8 @@ export function encodeCell(row: CalendarRow | undefined, mode: CalendarMode, met
   if (!row) return { background: 'transparent', color: 'var(--color-text-secondary)', step: null };
   if (mode === 'anomaly') {
     const ratio = row.anomaly_ratio;
+    // activity in a month whose normal is zero: above normal, though no ratio exists
+    if (ratio == null && row.reference_zero && (row.count_harm ?? 0) > 0) return { background: DIVERGING[6], color: onCellText(6, 7, scheme, true), step: 6 };
     if (ratio == null || !Number.isFinite(ratio)) return { background: EMPTY_CELL, color: 'var(--color-text-secondary)', step: null };
     const step = divStep(ratio);
     return { background: DIVERGING[step], color: onCellText(step, 7, scheme, true), step };

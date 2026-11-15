@@ -216,7 +216,10 @@ def calendar(*, h3_list=None, bbox=None, lat=None, lon=None, radius_km=None,
         if sample and value is not None:
             ordered = sorted(sample)
             baseline = (ordered[(len(ordered)-1)//2] + ordered[len(ordered)//2]) / 2 if reference == "median" else sum(sample) / len(sample)
-            ratio = value / baseline if baseline else None
+            # A reference of 0 ("normally no fire here this month") has no ratio: a month with 0 equals normal (1.0);
+            # a month with activity is above a zero normal, flagged instead of dividing by zero.
+            ratio = value / baseline if baseline else (1.0 if value == 0 else None)
+            reference_zero = not baseline
             greater = sum(v > value for v in sample)
             equal = sum(v == value for v in sample)
             rank = greater + (equal + 1) / 2 if equal else greater + 1
@@ -224,12 +227,13 @@ def calendar(*, h3_list=None, bbox=None, lat=None, lon=None, radius_km=None,
             period = min(50.0, 1 / (1 - percentile))
         else:
             ratio = percentile = period = None
+            reference_zero = False
         context_clear = clear_months.get((y, m), (None,))[0]
         cloud_value, cloud_coverage = corrected_months.get((y,m),(None,0))
         provisional = sp_month is None or (y,m) > sp_month
         rows.append({"year": y, "month": m, "count_harm": count,
                      "count_harm_lo": lo, "count_harm_hi": hi, "frp_harm": frp,
-                     "anomaly_ratio": ratio, "percentile": percentile,
+                     "anomaly_ratio": ratio, "reference_zero": reference_zero, "percentile": percentile,
                      "return_period_years": period, "clear_frac": context_clear,
                      "is_estimated": estimated, "source": "NRT" if provisional else "SP",
                      "is_provisional": provisional,

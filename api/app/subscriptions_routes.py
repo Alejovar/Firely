@@ -73,7 +73,7 @@ def area_params(area: dict) -> dict:
 
 def public(item: dict) -> dict:
     """Subscription as returned by the API: the chat id is masked (it identifies a person or group)."""
-    chat = str(item.get("chat_id", ""))
+    chat = "" if item.get("chat_id") is None else str(item["chat_id"])
     return {**{k: v for k, v in item.items() if k != "chat_id"}, "chat_id_masked": "…" + chat[-3:] if chat else None}
 
 
@@ -89,7 +89,7 @@ class Area(BaseModel):
 class SubscriptionIn(BaseModel):
     name: str = Field(..., min_length=1, max_length=80)
     area: Area
-    chat_id: int
+    chat_id: int | None = Field(None, description="Telegram chat id; omit it to only evaluate and preview the alert")
     min_index: float = Field(55.0, ge=0, le=100, description="Priority index (/risk, 0–100) that triggers the alert")
     min_anomaly_ratio: float | None = Field(None, gt=0, le=1000,
                                             description="Optional: latest month / median of the same month in other years")
@@ -128,6 +128,33 @@ def create_subscription(body: SubscriptionIn):
 @router.get("/subscriptions")
 def list_subscriptions():
     return {"attribution": ATTRIBUTION, "rows": [public(i) for i in load()]}
+
+
+@router.get("/subscriptions/{sub_id}/preview")
+def preview_subscription(sub_id: str):
+    """Evaluate a subscription NOW with the real data and return the exact message the daily job would send.
+    Sends nothing: it lets an operator (or a demo) check the alert without Telegram or shell access."""
+    from ai.intent import setting
+    from pipeline import alerts_job  # imported here: alerts_job imports this module
+    item = next((i for i in load() if i.get("id") == sub_id), None)
+    if item is None:
+        raise HTTPException(404, "Subscription not found")
+    ev = alerts_job.evaluate(item)
+    approved, telegram = bool(item.get("approved")), bool(setting("TELEGRAM_BOT_TOKEN"))
+    if not ev["triggered"]:
+        status = "below_threshold"
+    elif not item.get("chat_id"):
+        status = "no_chat"
+    elif not approved:
+        status = "pending_approval"
+    elif not telegram:
+        status = "telegram_not_configured"
+    else:
+        status = "would_send"
+    return {"attribution": ATTRIBUTION, "subscription": public(item), "evaluation": ev, "status": status,
+            "message": alerts_job.message(item, ev), "sent": False,
+            "note": "Vista previa: no se envió nada. El trabajo diario (06:30 UTC) envía solo si el umbral se cumple, "
+                    "la suscripción está aprobada y el bot de Telegram está configurado."}
 
 
 @router.delete("/subscriptions/{sub_id}")

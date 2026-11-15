@@ -132,6 +132,8 @@ def run(*, dry_run: bool = False, telegram=None, token: str | None = None) -> li
             entry["status"] = "below_threshold"
         elif key in sent:
             entry["status"] = "already_sent"
+        elif not sub.get("chat_id"):
+            entry["status"] = "no_chat"  # preview-only subscription: evaluated and logged, never sent
         elif not sub.get("approved"):
             entry["status"] = "pending_approval"
         elif not send_enabled:

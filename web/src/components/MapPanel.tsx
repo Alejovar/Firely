@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as stylex from '@stylexjs/stylex';
-import { Map, setWorkerUrl, type GeoJSONSource, type ExpressionSpecification } from 'maplibre-gl';
-import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
+import { Map, type GeoJSONSource, type ExpressionSpecification } from 'maplibre-gl';
+import '../lib/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { TerraDraw, TerraDrawPolygonMode } from 'terra-draw';
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter';
@@ -19,7 +19,6 @@ import { monthNames, monthShort } from '../i18n';
 import { FRP_LEGEND, FRP_STOPS, PRIORITY_STOPS, RECURRENCE_STOPS, mapInk } from '../lib/dataviz';
 import { Box, Caption, Inline, LinkButton, OutlineButton, Toggle, kit } from '../ui/kit';
 
-setWorkerUrl(workerUrl);
 
 const s = stylex.create({
   root: { position: 'relative', width: '100%', height: '100%', minHeight: 0, overflow: 'hidden', backgroundColor: 'var(--color-background-body)' },

@@ -199,6 +199,18 @@ def test_subscriptions_crud_and_alerts_job(data):
     assert client.post("/subscriptions", json={"name": "x", "area": {}, "chat_id": 1}).status_code == 422
     assert len(client.get("/subscriptions").json()["rows"]) == 2
 
+    # Preview: evaluates now with the real data and returns the message, never sends
+    prev = client.get(f"/subscriptions/{sub['id']}/preview").json()
+    assert prev["sent"] is False and prev["evaluation"]["triggered"] is True and prev["status"] == "pending_approval"
+    assert prev["message"].startswith("[EJERCICIO / PRUEBA]") and "123456789" not in str(prev)
+    assert client.get(f"/subscriptions/{low['subscription']['id']}/preview").json()["status"] == "below_threshold"
+    assert client.get("/subscriptions/nope/preview").status_code == 404
+    demo = client.post("/subscriptions", json={"name": "Solo prueba", "area": {"h3": CELL}, "min_index": 10}).json()["subscription"]
+    assert demo["chat_id_masked"] is None
+    assert client.get(f"/subscriptions/{demo['id']}/preview").json()["status"] == "no_chat"
+    assert {e["subscription"]: e for e in alerts_job.run(telegram=FakeTelegram())}[demo["id"]]["status"] == "no_chat"
+    client.delete(f"/subscriptions/{demo['id']}")
+
     tg = FakeTelegram()
     first = {e["subscription"]: e for e in alerts_job.run(telegram=tg)}
     assert first[sub["id"]]["status"] == "pending_approval" and tg.sent == []

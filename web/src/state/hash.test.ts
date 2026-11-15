@@ -26,6 +26,6 @@ describe('url state', () => {
   it('keeps the page', () => {
     expect(parseHash('#/metodo', base).page).toBe('metodo');
     expect(parseHash('#/asistente?x=1', base).page).toBe('asistente');
-    for (const page of ['historia', 'plataforma', 'ficha', 'widget', 'identidad']) expect(parseHash(`#/${page}`, base).page).toBe(page);
+    for (const page of ['historia', 'plataforma', 'ficha', 'widget']) expect(parseHash(`#/${page}`, base).page).toBe(page);
   });
 });

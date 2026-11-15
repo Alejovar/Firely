@@ -65,7 +65,6 @@ const History = lazy(() => import('./pages/History'));
 const Platform = lazy(() => import('./pages/Platform'));
 const Ficha = lazy(() => import('./pages/Ficha'));
 const WidgetDoc = lazy(() => import('./pages/WidgetDoc'));
-const Identity = lazy(() => import('./pages/Identity'));
 
 /** Firely mark: an H3 cell (the unit of analysis) in ember, a flame cut out of it, Gotita's water drop at its core
  *  and a satellite on its orbit. Theme tokens, so it follows light and dark mode; public/icon.svg is the favicon. */
@@ -104,7 +103,7 @@ function Shell() {
         <Logo />
         {item('explorar', t.explore)}{item('asistente', t.assistant)}{item('metodo', t.method)}{item('plataforma', t.platform)}{item('historia', t.history)}
         <Inline xs={s.divider} aria-hidden="true" />
-        {item('ficha', t.sheet, true)}{item('widget', t.widget, true)}{item('identidad', t.identity, true)}
+        {item('ficha', t.sheet, true)}{item('widget', t.widget, true)}
       </Box>
       <Box xs={s.body}>
         <Box as="header" xs={s.header}>
@@ -132,7 +131,6 @@ function Shell() {
             {page === 'plataforma' && <Platform />}
             {page === 'ficha' && <Ficha />}
             {page === 'widget' && <WidgetDoc />}
-            {page === 'identidad' && <Identity />}
           </Suspense>
         </Box>
       </Box>

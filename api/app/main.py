@@ -12,9 +12,19 @@ _real_mode = os.environ.get("FIRELY_API_MODE") == "real"
 _citation = ("Cita sugerida: Equipo Firely (2026). *Firely: serie armonizada de puntos de calor "
              "MODIS–VIIRS* (método 1.2.0-hybrid-biome). Fuente original: NASA FIRMS. "
              "El DOI se añadirá tras publicar el dataset.")
+# Behind nginx the API lives under /api (the proxy strips the prefix). FIRELY_API_PREFIX tells the docs page where
+# the schema is and lets "Try it out" call the right URL; unset (local runs, tests) it is the root.
+_prefix = os.environ.get("FIRELY_API_PREFIX", "").rstrip("/")
 app = FastAPI(title=f"Firely API ({'real' if _real_mode else 'mock'})", version="0.1.0",
               description=(("Datos procesados. " if _real_mode else
-                            "Respuestas SIMULADAS siguiendo api/openapi.yaml. ") + _citation))
+                            "Respuestas SIMULADAS siguiendo api/openapi.yaml. ") + _citation),
+              docs_url=None, servers=[{"url": _prefix}] if _prefix else None)
+
+
+@app.get("/docs", include_in_schema=False)
+def swagger_docs():
+    from fastapi.openapi.docs import get_swagger_ui_html
+    return get_swagger_ui_html(openapi_url=f"{_prefix}{app.openapi_url}", title="Firely API, documentación")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 if _real_mode:  # registered before the mock routes so /season, /analogs... resolve to the real analyses

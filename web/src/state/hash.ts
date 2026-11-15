@@ -1,9 +1,9 @@
 // Shareable URL state: #/explorar?area=bbox:-100.9,25.2,-100.2,25.7&label=...&from=2001-01-01&to=2026-11-14&metric=count
 import type { Area, Metric, Reference } from '../api/client';
 
-export type Page = 'explorar' | 'asistente' | 'metodo' | 'historia' | 'plataforma' | 'ficha' | 'widget' | 'identidad';
+export type Page = 'explorar' | 'asistente' | 'metodo' | 'historia' | 'plataforma' | 'ficha' | 'widget';
 export type CalendarMode = 'count' | 'anomaly';
-export const PAGES: Page[] = ['explorar', 'asistente', 'metodo', 'historia', 'plataforma', 'ficha', 'widget', 'identidad'];
+export const PAGES: Page[] = ['explorar', 'asistente', 'metodo', 'historia', 'plataforma', 'ficha', 'widget'];
 export type BurnFilter = 'all' | 'agricola' | 'forestal';
 
 export interface AreaSel {

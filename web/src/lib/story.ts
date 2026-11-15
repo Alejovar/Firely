@@ -34,12 +34,13 @@ export function playCalendar(rows: CalendarRow[], onMonth:(year:number,month:num
   const AudioContextClass = window.AudioContext;
   if (!AudioContextClass) return ()=>{};
   const ctx = new AudioContextClass();
+  void ctx.resume(); // created after the click, but some browsers start it suspended
   let stopped=false;
   const ordered=[...rows].sort((a,b)=>a.year-b.year||a.month-b.month);
   const max=Math.max(1,...ordered.map(r=>r.count_harm??0));
   ordered.forEach((r,i)=>{
     const start=ctx.currentTime+i*.12;
-    const volume=Math.min(.11,.015+.095*Math.sqrt((r.count_harm??0)/max));
+    const volume=Math.min(.3,.05+.25*Math.sqrt((r.count_harm??0)/max));
     const tone=(freq:number,duration:number)=>{const osc=ctx.createOscillator();const gain=ctx.createGain();osc.frequency.value=freq;osc.type='sine';gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(volume,start+.01);gain.gain.exponentialRampToValueAtTime(.001,start+duration);osc.connect(gain).connect(ctx.destination);osc.start(start);osc.stop(start+duration);};
     tone(220+550*Math.sqrt((r.count_harm??0)/max),.1);
     if((r.anomaly_ratio??0)>=2) tone(370,.08);

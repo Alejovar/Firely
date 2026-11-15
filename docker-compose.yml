@@ -9,6 +9,7 @@ services:
     restart: unless-stopped
     environment:
       FIRELY_API_MODE: real
+      FIRELY_API_PREFIX: /api
       # optional keys; leave unset and the features degrade gracefully (see .env.example)
       FIRMS_MAP_KEY: ${FIRMS_MAP_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
