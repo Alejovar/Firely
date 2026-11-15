@@ -1,0 +1,3 @@
+import { describe, expect, it } from 'vitest';
+import { noteForValue } from './sonify';
+describe('sonification',()=>{it('raises pitch and gain with activity and marks extreme months',()=>{const quiet=noteForValue(0,100),loud=noteForValue(100,100,true);expect(loud.frequency).toBeGreaterThan(quiet.frequency);expect(loud.gain).toBeGreaterThan(quiet.gain);expect(loud.dissonance).toBe(true);expect(quiet.dissonance).toBe(false);});it('clamps out-of-range values',()=>{expect(noteForValue(-10,100).frequency).toBe(noteForValue(0,100).frequency);expect(noteForValue(200,100).frequency).toBe(noteForValue(100,100).frequency);});});

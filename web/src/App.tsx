@@ -11,21 +11,26 @@ import { Skeleton } from '@astryxdesign/core/Skeleton';
 import { HStack } from '@astryxdesign/core/HStack';
 import { VStack } from '@astryxdesign/core/VStack';
 import { Icon } from '@astryxdesign/core/Icon';
-import { BeakerIcon, ChatBubbleLeftRightIcon, MapIcon, MoonIcon, SunIcon } from '@heroicons/react/24/outline';
+import { BeakerIcon, BellAlertIcon, ChatBubbleLeftRightIcon, CodeBracketIcon, DocumentTextIcon, FilmIcon, MapIcon, MoonIcon, SparklesIcon, SunIcon } from '@heroicons/react/24/outline';
 import { AppStateProvider, useApp, type Lang } from './state/AppState';
 import { useNav } from './i18n';
 import { themes } from './astryx-themes';
-import AreaSearch from './components/AreaSearch';
+import TopBarTools from './components/topbar/TopBarTools';
 
 const styles = stylex.create({
   // the TopNav search is for desktop; on phones Explorer renders its own inline search
-  searchSlot: { width: 'clamp(260px, 38vw, 540px)', display: { default: 'flex', '@media (max-width: 720px)': 'none' } },
+  searchSlot: { width: 'clamp(280px, 62vw, 980px)', display: { default: 'flex', '@media (max-width: 720px)': 'none' } },
   hideOnSmall: { display: { default: 'flex', '@media (max-width: 720px)': 'none' } },
 });
 
 const Explorer = lazy(() => import('./pages/Explorer'));
 const Assistant = lazy(() => import('./pages/Assistant'));
 const Method = lazy(() => import('./pages/Method'));
+const History = lazy(() => import('./pages/History'));
+const Platform = lazy(() => import('./pages/Platform'));
+const Ficha = lazy(() => import('./pages/Ficha'));
+const WidgetDoc = lazy(() => import('./pages/WidgetDoc'));
+const Identity = lazy(() => import('./pages/Identity'));
 
 function Shell() {
   const app = useApp();
@@ -40,7 +45,7 @@ function Shell() {
         <TopNav
           label={t.main}
           heading={<SideNavHeading heading="FIRELY" />}
-          centerContent={page === 'explorar' ? <VStack xstyle={styles.searchSlot}><AreaSearch /></VStack> : undefined}
+          centerContent={page === 'explorar' ? <VStack xstyle={styles.searchSlot}><TopBarTools /></VStack> : undefined}
           endContent={
             <HStack gap={2} vAlign="center">
               <HStack xstyle={styles.hideOnSmall}><Badge label={t.tagline} variant="neutral" /></HStack>
@@ -67,6 +72,13 @@ function Shell() {
             <SideNavItem label={t.explore} icon={MapIcon} isSelected={page === 'explorar'} onClick={() => app.navigate('explorar')} />
             <SideNavItem label={t.assistant} icon={ChatBubbleLeftRightIcon} isSelected={page === 'asistente'} onClick={() => app.navigate('asistente')} />
             <SideNavItem label={t.method} icon={BeakerIcon} isSelected={page === 'metodo'} onClick={() => app.navigate('metodo')} />
+            <SideNavItem label={t.platform} icon={BellAlertIcon} isSelected={page === 'plataforma'} onClick={() => app.navigate('plataforma')} />
+            <SideNavItem label={t.history} icon={FilmIcon} isSelected={page === 'historia'} onClick={() => app.navigate('historia')} />
+          </SideNavSection>
+          <SideNavSection title="Más" isHeaderHidden>
+            <SideNavItem label={t.sheet} icon={DocumentTextIcon} isSelected={page === 'ficha'} onClick={() => app.navigate('ficha')} />
+            <SideNavItem label={t.widget} icon={CodeBracketIcon} isSelected={page === 'widget'} onClick={() => app.navigate('widget')} />
+            <SideNavItem label={t.identity} icon={SparklesIcon} isSelected={page === 'identidad'} onClick={() => app.navigate('identidad')} />
           </SideNavSection>
         </SideNav>
       }
@@ -75,6 +87,11 @@ function Shell() {
         {page === 'explorar' && <Explorer />}
         {page === 'asistente' && <Assistant />}
         {page === 'metodo' && <Method />}
+        {page === 'historia' && <History />}
+        {page === 'plataforma' && <Platform />}
+        {page === 'ficha' && <Ficha />}
+        {page === 'widget' && <WidgetDoc />}
+        {page === 'identidad' && <Identity />}
       </Suspense>
     </AppShell>
   );

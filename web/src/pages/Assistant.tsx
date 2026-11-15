@@ -7,6 +7,9 @@ import { Heading, Text } from '@astryxdesign/core/Text';
 import { ChatComposer, ChatComposerInput, ChatLayout, ChatMessage, ChatMessageBubble, ChatMessageList, ChatSystemMessage, ChatToolCalls } from '@astryxdesign/core/Chat';
 import { Button } from '@astryxdesign/core/Button';
 import { Card } from '@astryxdesign/core/Card';
+import { Grid } from '@astryxdesign/core/Grid';
+import { Table } from '@astryxdesign/core/Table';
+import { Banner } from '@astryxdesign/core/Banner';
 import { Token } from '@astryxdesign/core/Token';
 import { Badge } from '@astryxdesign/core/Badge';
 import { SelectableCard } from '@astryxdesign/core/SelectableCard';
@@ -14,14 +17,15 @@ import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/Segme
 import { Popover } from '@astryxdesign/core/Popover';
 import { Skeleton } from '@astryxdesign/core/Skeleton';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
-import { API_URL, ApiError, getCalendar, getReturnPeriod, resolveArea, type AreaCandidate, type CalendarResponse, type ResolveAreaResponse } from '../api/client';
+import { API_URL, ApiError, getAnalogs, getCalendar, getContext, getReturnPeriod, getTerritory, resolveArea, type AreaCandidate, type AnalogsResponse, type CalendarResponse, type ContextResponse, type ResolveAreaResponse, type TerritoryResponse } from '../api/client';
 import { chartInk, emphasisSeries } from '../lib/dataviz';
 import { monthShort, type Lang } from '../i18n';
 import { useApp } from '../state/AppState';
 import type { AreaSel } from '../state/hash';
-import { calendarQuery, candidateArea, contextWindow, formatAnomaly, formatCount, latestRow, localSummary, monthIndex, peakRow, returnPeriodQuery } from '../components/assistant/helpers';
+import { calendarQuery, candidateArea, contextWindow, formatAnomaly, formatCount, largestLocalities, latestContextRow, latestRow, localSummary, monthIndex, peakRow, returnPeriodQuery } from '../components/assistant/helpers';
 
 type Profile = 'brigadista' | 'cientifico';
+type FollowUp = { id: number; turnId: number; kind: 'territory' | 'context'; status: 'running' | 'complete' | 'error'; territory?: TerritoryResponse; context?: ContextResponse; analogs?: AnalogsResponse; error?: string };
 type Turn = {
   id: number; prompt: string; resolveStatus: 'running' | 'complete' | 'error';
   calendarStatus?: 'running' | 'complete' | 'error'; resolved?: ResolveAreaResponse;
@@ -38,7 +42,20 @@ const summaryLabel: Record<Lang, string> = { es: 'Resumen automático', en: 'Aut
 const queryListLabel: Record<Lang, string> = { es: 'Consultas exactas usadas', en: 'Exact queries used', pt: 'Consultas exatas usadas' };
 const copyLabel: Record<Lang, string> = { es: 'Copiar consulta', en: 'Copy query', pt: 'Copiar consulta' };
 const contextError: Record<Lang, string> = { es: 'No se pudo cargar el contexto mensual.', en: 'Monthly context could not be loaded.', pt: 'Não foi possível carregar o contexto mensal.' };
-const styles = stylex.create({ chat: { flex: 1, minHeight: 0, width: '100%' } });
+const styles = stylex.create({
+  chat: { flex: 1, minHeight: 0, width: '100%' },
+  page: { width: '100%', minWidth: 0, height: '100%' },
+  body: { width: '100%', minWidth: 0, flex: 1, minHeight: 0 },
+  chatColumn: { minWidth: 0, height: '100%' },
+  resultColumn: { minWidth: 0, overflowY: 'auto', '@media (max-width: 56.25rem)': { display: 'none' } },
+  resultMobile: { width: '100%', '@media (min-width: 56.251rem)': { display: 'none' } },
+  header: { padding: 'var(--spacing-4)', borderBottom: 'thin solid var(--color-border)', width: '100%' },
+});
+const extras = {
+  es: { eyebrow: 'ASISTENTE ANALISTA · PANEL LATERAL', result: 'Resultado', area: 'Área activa', range: 'Rango activo', template: 'Modo plantilla', templateHelp: 'El servicio de IA no intervino: FIRELY usa reglas locales y redacta respuestas con plantillas a partir de cifras de la API.', affected: '¿A quién afecta?', why: '¿Por qué este año?', pdf: 'Generar ficha PDF', other: 'Otro lugar…', draw: 'Dibujar en el mapa', geometry: 'La geometría viene de límites de INEGI/geoBoundaries; el asistente nunca genera coordenadas.', locality: 'Localidad', population: 'Población', protected: 'Áreas protegidas', none: 'Sin datos disponibles', weather: 'Datos de tiempo de incendios no disponibles para esta área.', enso: 'Fase ENSO', fwi: 'Anomalía FWI', analogs: 'Años análogos', resultHelp: 'Haz una consulta para ver aquí el resultado más reciente.' },
+  en: { eyebrow: 'ANALYST ASSISTANT · SIDE PANEL', result: 'Result', area: 'Active area', range: 'Active range', template: 'Template mode', templateHelp: 'The AI service was not involved: FIRELY uses local rules and templates based on API figures.', affected: 'Who is affected?', why: 'Why this year?', pdf: 'Generate PDF brief', other: 'Another place…', draw: 'Draw on map', geometry: 'Geometry comes from INEGI/geoBoundaries boundaries; the assistant never generates coordinates.', locality: 'Locality', population: 'Population', protected: 'Protected areas', none: 'No data available', weather: 'Fire-weather data is unavailable for this area.', enso: 'ENSO phase', fwi: 'FWI anomaly', analogs: 'Analog years', resultHelp: 'Ask a question to see the latest result here.' },
+  pt: { eyebrow: 'ASSISTENTE ANALISTA · PAINEL LATERAL', result: 'Resultado', area: 'Área ativa', range: 'Período ativo', template: 'Modo modelo', templateHelp: 'O serviço de IA não participou: FIRELY usa regras locais e modelos de texto baseados em números da API.', affected: 'Quem é afetado?', why: 'Por que este ano?', pdf: 'Gerar ficha PDF', other: 'Outro lugar…', draw: 'Desenhar no mapa', geometry: 'A geometria vem dos limites INEGI/geoBoundaries; o assistente nunca gera coordenadas.', locality: 'Localidade', population: 'População', protected: 'Áreas protegidas', none: 'Sem dados disponíveis', weather: 'Dados meteorológicos de incêndio indisponíveis para esta área.', enso: 'Fase ENSO', fwi: 'Anomalia FWI', analogs: 'Anos análogos', resultHelp: 'Faça uma pergunta para ver aqui o resultado mais recente.' },
+} as const;
 function readableError(error: unknown, lang: Lang): string {
   const t = messages[lang];
   return error instanceof ApiError ? `${t.apiError} (${error.status}${error.code ? ` · ${error.code}` : ''}). ${t.retry}` : t.apiDown;
@@ -83,12 +100,41 @@ function Result({ turn, lang, profile, onProfile, onMap, onMethod }: { turn: Tur
     <HStack gap={2} wrap="wrap"><Button label={t.map} variant="primary" onClick={onMap} /><Button label={t.method} variant="secondary" onClick={onMethod} /><DataLink queries={queries} lang={lang} /></HStack>
   </VStack></Card>;
 }
+function FollowUpResult({ item, lang }: { item: FollowUp; lang: Lang }) {
+  const t = extras[lang];
+  if (item.status === 'running') return <Card padding={4}><VStack gap={2}><Skeleton width="50%" height="var(--spacing-5)"/><Skeleton width="100%" height="var(--spacing-8)"/></VStack></Card>;
+  if (item.status === 'error') return <Banner status="error" title={item.error || messages[lang].apiError}/>;
+  if (item.kind === 'territory' && item.territory) {
+    const data = item.territory;
+    const localities = largestLocalities(data.localities).map(x => ({ name: x.name, population: formatCount(x.pop!, lang) }));
+    const protectedNames = [...new Set(data.protected_areas.features.map(x => x.properties.name).filter(Boolean))];
+    return <Card padding={4}><VStack gap={3}><Heading level={4}>{t.affected}</Heading>
+      {localities.length ? <Table aria-label={t.locality} data={localities} columns={[{key:'name',header:t.locality},{key:'population',header:t.population}]} idKey="name" density="compact"/> : <EmptyState title={t.none} isCompact/>}
+      <Text type="label">{t.protected}</Text><Text>{protectedNames.length ? protectedNames.join(' · ') : t.none}</Text>
+      <Text type="supporting">{data.attribution || 'NASA FIRMS'} · {data.data_cutoff} · v{data.methodology_version}</Text>
+    </VStack></Card>;
+  }
+  if (item.kind === 'context') {
+    const context = item.context, analogs = item.analogs;
+    const last = latestContextRow(context?.rows ?? []);
+    const weather = latestContextRow((context?.rows ?? []).filter(row => row.fwi_anom != null));
+    return <Card padding={4}><VStack gap={3}><Heading level={4}>{t.why}</Heading>
+      <Text>{t.enso}: {last?.enso_phase || analogs?.current_oni_phase || t.none}</Text>
+      <Text>{weather?.fwi_anom == null ? t.weather : `${t.fwi} (${monthLabel(weather, lang)}): ${new Intl.NumberFormat(lang, {maximumFractionDigits: 2}).format(weather.fwi_anom)}`}</Text>
+      <Text>{t.analogs}: {analogs?.analogs.length ? analogs.analogs.map(x => x.year).join(' · ') : t.none}</Text>
+      <Text type="supporting">{(context || analogs)?.attribution || 'NASA FIRMS'} · {(context || analogs)?.data_cutoff} · v{(context || analogs)?.methodology_version}</Text>
+    </VStack></Card>;
+  }
+  return <EmptyState title={t.none} isCompact/>;
+}
 export default function Assistant() {
   const app = useApp(), lang = app.lang, t = messages[lang];
   const [turns, setTurns] = useState<Turn[]>([]), [draft, setDraft] = useState('');
-  const active = useRef<AbortController | null>(null), nextId = useRef(0);
+  const [profile, setProfile] = useState<Profile>('brigadista');
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
+  const active = useRef<AbortController | null>(null), followUpController = useRef<AbortController | null>(null), nextId = useRef(0), nextFollowUpId = useRef(0);
   const change = (id: number, patch: Partial<Turn>) => setTurns((prev) => prev.map((turn) => turn.id === id ? { ...turn, ...patch } : turn));
-  useEffect(() => () => { active.current?.abort(); }, []);
+  useEffect(() => () => { active.current?.abort(); followUpController.current?.abort(); }, []);
   async function loadCalendar(id: number, selected: AreaSel, resolved: ResolveAreaResponse, controller: AbortController) {
     const from = resolved.intent.date_from || app.from, to = resolved.intent.date_to || app.to, query = calendarQuery(selected, from, to);
     change(id, { selected, from, to, query, calendarStatus: 'running', error: undefined });
@@ -118,13 +164,15 @@ export default function Assistant() {
   async function submit(value: string) {
     const prompt = value.trim(); if (!prompt) return;
     active.current?.abort();
+    followUpController.current?.abort();
+    setFollowUps(prev => prev.filter(item => item.status !== 'running'));
     const controller = new AbortController(); active.current = controller;
     const id = ++nextId.current; setDraft('');
     setTurns((prev) => [...prev.map((turn) => ({
       ...turn,
       resolveStatus: turn.resolveStatus === 'running' ? 'error' as const : turn.resolveStatus,
       calendarStatus: turn.calendarStatus === 'running' ? 'error' as const : turn.calendarStatus,
-    })), { id, prompt, profile: 'brigadista', resolveStatus: 'running' }]);
+    })), { id, prompt, profile, resolveStatus: 'running' }]);
     try {
       const resolved = await resolveArea(prompt, lang, controller.signal);
       if (controller.signal.aborted) return;
@@ -140,31 +188,84 @@ export default function Assistant() {
     void loadCalendar(id, selected, resolved, controller);
   }
   function updateProfile(value: Profile, turn: Turn) {
+    setProfile(value);
     change(turn.id, { profile: value });
   }
-  const composer = <VStack gap={1} width="100%"><ChatComposer onSubmit={submit} value={draft} onChange={setDraft} placeholder={t.ask} input={<ChatComposerInput label={t.send} pasteAsToken={false} />} /><Text type="supporting">{t.limit}</Text></VStack>;
+  async function followUp(turn: Turn, kind: 'territory' | 'context') {
+    if (!turn.selected || !turn.calendar) return;
+    followUpController.current?.abort();
+    const controller = new AbortController(); followUpController.current = controller;
+    const id = ++nextFollowUpId.current;
+    setFollowUps(prev => [...prev, { id, turnId: turn.id, kind, status: 'running' }]);
+    const update = (patch: Partial<FollowUp>) => setFollowUps(prev => prev.map(item => item.id === id ? { ...item, ...patch } : item));
+    try {
+      if (kind === 'territory') {
+        const territory = await getTerritory(turn.selected.area, controller.signal);
+        if (!controller.signal.aborted) update({ status: 'complete', territory });
+      } else {
+        const latest = latestRow(turn.calendar.rows);
+        const year = latest?.year ?? Number(turn.to?.slice(0,4));
+        const latestDate = latest ? new Date(Date.UTC(latest.year, latest.month, 0)).toISOString().slice(0,10) : turn.to!;
+        const from = `${year}-01-01`, to = latestDate < turn.to! ? latestDate : turn.to!;
+        const results = await Promise.allSettled([
+          getContext(turn.selected.area, from, to, controller.signal),
+          getAnalogs(turn.selected.area, to, controller.signal),
+        ]);
+        if (controller.signal.aborted) return;
+        const context = results[0].status === 'fulfilled' ? results[0].value : undefined;
+        const analogs = results[1].status === 'fulfilled' ? results[1].value : undefined;
+        update(context || analogs ? { status: 'complete', context, analogs } : { status: 'error', error: messages[lang].apiError });
+      }
+    } catch (error) { if (!controller.signal.aborted) update({ status: 'error', error: readableError(error, lang) }); }
+  }
+  function drawOnMap() {
+    try { window.sessionStorage.setItem('firely.requestDraw', 'polygon'); } catch { /* storage may be blocked */ }
+    app.navigate('explorar');
+    window.dispatchEvent(new CustomEvent('firely:request-draw', { detail: { mode: 'polygon' } }));
+  }
+  const latestTurn = [...turns].reverse().find(turn => turn.calendar);
+  const ext = extras[lang];
+  const quickActions = latestTurn && <HStack gap={2} wrap="wrap">
+    <Button label={ext.affected} size="sm" variant="secondary" onClick={() => void followUp(latestTurn, 'territory')}/>
+    <Button label={ext.why} size="sm" variant="secondary" onClick={() => void followUp(latestTurn, 'context')}/>
+    <Button label={ext.pdf} size="sm" variant="secondary" onClick={() => { app.patch({ area: latestTurn.selected!, from: latestTurn.from!, to: latestTurn.to! }); app.navigate('ficha'); }}/>
+  </HStack>;
+  const composer = <VStack gap={2} width="100%">{quickActions}<ChatComposer onSubmit={submit} value={draft} onChange={setDraft} placeholder={t.ask} input={<ChatComposerInput label={t.send} pasteAsToken={false} />} /><Text type="supporting">{t.limit}</Text></VStack>;
   const transcript = turns.length > 0;
-  return <Layout height="fill" content={<LayoutContent padding={transcript ? 0 : 6} isScrollable={!transcript}>
-    {transcript ? <Center axis="horizontal" width="100%" height="100%"><VStack width="100%" maxWidth={760} height="100%"><ChatLayout density="balanced" composer={composer} xstyle={styles.chat}><ChatMessageList align="top">
-      {turns.map((turn) => {
-        const resolved = turn.resolved;
-        const options = resolved?.candidates.filter((candidate) => candidateArea(candidate) !== null) ?? [];
-        return <VStack key={turn.id} gap={3}>
-          <ChatMessage sender="user"><ChatMessageBubble>{turn.prompt}</ChatMessageBubble></ChatMessage>
-          <ChatMessage sender="assistant">
-            <ChatToolCalls defaultIsExpanded calls={[{ name: t.resolving, status: turn.resolveStatus }, ...(turn.calendarStatus ? [{ name: t.calendar, status: turn.calendarStatus }] : [])]} />
-            {turn.resolveStatus === 'running' && <ChatMessageBubble variant="ghost"><Skeleton width="75%" height="var(--spacing-6)" /></ChatMessageBubble>}
-            {resolved && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={3}>
-              <HStack gap={2} wrap="wrap"><Token label={`${t.place}: ${resolved.intent.place_text || '—'}`} /><Token label={`${t.from}: ${resolved.intent.date_from || app.from}`} /><Token label={`${t.to}: ${resolved.intent.date_to || app.to}`} /><Badge label={resolved.intent.source === 'llm' ? t.ai : t.rules} variant="neutral" /></HStack>
-              {!turn.selected && options.length === 0 && <EmptyState title={t.noPlace} description={t.noPlaceHelp} isCompact actions={<Button label={suggestions[0]} variant="secondary" onClick={() => void submit(suggestions[0])} />} />}
-              {!turn.selected && options.length > 0 && <VStack gap={2}><Text weight="semibold">{t.choose}</Text>{options.map((candidate, index) => <SelectableCard key={`${candidate.code || candidate.label}-${index}`} label={`${candidate.label}, ${candidate.kind || ''}, ${candidate.country || ''}`} isSelected={false} onChange={() => choose(turn.id, candidate, resolved)} padding={3} width="100%"><VStack gap={0.5}><Text weight="semibold">{candidate.label}</Text><Text type="supporting">{[candidate.kind, candidate.country].filter(Boolean).join(' · ')}</Text></VStack></SelectableCard>)}</VStack>}
-            </VStack></ChatMessageBubble>}
-            {turn.calendarStatus === 'running' && <ChatMessageBubble variant="ghost" width="100%"><Card width="100%"><VStack gap={3}><Skeleton width="50%" height="var(--spacing-6)" /><Skeleton width="100%" height="var(--spacing-10)" /><Skeleton width="70%" height="var(--spacing-6)" /></VStack></Card></ChatMessageBubble>}
-            {turn.calendar && <ChatMessageBubble variant="ghost" width="100%"><Result turn={turn} lang={lang} profile={turn.profile} onProfile={(value) => updateProfile(value, turn)} onMap={() => app.patch({ area: turn.selected!, from: turn.from!, to: turn.to!, page: 'explorar' })} onMethod={() => app.navigate('metodo')} /></ChatMessageBubble>}
-          </ChatMessage>
-          {turn.error && <ChatSystemMessage>{turn.error}</ChatSystemMessage>}
-        </VStack>;
-      })}
-    </ChatMessageList></ChatLayout></VStack></Center> : <Center axis="both" width="100%" height="100%"><VStack gap={8} width="100%" maxWidth={760}><VStack gap={2} width="100%"><Heading level={1}>{t.title}</Heading><Text type="large" color="secondary">{t.subtitle}</Text></VStack><VStack gap={4} width="100%">{composer}<HStack gap={2} wrap="wrap" width="100%">{suggestions.map((suggestion) => <Button key={suggestion} label={suggestion} variant="secondary" size="sm" onClick={() => void submit(suggestion)} />)}</HStack></VStack></VStack></Center>}
-  </LayoutContent>} />;
+  const resultCard = latestTurn && <Result turn={latestTurn} lang={lang} profile={profile} onProfile={value => updateProfile(value, latestTurn)} onMap={() => app.patch({ area: latestTurn.selected!, from: latestTurn.from!, to: latestTurn.to!, page: 'explorar' })} onMethod={() => app.navigate('metodo')} />;
+  return <Layout height="fill" content={<LayoutContent padding={0} isScrollable={false}><VStack xstyle={styles.page}>
+    <VStack gap={3} xstyle={styles.header}>
+      <VStack gap={1}><Text type="label" color="accent">{ext.eyebrow}</Text><Heading level={1}>{t.title}</Heading><Text type="supporting">{t.subtitle}</Text></VStack>
+      <HStack gap={2} wrap="wrap" vAlign="center"><Token label={`${ext.area}: ${app.area.label}`} /><Token label={`${ext.range}: ${app.from} – ${app.to}`} /></HStack>
+      <HStack gap={3} wrap="wrap" hAlign="between"><SegmentedControl label={t.profile} value={profile} onChange={value => { setProfile(value as Profile); if (latestTurn) change(latestTurn.id, { profile: value as Profile }); }} size="sm"><SegmentedControlItem value="brigadista" label={t.brigade}/><SegmentedControlItem value="cientifico" label={t.scientist}/></SegmentedControl><SegmentedControl label="Idioma / Language / Idioma" value={lang} onChange={value => app.setLang(value as Lang)} size="sm"><SegmentedControlItem value="es" label="ES"/><SegmentedControlItem value="en" label="EN"/><SegmentedControlItem value="pt" label="PT"/></SegmentedControl></HStack>
+    </VStack>
+    <Grid columns={{ minWidth: 420, max: 2 }} gap={4} width="100%" xstyle={styles.body}>
+      <VStack xstyle={styles.chatColumn}>
+        {transcript ? <ChatLayout density="balanced" composer={composer} xstyle={styles.chat}><ChatMessageList align="top">
+          {turns.map(turn => {
+            const resolved = turn.resolved;
+            const options = resolved?.candidates.filter(candidate => candidateArea(candidate) !== null) ?? [];
+            return <VStack key={turn.id} gap={3}>
+              <ChatMessage sender="user"><ChatMessageBubble>{turn.prompt}</ChatMessageBubble></ChatMessage>
+              <ChatMessage sender="assistant">
+                <ChatToolCalls defaultIsExpanded calls={[{ name: t.resolving, status: turn.resolveStatus }, ...(turn.calendarStatus ? [{ name: t.calendar, status: turn.calendarStatus }] : [])]} />
+                {turn.resolveStatus === 'running' && <ChatMessageBubble variant="ghost"><Skeleton width="75%" height="var(--spacing-6)" /></ChatMessageBubble>}
+                {resolved && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={3}>
+                  <HStack gap={2} wrap="wrap"><Token label={`${t.place}: ${resolved.intent.place_text || '—'}`} /><Token label={`${t.from}: ${resolved.intent.date_from || app.from}`} /><Token label={`${t.to}: ${resolved.intent.date_to || app.to}`} /><Badge label={resolved.intent.source === 'llm' ? t.ai : t.rules} variant="neutral" /></HStack>
+                  {resolved.intent.source === 'rules' && <Banner status="info" title={ext.template} description={ext.templateHelp}/>}
+                  {!turn.selected && options.length === 0 && <EmptyState title={t.noPlace} description={t.noPlaceHelp} isCompact actions={<Button label={suggestions[0]} variant="secondary" onClick={() => void submit(suggestions[0])} />} />}
+                  {!turn.selected && options.length > 0 && <VStack gap={2}><Text weight="semibold">{t.choose}</Text>{options.map((candidate, index) => <SelectableCard key={`${candidate.code || candidate.label}-${index}`} label={`${candidate.label}, ${candidate.kind || ''}, ${candidate.country || ''}${candidate.code ? `, ${candidate.code}` : ''}`} isSelected={false} onChange={() => choose(turn.id, candidate, resolved)} padding={3} width="100%"><VStack gap={0.5}><Text weight="semibold">{candidate.label}</Text><Text type="supporting">{[candidate.kind, candidate.country].filter(Boolean).join(' · ')}</Text>{candidate.code && <Text type="code">{candidate.country?.toLowerCase().includes('mex') ? 'INEGI' : 'ID'} {candidate.code}</Text>}</VStack></SelectableCard>)}<HStack gap={2} wrap="wrap"><Button label={ext.other} variant="ghost" size="sm" onClick={() => { setDraft(''); document.querySelector<HTMLElement>('textarea, input[placeholder]')?.focus(); }}/><Button label={ext.draw} variant="ghost" size="sm" onClick={drawOnMap}/></HStack><Text type="supporting">{ext.geometry}</Text></VStack>}
+                </VStack></ChatMessageBubble>}
+                {turn.calendarStatus === 'running' && <ChatMessageBubble variant="ghost" width="100%"><Card width="100%"><VStack gap={3}><Skeleton width="50%" height="var(--spacing-6)" /><Skeleton width="100%" height="var(--spacing-10)" /><Skeleton width="70%" height="var(--spacing-6)" /></VStack></Card></ChatMessageBubble>}
+                {turn.calendar && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={2}><Text>{localSummary(turn.calendar, lang, profile, turn.referenceYears)}</Text><VStack xstyle={styles.resultMobile}><Result turn={turn} lang={lang} profile={profile} onProfile={value => updateProfile(value, turn)} onMap={() => app.patch({ area: turn.selected!, from: turn.from!, to: turn.to!, page: 'explorar' })} onMethod={() => app.navigate('metodo')} /></VStack></VStack></ChatMessageBubble>}
+              </ChatMessage>
+              {followUps.filter(item => item.turnId === turn.id).map(item => <ChatMessage key={item.id} sender="assistant"><ChatMessageBubble variant="ghost" width="100%"><FollowUpResult item={item} lang={lang}/></ChatMessageBubble></ChatMessage>)}
+              {turn.error && <ChatSystemMessage>{turn.error}</ChatSystemMessage>}
+            </VStack>;
+          })}
+        </ChatMessageList></ChatLayout> : <Center axis="both" width="100%" height="100%"><VStack gap={6} width="100%" maxWidth={760}><VStack gap={2}><Heading level={2}>{t.title}</Heading><Text type="large" color="secondary">{t.subtitle}</Text></VStack>{composer}<HStack gap={2} wrap="wrap">{suggestions.map(suggestion => <Button key={suggestion} label={suggestion} variant="secondary" size="sm" onClick={() => void submit(suggestion)} />)}</HStack></VStack></Center>}
+      </VStack>
+      <VStack gap={3} xstyle={styles.resultColumn}><Text type="label" color="secondary">{ext.result}</Text>{resultCard || <EmptyState title={ext.result} description={ext.resultHelp} isCompact/>}</VStack>
+    </Grid>
+  </VStack></LayoutContent>} />;
 }

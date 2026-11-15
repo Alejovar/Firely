@@ -75,7 +75,7 @@ def test_area_filters_and_unsupported_breakdown(client):
              [lon+0.2, lat+0.2], [lon-0.2, lat+0.2], [lon-0.2, lat-0.2]]]}
     assert real.calendar(geometry=json.dumps(shape))["rows"][0]["count_harm"] == 5
     with pytest.raises(Exception) as exc:
-        real.calendar(h3_list=a, burn_type="forestal")
+        real.calendar(h3_list=a, burn_type="otro")
     assert exc.value.status_code == 422
     with pytest.raises(Exception) as exc:
         real.calendar(h3_list="invalid")

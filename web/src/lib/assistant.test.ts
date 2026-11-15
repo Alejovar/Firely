@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calendarQuery, candidateArea, contextWindow, formatAnomaly, formatCount, latestRow, localSummary, peakRow, returnPeriodQuery } from '../components/assistant/helpers';
+import { calendarQuery, candidateArea, contextWindow, formatAnomaly, formatCount, largestLocalities, latestContextRow, latestRow, localSummary, peakRow, returnPeriodQuery } from '../components/assistant/helpers';
 import type { CalendarResponse, ResolveAreaResponse } from '../api/client';
 
 describe('assistant data helpers', () => {
@@ -66,5 +66,21 @@ describe('assistant data helpers', () => {
   it('builds the exact return-period query', () => {
     const area = candidateArea({ label: 'Arteaga', bbox: [-101, 25, -100, 26] })!;
     expect(returnPeriodQuery(area, 2021, 3)).toBe('/return-period?bbox=-101%2C25%2C-100%2C26&year=2021&month=3');
+  });
+  it('orders populated localities and selects the latest weather month without changing API rows', () => {
+    const localities = [
+      { name: 'Small', pop: 10, lat: 1, lon: 1 },
+      { name: 'Unknown', pop: null, lat: 2, lon: 2 },
+      { name: 'Large', pop: 100, lat: 3, lon: 3 },
+    ];
+    expect(largestLocalities(localities, 2).map(row => row.name)).toEqual(['Large', 'Small']);
+    expect(localities[0].name).toBe('Small');
+    const months = [
+      { year: 2025, month: 12, oni: null, enso_phase: 'La Niña', fwi_mean: null, fwi_anom: null, dc_anom: null, dmc_anom: null },
+      { year: 2026, month: 2, oni: null, enso_phase: 'El Niño', fwi_mean: null, fwi_anom: 1.2, dc_anom: null, dmc_anom: null },
+      { year: 2026, month: 1, oni: null, enso_phase: null, fwi_mean: null, fwi_anom: null, dc_anom: null, dmc_anom: null },
+    ];
+    expect(latestContextRow(months)?.month).toBe(2);
+    expect(months[0].month).toBe(12);
   });
 });

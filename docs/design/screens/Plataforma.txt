@@ -1,0 +1,173 @@
+Mapa
+Asistente
+Método
+Alertas y API
+Historia
+Ficha
+Móvil
+Widget
+Identidad
+PLATAFORMA
+Alertas y CAP
+Agente vigía
+Reportes oficiales
+API · /docs
+Consultas SQL
+Servidor MCP
+Exportar a SIG
+Simulacros
+ALERTAS
+Avisar cuando un área sale de lo normal
+
+Suscríbete a un área y recibe aviso cuando la actividad supere el percentil 90. Los borradores públicos los redacta la IA; los publica una persona.
+
+Mis suscripciones
+Sierra de Arteaga
+> p90 mensual · correo + Telegram
+DISPARADA
+Sierra de Zapalinamé
+> p90 · webhook
+NORMAL
+Cañón de San Lorenzo
+> p90 · feed CAP
+NORMAL
+Canales: correo, Telegram, webhook, feed CAP
+Borrador de alerta CAP 1.2
+BORRADOR · REQUIERE APROBACIÓN
+headline
+Peligro extremo de incendio en Sierra de Arteaga
+severity
+Severe · urgency Expected · certainty Likely
+area
+San Antonio de las Alazanas, Los Lirios, Jamé (polígono INEGI)
+onset
+2026-03-21T10:00-06:00
+instruction
+Evite quemas. Si ve humo, llame al 911. Tenga lista su ruta de salida hacia Arteaga.
+Texto para redes: Sábado 21: peligro extremo de incendio en la sierra de Arteaga. Evita quemas y reporta humo al 911.
+Aprobar y publicar
+Editar
+Redactado por IA con cifras de la API
+AGENTE VIGÍA · BOLETÍN SEMANAL
+Cada noche revisa todas las regiones
+Semana 11 · 9–15 marzo 2026 · Noreste de México
+4 áreas fuera de lo normal de 312 revisadas
+3.4×
+Sierra de Arteaga, Coah.
+Incendio activo, 4º mayor desde 2000. Temporada adelantada y peligro extremo el sábado.
+ver datos
+2.6×
+Cumbres de Monterrey, N.L.
+Aumento sostenido en zonas altas; año análogo: 2012.
+ver datos
+2.1×
+Sierra de San Carlos, Tamps.
+Quemas agrícolas tempranas en fin de semana.
+ver datos
+0.3×
+Sierra del Carmen, Coah.
+Muy por debajo de lo normal; lluvias de febrero.
+ver datos
+EXTRACCIÓN DE REPORTES OFICIALES
+De PDF desordenado a tabla comparable
+reporte_semanal_CONAFOR_s11.pdf
+(escaneo de tabla)
+→
+MUNICIPIO
+INICIO
+HA
+CAUSA
+CONF.
+Arteaga
+12/03/26
+1,250
+Agrícola
+0.97
+Arteaga
+15/03/26
+80
+Desconocida
+0.91
+Ramos Arizpe
+14/03/26
+3?
+Fogata
+0.58
+Saltillo
+16/03/26
+22
+Intencional
+0.94
+Valores con confianza baja quedan marcados para revisión humana antes de entrar a “detectados vs reportados”.
+API · OPENAPI EN /docs · OGC API FEATURES
+Los mismos datos, para cualquier sistema
+GET
+/calendar
+Matriz años × meses con conteo, FRP y anomalía
+GET
+/hotspots.csv
+Puntos de calor de un área y rango de fechas
+GET
+/events
+Incendios agrupados con su ranking
+GET
+/analogs
+Años análogos y proyección de cierre
+GET
+/season
+Inicio, pico, fin y tendencia
+GET /calendar?h3=8648a2c4fffffff&years=2000-2026
+
+{
+  "area": "h3:8648a2c4fffffff",
+  "metric": "count_harmonized",
+  "reference": "median_2000_2025",
+  "rows": [
+    { "year": 2026, "month": 3, "count": 57,
+      "ratio": 2.8, "partial_days": 18,
+      "cloud_flag": false }
+  ],
+  "methodology_version": "1.2",
+  "harmonization_uncertainty": { "pre_2012": 0.18 },
+  "attribution": "NASA FIRMS (MODIS, VIIRS)"
+}
+CONSULTAS AVANZADAS · PARA CIENTÍFICOS
+Pregunta en español, revisa el SQL, ejecuta
+“Celdas de la sierra que ardieron 5 o más años desde 2000 y llevan 3 años sin fuego”
+SELECT h3_cell, years_burned, last_fire_year
+FROM cell_stats
+WHERE area_id = 'INEGI:05004'
+  AND years_burned >= 5
+  AND last_fire_year <= 2023
+ORDER BY years_burned DESC;
+DuckDB · solo lectura · 37 filas en 41 ms
+Editar SQL
+Ejecutar
+SERVIDOR MCP
+Que otros asistentes de IA consulten el historial
+
+Las mismas herramientas de la API, expuestas por Model Context Protocol. Cada respuesta incluye la atribución a NASA FIRMS y la incertidumbre.
+
+{
+  "mcpServers": {
+    "rescoldo": { "url": "https://rescoldo.app/mcp" }
+  }
+}
+tools: get_calendar · get_hotspots · get_events
+       get_analogs · get_season
+EXPORTAR A SIG
+QGIS, ArcGIS y Google Earth
+GeoJSON
+Puntos y polígonos para QGIS y web
+KML
+Google Earth, con estilo por FRP
+CSV
+Con columna de sensor y valor armonizado
+OGC API
+Conecta QGIS/ArcGIS directo a /collections
+ESCENARIOS DE SIMULACRO
+VISIÓN
+Entrenar con incendios que sí ocurrieron
+Los Lirios – El Tunal · marzo 2021
+Se reproduce el evento día por día sin revelar su evolución. El equipo decide dónde desplegar brigadas; al final se compara con lo que pasó.
+Iniciar ejercicio

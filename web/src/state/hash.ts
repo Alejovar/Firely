@@ -1,9 +1,10 @@
 // Shareable URL state: #/explorar?area=bbox:-100.9,25.2,-100.2,25.7&label=...&from=2001-01-01&to=2026-11-14&metric=count
 import type { Area, Metric, Reference } from '../api/client';
 
-export type Page = 'explorar' | 'asistente' | 'metodo';
+export type Page = 'explorar' | 'asistente' | 'metodo' | 'historia' | 'plataforma' | 'ficha' | 'widget' | 'identidad';
 export type CalendarMode = 'count' | 'anomaly';
-export const PAGES: Page[] = ['explorar', 'asistente', 'metodo'];
+export const PAGES: Page[] = ['explorar', 'asistente', 'metodo', 'historia', 'plataforma', 'ficha', 'widget', 'identidad'];
+export type BurnFilter = 'all' | 'agricola' | 'forestal';
 
 export interface AreaSel {
   label: string;
@@ -21,6 +22,8 @@ export interface UrlState {
   metric: Metric;
   reference: Reference;
   mode: CalendarMode;
+  /** land-cover proxy filter: agricola = cropland biome, forestal = forest + shrub biomes */
+  burn: BurnFilter;
   selected: { year: number; month: number } | null;
 }
 
@@ -32,7 +35,7 @@ export const DEFAULT_AREA: AreaSel = {
 };
 
 export function defaultState(today = new Date()): UrlState {
-  return { page: 'explorar', area: DEFAULT_AREA, from: '2001-01-01', to: today.toISOString().slice(0, 10), metric: 'count', reference: 'median', mode: 'count', selected: null };
+  return { page: 'explorar', area: DEFAULT_AREA, from: '2001-01-01', to: today.toISOString().slice(0, 10), metric: 'count', reference: 'median', mode: 'count', burn: 'all', selected: null };
 }
 
 const MAX_GEOMETRY_IN_URL = 1800;
@@ -81,6 +84,7 @@ export function buildHash(state: UrlState): string {
   if (state.metric !== 'count') params.set('metric', state.metric);
   if (state.reference !== 'median') params.set('ref', state.reference);
   if (state.mode !== 'count') params.set('mode', state.mode);
+  if (state.burn !== 'all') params.set('burn', state.burn);
   if (state.selected) params.set('sel', `${state.selected.year}-${state.selected.month}`);
   return `#/${state.page}?${params}`;
 }
@@ -106,6 +110,7 @@ export function parseHash(hash: string, fallback: UrlState = defaultState()): Ur
     metric,
     reference: params.get('ref') === 'mean' ? 'mean' : 'median',
     mode,
+    burn: params.get('burn') === 'agricola' ? 'agricola' : params.get('burn') === 'forestal' ? 'forestal' : 'all',
     selected: sel && Number(sel[2]) >= 1 && Number(sel[2]) <= 12 ? { year: Number(sel[1]), month: Number(sel[2]) } : null,
   };
 }

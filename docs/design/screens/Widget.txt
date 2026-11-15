@@ -1,0 +1,57 @@
+WIDGET EMBEBIBLE · <rescoldo-calendar>
+Así se ve dentro de un sitio de Protección Civil (ejemplo ficticio)
+proteccioncivil.estado.gob.mx/incendios
+PC
+Protección Civil del Estado
+Coordinación Estatal · Ejemplo
+Inicio
+Incendios forestales
+Alertas
+Refugios
+Contacto
+Aviso: temporada de incendios activa. Reporta humo al 911.
+Inicio › Incendios forestales
+Temporada de incendios forestales 2026
+
+La Coordinación Estatal mantiene vigilancia en las sierras del sureste del estado. Ante el aumento de puntos de calor en marzo, se reforzaron las brigadas en Arteaga y se emitieron recomendaciones para evitar quemas agrícolas durante los fines de semana.
+
+foto de brigada
+Recomendaciones
+
+No realices quemas sin permiso. Si ves humo, llama al 911 e indica tu ubicación. Mantente informado por los canales oficiales.
+
+Actividad de fuego en la región
+Sierra de Arteaga
+30 km alrededor · 2000–2026
+MUY ALTO
+Marzo va 2.8× sobre la mediana histórica.
+E
+F
+M
+A
+M
+J
+J
+A
+S
+O
+N
+D
+2026
+2025
+2024
+2023
+2022
+2021
+2020
+2019
+2018
+2017
+Rescoldo · ver completo →
+NASA FIRMS
+Datos satelitales armonizados MODIS + VIIRS. Para emergencias llama al 911.
+INSERCIÓN · DOS LÍNEAS
+<script src="https://rescoldo.app/widget.js"></script><rescoldo-calendar lat="25.38" lon="-100.6"
+  radius-km="30" theme="light" lang="es"></rescoldo-calendar>
+VARIANTE OSCURA · COMPACTA
+Sierra de Arteaga · 2.8× la mediana

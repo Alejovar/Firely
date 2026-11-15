@@ -1,4 +1,4 @@
-import { areaParams, type AreaCandidate, type CalendarResponse, type CalendarRow } from '../../api/client';
+import { areaParams, type AreaCandidate, type CalendarResponse, type CalendarRow, type ContextRow, type Locality } from '../../api/client';
 import { monthNames, type Lang } from '../../i18n';
 import type { AreaSel } from '../../state/hash';
 
@@ -34,6 +34,16 @@ export function latestRow(rows: CalendarRow[]): CalendarRow | undefined {
 export function peakRow(rows: CalendarRow[]): CalendarRow | undefined {
   return rows.filter((row) => Number.isFinite(row.count_harm)).reduce<CalendarRow | undefined>((peak, row) =>
     !peak || (row.count_harm ?? -Infinity) > (peak.count_harm ?? -Infinity) ? row : peak, undefined);
+}
+
+export function largestLocalities(rows: Locality[], limit = 5): Locality[] {
+  return rows.filter(row => row.pop != null && Number.isFinite(row.pop))
+    .sort((a, b) => (b.pop ?? 0) - (a.pop ?? 0) || a.name.localeCompare(b.name))
+    .slice(0, limit);
+}
+
+export function latestContextRow(rows: ContextRow[]): ContextRow | undefined {
+  return [...rows].sort((a, b) => a.year - b.year || a.month - b.month).at(-1);
 }
 
 export function monthIndex(date: string): number {

@@ -5,7 +5,7 @@ describe('url state', () => {
   const base = defaultState(new Date('2026-11-14'));
 
   it('round-trips a bbox area, dates and options', () => {
-    const state = { ...base, page: 'explorar' as const, metric: 'frp' as const, mode: 'anomaly' as const, selected: { year: 2021, month: 3 } };
+    const state = { ...base, page: 'explorar' as const, metric: 'frp' as const, mode: 'anomaly' as const, burn: 'agricola' as const, selected: { year: 2021, month: 3 } };
     expect(parseHash(buildHash(state), base)).toEqual(state);
   });
 
@@ -26,5 +26,6 @@ describe('url state', () => {
   it('keeps the page', () => {
     expect(parseHash('#/metodo', base).page).toBe('metodo');
     expect(parseHash('#/asistente?x=1', base).page).toBe('asistente');
+    for (const page of ['historia', 'plataforma', 'ficha', 'widget', 'identidad']) expect(parseHash(`#/${page}`, base).page).toBe(page);
   });
 });

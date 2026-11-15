@@ -136,8 +136,9 @@ const withArea = (area: Area, extra: Record<string, string | number | undefined>
   return params;
 };
 
-export const getCalendar = (area: Area, from: string, to: string, metric: Metric, reference: Reference, signal?: AbortSignal) =>
-  request<CalendarResponse>(`/calendar?${withArea(area, { from, to, metric, reference })}`, { signal });
+export type BurnType = 'agricola' | 'forestal';
+export const getCalendar = (area: Area, from: string, to: string, metric: Metric, reference: Reference, signal?: AbortSignal, burnType?: BurnType) =>
+  request<CalendarResponse>(`/calendar?${withArea(area, { from, to, metric, reference, burn_type: burnType })}`, { signal });
 export const getDaily = (area: Area, year: number, month: number, signal?: AbortSignal) =>
   request<DailyResponse | DailyRow[]>(`/calendar/daily?${withArea(area, { year, month })}`, { signal });
 export const getSeason = (area: Area, signal?: AbortSignal) => request<SeasonResponse>(`/season?${withArea(area)}`, { signal });
@@ -165,3 +166,54 @@ export const describe = (kind: 'calendar' | 'chart', payload: unknown, lang = 'e
   request<DescribeResponse>('/describe', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind, payload, lang, profile }), signal,
   });
+
+// ---- map layers and territory (backend contract: api/app/extra_routes.py) ----
+export interface HotspotProps { date: string; sensor: 'MODIS' | 'VIIRS'; platform: string; frp_mw: number | null; confidence_h: string; daynight: 'D' | 'N' }
+export interface HotspotsGeoJson extends Envelope {
+  type: 'FeatureCollection';
+  features: Array<{ type: 'Feature'; geometry: { type: 'Point'; coordinates: [number, number] }; properties: HotspotProps }>;
+  /** true when the area/period has more points than `limit` (the strongest FRP are kept) */
+  truncated: boolean;
+  n_total: number;
+}
+export const getHotspotsGeoJson = (area: Area, from: string, to: string, limit = 20000, signal?: AbortSignal) =>
+  request<HotspotsGeoJson>(`/hotspots.geojson?${withArea(area, { from, to, limit })}`, { signal });
+
+export interface RecurrenceCell { h3: string; years_burned: number; last_fire_year: number | null }
+export interface RecurrenceGeoJson extends Envelope {
+  type: 'FeatureCollection';
+  features: Array<{ type: 'Feature'; geometry: { type: 'Polygon'; coordinates: number[][][] }; properties: RecurrenceCell }>;
+  n_years: number;
+  max_years_burned: number;
+}
+export const getRecurrence = (area: Area, from: string, to: string, signal?: AbortSignal) =>
+  request<RecurrenceGeoJson>(`/recurrence?${withArea(area, { from, to })}`, { signal });
+
+export interface Locality { name: string; pop: number | null; lat: number; lon: number; dist_km?: number | null }
+export interface LandcoverShare { biome: 'bosque' | 'matorral' | 'pastizal/sabana' | 'cultivo' | 'otros' | 'desconocido'; share: number }
+export interface TerritoryResponse extends Envelope {
+  area_km2: number;
+  cells: number;
+  admin: { country: string; state?: string | null; municipality?: string | null; source: string } | null;
+  population_total: number | null;
+  localities: Locality[];
+  protected_areas: { type: 'FeatureCollection'; features: Array<{ type: 'Feature'; geometry: unknown; properties: { name: string; category?: string | null } }> };
+  landcover: LandcoverShare[];
+}
+export const getTerritory = (area: Area, signal?: AbortSignal) => request<TerritoryResponse>(`/territory?${withArea(area)}`, { signal });
+
+export interface RiskComponent { key: string; label: string; value: number; weight: number; note: string }
+export interface RiskResponse extends Envelope {
+  index: number;
+  level: 'baja' | 'media' | 'alta' | 'extrema';
+  components: RiskComponent[];
+  period: string;
+  summary_es: string;
+  method: string;
+}
+export const getRisk = (area: Area, signal?: AbortSignal) => request<RiskResponse>(`/risk?${withArea(area)}`, { signal });
+
+export interface WatchRow { code: string; name: string; parent: string | null; country: string; ratio: number | null; count: number; percentile: number | null; text: string }
+export interface WatchResponse extends Envelope { period: string; level: string; n_reviewed: number; rows: WatchRow[] }
+export const getWatch = (level: 'mun' | 'ent' | 'adm1' | 'adm2' = 'mun', country = 'Mexico', top = 10, signal?: AbortSignal) =>
+  request<WatchResponse>(`/watch?level=${level}&country=${encodeURIComponent(country)}&top=${top}`, { signal });

@@ -1,15 +1,27 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Metric, Reference } from '../api/client';
-import { buildHash, defaultState, parseHash, type AreaSel, type CalendarMode, type Page, type UrlState } from './hash';
+import { buildHash, defaultState, parseHash, type AreaSel, type BurnFilter, type CalendarMode, type Page, type UrlState } from './hash';
 
 export type Lang = 'es' | 'en' | 'pt';
 export type Scheme = 'dark' | 'light';
 export type LiveHours = 0 | 24 | 48;
+/** Map layers (design: 'Capas'). hotspots = the month's harmonized points; recent = FIRMS NRT; goes = vision, no data yet. */
+export interface Layers { hotspots: boolean; recent: boolean; goes: boolean; recurrence: boolean; spread: boolean; exposure: boolean }
+export const DEFAULT_LAYERS: Layers = { hotspots: true, recent: false, goes: false, recurrence: false, spread: false, exposure: true };
 
 interface AppContextValue extends UrlState {
   lang: Lang;
   scheme: Scheme;
   live: LiveHours;
+  layers: Layers;
+  /** ISO date of the day picked in the daily breakdown; the map shows only that day's points */
+  selectedDay: string | null;
+  setSelectedDay: (day: string | null) => void;
+  /** second area for the side-by-side calendar comparison, null when off */
+  compare: AreaSel | null;
+  setLayer: (key: keyof Layers, on: boolean) => void;
+  setCompare: (area: AreaSel | null) => void;
+  setBurn: (burn: BurnFilter) => void;
   setLang: (lang: Lang) => void;
   toggleScheme: () => void;
   setLive: (hours: LiveHours) => void;
@@ -41,16 +53,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => stored('firely.lang', ['es', 'en', 'pt'] as const, 'es'));
   const [scheme, setScheme] = useState<Scheme>(() => stored('firely.scheme', ['dark', 'light'] as const, 'dark'));
   const [live, setLive] = useState<LiveHours>(0);
-  const writing = useRef(false);
+  const [layers, setLayers] = useState<Layers>(DEFAULT_LAYERS);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [compare, setCompare] = useState<AreaSel | null>(null);
 
   // state -> hash
   useEffect(() => {
     const next = buildHash(url);
-    if (next !== window.location.hash) { writing.current = true; window.history.replaceState(null, '', next); }
+    if (next !== window.location.hash) window.history.replaceState(null, '', next);
   }, [url]);
   // hash -> state (back/forward, pasted links)
   useEffect(() => {
-    const onHash = () => { if (writing.current) { writing.current = false; return; } setUrl((current) => parseHash(window.location.hash, current)); };
+    const onHash = () => { setUrl((current) => (buildHash(current) === window.location.hash ? current : parseHash(window.location.hash, current))); };
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
@@ -58,7 +72,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const patch = useCallback((changes: Partial<UrlState>) => setUrl((current) => ({ ...current, ...changes })), []);
   const value = useMemo<AppContextValue>(() => ({
-    ...url, lang, scheme, live, patch,
+    ...url, lang, scheme, live, layers, compare, selectedDay, setSelectedDay, patch,
+    setLayer: (key, on) => setLayers((current) => ({ ...current, [key]: on })),
+    setCompare,
+    setBurn: (burn) => patch({ burn }),
     setLang: (next) => { setLangState(next); remember('firely.lang', next); },
     toggleScheme: () => setScheme((current) => { const next = current === 'dark' ? 'light' : 'dark'; remember('firely.scheme', next); return next; }),
     setLive,
@@ -68,8 +85,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setMetric: (metric) => patch({ metric }),
     setReference: (reference) => patch({ reference }),
     setMode: (mode) => patch({ mode }),
-    setSelected: (selected) => patch({ selected }),
-  }), [url, lang, scheme, live, patch]);
+    setSelected: (selected) => { setSelectedDay(null); patch({ selected }); },
+  }), [url, lang, scheme, live, layers, compare, selectedDay, patch]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

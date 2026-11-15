@@ -1,61 +1,28 @@
 import { useMemo } from 'react';
 import * as stylex from '@stylexjs/stylex';
-import { Card } from '@astryxdesign/core/Card';
 import { VStack } from '@astryxdesign/core/VStack';
 import { HStack } from '@astryxdesign/core/HStack';
-import { Heading, Text } from '@astryxdesign/core/Text';
-import { EmptyState } from '@astryxdesign/core/EmptyState';
-import { Skeleton } from '@astryxdesign/core/Skeleton';
+import { Text } from '@astryxdesign/core/Text';
 import { Tooltip } from '@astryxdesign/core/Tooltip';
-import { Badge } from '@astryxdesign/core/Badge';
+import { Skeleton } from '@astryxdesign/core/Skeleton';
+import { EmptyState } from '@astryxdesign/core/EmptyState';
+import { Banner } from '@astryxdesign/core/Banner';
 import { useGridFocus } from '@astryxdesign/core/hooks';
 import type { CalendarResponse } from '../api/client';
 import { useApp } from '../state/AppState';
 import { monthNames, monthShort } from '../i18n';
 import { divergingSteps, encodeCell, sequentialSteps } from '../lib/dataviz';
-import { calendarCellValue, compact, fmt, words } from '../lib/explorerLabels';
+import { calendarCellValue, compact, fmt, newest, yearPhase } from '../lib/explorerLabels';
 
-const s = stylex.create({
-  scroll: { overflowX: 'auto', maxWidth: '100%' },
-  grid: { display: 'grid', gridTemplateColumns: 'minmax(3.5rem, 1.4fr) repeat(12, minmax(1.5rem, 1fr)) minmax(3.5rem, 1.2fr)', gap: 'var(--spacing-1)', minWidth: '28rem', alignItems: 'center' },
-  cell: { display: 'block', width: '100%', border: 'var(--spacing-0-5) solid var(--color-border-subtle)', borderRadius: 'var(--radius-sm)', height: 'var(--spacing-8)', padding: '0', cursor: 'pointer', textAlign: 'center', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', font: 'inherit', ':focus-visible': { outline: 'var(--spacing-0-5) solid var(--color-border-focus)' } },
-  selected: { outline: 'var(--spacing-0-5) solid var(--color-border-focus)' },
-  estimated: { borderStyle: 'dotted' },
-  header: { display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' },
-  year: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--spacing-1)', whiteSpace: 'nowrap' },
-  total: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 'var(--spacing-1)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' },
-  swatch: { width: 'var(--spacing-4)', height: 'var(--spacing-4)', borderRadius: 'var(--radius-sm)' },
-});
-
-export default function CalendarHeatmap({ data, loading, error }: { data: CalendarResponse | null; loading: boolean; error: string | null }) {
-  const app = useApp(); const t = words[app.lang];
-  const years = useMemo(() => [...new Set(data?.rows.map(r => r.year) ?? [])].sort((a,b) => b-a), [data]);
-  const lookup = useMemo(() => new Map(data?.rows.map(r => [`${r.year}-${r.month}`,r]) ?? []), [data]);
-  const max = Math.max(1, ...(data?.rows.map(r => app.metric === 'frp' ? r.frp_harm ?? 0 : r.count_harm ?? 0) ?? []));
-  const {gridRef, handleKeyDown, handleFocus} = useGridFocus<HTMLDivElement>({columns:13, cellSelector:'[role="gridcell"]', getFocusTarget: cell => cell.querySelector<HTMLElement>('button'), isCellFocusable: cell => !!cell.querySelector('button'), hasRovingTabIndex:true});
-  const ramp = app.mode === 'count' ? sequentialSteps(app.scheme) : divergingSteps();
-  return <Card><VStack gap={4}>
-    <Heading level={2}>{t.calendar}</Heading>
-    {loading ? <Skeleton width="100%" height="18rem" /> : error ? <Text color="secondary">{error}</Text> : !data?.rows.length ? <EmptyState title={t.empty} isCompact /> : <>
-      <div {...stylex.props(s.scroll)} role="region" aria-label={t.calendar} tabIndex={0}>
-        <div {...stylex.props(s.grid)} role="grid" aria-label={t.calendar} ref={gridRef} onKeyDown={handleKeyDown} onFocus={handleFocus}>
-          <Text xstyle={s.header}>Año</Text>{monthShort[app.lang].map(m => <Text key={m} type="supporting" xstyle={s.header}>{m}</Text>)}<Text type="supporting" xstyle={s.header}>Total</Text>
-          {years.flatMap(year => {
-            const rows = Array.from({length:12},(_,i)=>lookup.get(`${year}-${i+1}`));
-            const total = rows.reduce((sum,r)=>sum+(app.metric === 'frp' ? r?.frp_harm ?? 0 : r?.count_harm ?? 0),0);
-            return [<HStack key={`${year}-label`} xstyle={s.year} gap={1} vAlign="center"><Text>{year}</Text>{rows.some(r=>r?.is_estimated)&&<Badge variant="info" label="E" />}</HStack>, ...rows.map((row,i) => {
-              const encoding = encodeCell(row,app.mode,app.metric,max,app.scheme);
-              const value = app.metric === 'frp' ? row?.frp_harm : row?.count_harm;
-              const selected = app.selected?.year === year && app.selected.month === i+1;
-              const label = `${year} ${monthNames[app.lang][i]}: ${fmt(value,app.lang)} ${app.metric === 'frp' ? 'FRP' : t.count}${row?.anomaly_ratio != null ? `, ${fmt(row.anomaly_ratio,app.lang,1)}× ${t[app.reference]}` : ''}`;
-              const detail = row ? `${label} · retorno ${fmt(row.return_period_years,app.lang,1)} ${t.years}${row.clear_frac != null ? ` · despejado ${fmt(row.clear_frac*100,app.lang)} %` : ''}` : `${year} ${monthNames[app.lang][i]}: ${t.empty}`;
-              return <Tooltip key={`${year}-${i}`} content={detail}><Text role="gridcell"><button {...stylex.props(s.cell,selected && s.selected,row?.is_estimated && s.estimated)} style={{backgroundColor:encoding.background,color:encoding.color}} type="button" tabIndex={selected ? 0 : -1} aria-label={label} aria-selected={selected} onClick={() => row && app.setSelected({year,month:i+1})}>{row ? calendarCellValue(value,app.lang) : '·'}</button></Text></Tooltip>;
-            }), <Text key={`${year}-total`} role="gridcell" xstyle={s.total} hasTabularNumbers>{compact(total,app.lang)}</Text>];
-          })}
-        </div>
-      </div>
-      <HStack gap={2} wrap="wrap" vAlign="center"><Text type="supporting" color="secondary">{app.mode === 'count' ? `0 → ${compact(max,app.lang)}` : `<1× · 1× · >1×`}</Text><HStack gap={1} aria-label="Escala de color">{ramp.map((color,i)=><Text key={i} xstyle={s.swatch} style={{backgroundColor:color}}> </Text>)}</HStack><Text type="supporting" color="secondary">E junto al año y borde punteado = {t.estimated} · · = {t.empty}</Text></HStack>
-      <Text type="supporting" color="secondary">{data.attribution || 'NASA FIRMS'} · {data.methodology_version} · {data.data_cutoff}</Text>
-    </>}
-  </VStack></Card>;
+const s=stylex.create({scroll:{overflowX:'auto',maxWidth:'100%'},grid:{display:'grid',gridTemplateColumns:'minmax(var(--spacing-10),1.4fr) repeat(12,minmax(var(--spacing-5),1fr)) minmax(var(--spacing-8),1fr)',gap:'var(--spacing-0-5)',minWidth:'calc(var(--spacing-12) * 7)',alignItems:'center'},cell:{display:'block',width:'100%',height:'var(--spacing-5)',border:'none',borderRadius:'var(--radius-inner)',padding:0,cursor:'pointer',font:'inherit',fontSize:'var(--font-size-xs)',textAlign:'center',fontVariantNumeric:'tabular-nums',':focus-visible':{outline:'var(--spacing-0-5) solid var(--color-border-emphasized)'}},selected:{outline:'var(--spacing-0-5) solid var(--color-border-emphasized)'},cloud:{backgroundImage:'repeating-linear-gradient(135deg, transparent 0 var(--spacing-0-5), var(--color-border-emphasized) var(--spacing-0-5) var(--spacing-1))'},header:{textAlign:'center'},year:{whiteSpace:'nowrap'},oni:{textAlign:'center'},nina:{color:'var(--color-data-blue-4)'},nino:{color:'var(--color-data-red-4)'},swatch:{width:'var(--spacing-4)',height:'var(--spacing-3)',borderRadius:'var(--radius-inner)'},legendCloud:{width:'var(--spacing-4)',height:'var(--spacing-3)',backgroundImage:'repeating-linear-gradient(135deg, var(--color-background-muted) 0 var(--spacing-0-5), var(--color-border-emphasized) var(--spacing-0-5) var(--spacing-1))'}});
+export default function CalendarHeatmap({data,loading,error,label}:{data:CalendarResponse|null;loading:boolean;error:string|null;label?:string}){
+ const app=useApp(); const years=useMemo(()=>[...new Set(data?.rows.map(r=>r.year)??[])].sort((a,b)=>b-a),[data]); const lookup=useMemo(()=>new Map(data?.rows.map(r=>[`${r.year}-${r.month}`,r])??[]),[data]);
+ const max=Math.max(1,...(data?.rows.map(r=>app.metric==='frp'?r.frp_harm??0:r.count_harm??0)??[]));
+ const {gridRef,handleKeyDown,handleFocus}=useGridFocus<HTMLElement>({columns:14,cellSelector:'[role="gridcell"]',getFocusTarget:cell=>cell.querySelector<HTMLElement>('button'),isCellFocusable:cell=>!!cell.querySelector('button'),hasRovingTabIndex:true});
+ if(loading)return <Skeleton width="100%" height="18rem"/>; if(error)return <Banner status="error" title={error}/>; if(!data?.rows.length)return <EmptyState title={app.lang==='es'?'Sin datos para el calendario':app.lang==='pt'?'Sem dados no calendário':'No calendar data'} isCompact/>;
+ const initial=newest(data.rows); const ramp=app.mode==='count'?sequentialSteps(app.scheme):divergingSteps();
+ return <VStack gap={2}><Text type="supporting">{label}</Text><section {...stylex.props(s.scroll)} aria-label={label||'Calendario'} tabIndex={0}><section {...stylex.props(s.grid)} role="grid" aria-label={label||'Calendario'} ref={gridRef} onKeyDown={handleKeyDown} onFocus={handleFocus}>
+ <Text>Año</Text>{monthShort[app.lang].map((m,i)=><Text key={i} type="supporting" xstyle={s.header}>{m[0].toUpperCase()}</Text>)}<Text type="supporting" xstyle={s.oni}>ONI</Text>
+ {years.flatMap(year=>{const rows=Array.from({length:12},(_,i)=>lookup.get(`${year}-${i+1}`)); const phase=yearPhase(data.rows,year); const uncertainty=data.harmonization_uncertainty?.median_rel_error; const est=rows.some(r=>r?.is_estimated);return [<HStack key={`${year}-label`} gap={1} xstyle={s.year}><Text type="supporting">{year}</Text>{est&&<Tooltip content={`${app.lang==='es'?'Estimado desde MODIS':app.lang==='pt'?'Estimado desde MODIS':'Estimated from MODIS'}${uncertainty!=null?`, ±${fmt(uncertainty*100,app.lang)} %`:''}`}><Text>≈</Text></Tooltip>}</HStack>,...rows.map((row,i)=>{const enc=encodeCell(row,app.mode,app.metric,max,app.scheme);const value=app.metric==='frp'?row?.frp_harm:row?.count_harm;const selected=app.selected?.year===year&&app.selected.month===i+1;const label=`${monthNames[app.lang][i]} ${year}: ${fmt(value,app.lang)}${row?.anomaly_ratio!=null?` · ${fmt(row.anomaly_ratio,app.lang,1)}×`:''}`;return <Text key={`${year}-${i}`} role="gridcell"><Tooltip content={`${label}${row?.clear_frac!=null?` · ${fmt(row.clear_frac*100,app.lang)} % clear`:''}`}><button type="button" {...stylex.props(s.cell,selected&&s.selected,row?.clear_frac!=null&&row.clear_frac<.5&&s.cloud)} style={{backgroundColor:enc.background,color:enc.color}} tabIndex={selected||(!app.selected&&year===initial.year&&i+1===initial.month)?0:-1} aria-label={label} aria-selected={selected} onClick={()=>row&&app.setSelected({year,month:i+1})}>{row?calendarCellValue(value,app.lang):'·'}</button></Tooltip></Text>;}),<Text key={`${year}-oni`} role="gridcell" xstyle={[s.oni,phase==='nina'&&s.nina,phase==='nino'&&s.nino]}>{phase==='nina'?'Niña':phase==='nino'?'Niño':''}</Text>];})}
+ </section></section><HStack gap={2} wrap="wrap" vAlign="center"><Text type="supporting">{app.mode==='count'?`0 → ${compact(max,app.lang)}`:'<1× · 1× · >1×'}</Text>{ramp.map((c,i)=><Text key={i} xstyle={s.swatch} style={{backgroundColor:c}}> </Text>)}<Text type="supporting">{data.harmonization_uncertainty?.years_estimated?.join('–')||'≈'} {app.lang==='es'?'estimación':app.lang==='pt'?'estimativa':'estimate'}</Text><Text xstyle={s.legendCloud}> </Text><Text type="supporting">{app.lang==='en'?'Clouds':app.lang==='pt'?'Nuvens':'Nubes'} · Niña · Niño</Text></HStack><Text type="supporting" color="secondary">{data.attribution||'NASA FIRMS'} · {data.methodology_version} · {data.data_cutoff}</Text></VStack>;
 }

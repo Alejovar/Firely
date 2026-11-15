@@ -16,3 +16,25 @@ export const apiMessage = (error: unknown, lang: Lang) => {
   const base = words[lang].retry;
   return e?.status ? `${base} (${e.status}${e.code ? ` · ${e.code}` : ''})` : base;
 };
+
+export function monthRank(rows: CalendarRow[], selected: CalendarRow, metric: 'count' | 'frp' = 'count') {
+  const key = metric === 'frp' ? 'frp_harm' : 'count_harm';
+  const value = selected[key];
+  if (value == null) return null;
+  const peers = rows.filter(row => row.month === selected.month && row[key] != null);
+  return { rank: 1 + peers.filter(row => (row[key] ?? 0) > value).length, total: peers.length };
+}
+
+export function yearPhase(rows: CalendarRow[], year: number): 'nina' | 'nino' | null {
+  const phases = rows.filter(row => row.year === year).map(row => (row.enso_phase ?? '').toLowerCase());
+  const nina = phases.filter(phase => phase.includes('nina') || phase.includes('niña') || phase.includes('cold')).length;
+  const nino = phases.filter(phase => phase.includes('nino') || phase.includes('niño') || phase.includes('warm')).length;
+  return nina === nino ? null : nina > nino ? 'nina' : 'nino';
+}
+
+export function calendarQuery(area: import('../api/client').Area, from: string, to: string, metric: string, reference: string, burn: string) {
+  const params = new URLSearchParams(Object.entries(area).map(([key, value]) => [key, String(value)]));
+  params.set('from', from); params.set('to', to); params.set('metric', metric); params.set('reference', reference);
+  if (burn !== 'all') params.set('burn_type', burn);
+  return `/calendar?${params}`;
+}

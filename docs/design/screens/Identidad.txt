@@ -1,0 +1,62 @@
+RESCOLDO · MINI GUÍA DE IDENTIDAD
+La brasa que sigue viva bajo la ceniza.
+← Volver a la app
+01 · LOGO · TRES VARIANTES
+Rescoldo
+Rescoldo
+A · Píxel encendido EN USO
+Un píxel de satélite que se enciende entre sus vecinos apagados. Directo y escalable hasta 16 px.
+Rescoldo
+Rescoldo
+B · Brasa en órbita
+La brasa al centro y el paso del satélite alrededor. Más cálido; funciona bien como ícono de app.
+Rescoldo
+Rescoldo
+C · Bajo la ceniza
+Capas de ceniza como líneas de barrido del sensor, con la brasa asomando. La más narrativa.
+02 · PALETA DE MARCA
+Brasa
+#E8803F · oscuro
+#C9601F · claro
+Carbón
+#0D0F11
+Papel
+#EFEEE9
+Escala ceniza: neutros ligeramente cálidos para fondos, bordes y texto.
+
+Regla: la brasa es solo para el logo, el botón principal y acentos. Nunca para datos: el naranja en un mapa de fuego se lee como alarma.
+
+03 · RAMPAS DE DATOS · APTAS PARA DALTONISMO
+Cividis · conteos
+0 puntos
+#00204D → #FDE34A
+máximo
+Divergente azul–blanco–rojo · anomalías
+¼× la referencia
+= referencia
+4×
+Rayado: nubes
+Barra: estimación pre-2012
+Contorno: seleccionado
+04 · TIPOGRAFÍA
+IBM PLEX SANS · TEXTO Y TÍTULOS
+Marzo va 2.8× sobre la mediana.
+Clara a cualquier tamaño, con números tabulares para que las cifras se alineen en tablas y calendarios.
+IBM PLEX MONO · ETIQUETAS Y DATOS
+MES ACTUAL · MARZO 2026
+2021 · 312 · 5.9×
+2012 · 171 · 2.9×
+25.38°N 100.60°O
+05 · USO EN MODO OSCURO Y CLARO
+Rescoldo
+CENTRO DE MONITOREO
+2.8× sobre la mediana
+ver datos
+Ficha PDF
+CSV
+Rescoldo
+FICHA · IMPRESIÓN
+2.8× sobre la mediana
+ver datos
+Ficha PDF
+CSV

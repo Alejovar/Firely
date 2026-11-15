@@ -1,0 +1,88 @@
+RESCOLDO · FICHA DE SITUACIÓN
+Sierra de Arteaga, Coahuila
+1,742 km² · límite municipal INEGI 05004 · corte: 18 de marzo de 2026, 08:00 h
+PRIORIDAD
+ALTA
+índice 82 / 100
+mapa base OSM · 10 km
+Puntos de marzo 2026 · triángulo: cono de propagación 12 h hacia el NE.
+2.8×
+Marzo va 2.8 veces sobre la mediana 2000–2025. Un marzo así ocurre 1 vez cada 25 años.
+HALLAZGOS CLAVE
+1
+El incendio de San Antonio de las Alazanas ya es el 4º más grande desde 2000 (143 puntos, 7 días) y sigue activo de noche.
+2
+Peligro meteorológico extremo el sábado 21. Con viento del SO, 3 localidades (3,450 personas) quedan a favor del humo.
+3
+Invierno más seco desde 2011 (−41% de lluvia). Los años parecidos (2011, 2012, 2024) cerraron muy por encima de lo normal.
+CALENDARIO DE ACTIVIDAD · ANOMALÍA VS MEDIANA
+E
+F
+M
+A
+M
+J
+J
+A
+S
+O
+N
+D
+2026
+2025
+2024
+2023
+2022
+2021
+2020
+2019
+2018
+2017
+2016
+2015
+2014
+2013
+2012
+2011
+2010
+2009
+2008
+2007
+2006
+2005
+2004
+2003
+2002
+2001
+2000
+¼×
+4×
+2000–11: estimación ±18%
+RITMO DE TEMPORADA · ACUMULADO DEL AÑO
+ene
+mar
+may
+jul
+sep
+nov
+dic
+— 2026 (línea gruesa) · ▮ percentiles 10–90 · - - mediana
+PELIGRO METEOROLÓGICO · 7 DÍAS (GFWED)
+28
+Mié
+31
+Jue
+36
+Vie
+41
+Sáb
+38
+Dom
+33
+Lun
+24
+Mar
+LOCALIDADES A FAVOR DEL VIENTO
+San Antonio de las Alazanas (4.2 km NE, 1,850 hab.) · Los Lirios (7.8 km E, 960) · Jamé (11.3 km ENE, 640)
+Puntos de calor: NASA FIRMS (MODIS C6.1 y VIIRS 375 m), armonizados por Rescoldo, metodología v1.2. Clima: NASA POWER, GFWED, NOAA ONI. Límites: INEGI. Cifras calculadas; textos redactados automáticamente. Datos: rescoldo.app/a/arteaga-coah
+Revisó:

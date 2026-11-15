@@ -1,14 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import * as stylex from '@stylexjs/stylex';
-import { Map, setWorkerUrl, type GeoJSONSource } from 'maplibre-gl';
+import { Map, Popup, ScaleControl, setWorkerUrl, type GeoJSONSource, type ExpressionSpecification } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { TerraDraw, TerraDrawPolygonMode } from 'terra-draw';
 import { TerraDrawMapLibreGLAdapter } from 'terra-draw-maplibre-gl-adapter';
-
-// Vite serves the worker as a separate asset; MapLibre 6 must be told where it is.
-setWorkerUrl(workerUrl);
-import { Card } from '@astryxdesign/core/Card';
 import { VStack } from '@astryxdesign/core/VStack';
 import { HStack } from '@astryxdesign/core/HStack';
 import { Heading, Text } from '@astryxdesign/core/Text';
@@ -16,64 +12,102 @@ import { Button } from '@astryxdesign/core/Button';
 import { Banner } from '@astryxdesign/core/Banner';
 import { Skeleton } from '@astryxdesign/core/Skeleton';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
+import { Switch } from '@astryxdesign/core/Switch';
+import { Popover } from '@astryxdesign/core/Popover';
+import { DateRangeInput, type DateRange } from '@astryxdesign/core/DateRangeInput';
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
-import { getRecent, ApiError, type RecentFeatureCollection } from '../api/client';
+import { getCalendar, getHotspotsGeoJson, getRecent, getRecurrence, getTerritory, ApiError, type HotspotsGeoJson, type RecentFeatureCollection, type RecurrenceGeoJson, type TerritoryResponse } from '../api/client';
 import { useApp } from '../state/AppState';
-import type { AreaSel } from '../state/hash';
-import { DEFAULT_AREA } from '../state/hash';
 import { simplifyPolygon } from '../lib/drawnArea';
-import { emphasisSeries } from '../lib/dataviz';
-import { words } from '../lib/explorerLabels';
-
+import { areaGeometry, frpRamp, geometryBbox, hotspotPeriod } from '../lib/mapVisual';
+import { onMapDraw } from '../lib/mapBus';
+import { monthShort } from '../i18n';
+setWorkerUrl(workerUrl);
 const s = stylex.create({
-  card: { alignSelf: 'start', position: {default:'sticky','@media (max-width: 1099px)':'static'}, top: 'var(--spacing-20)', height: {default:'calc(100vh - var(--spacing-24))','@media (max-width: 1099px)':'auto'}, minHeight: {default:'36rem','@media (max-width: 1099px)':'auto'} },
-  content: { height: '100%', minHeight: 0 },
-  map: { width: '100%', flexGrow: {default:1,'@media (max-width: 719px)':0}, minHeight: {default:'30rem','@media (max-width: 719px)':'20rem'}, height: {default:'auto','@media (max-width: 719px)':'20rem'}, borderRadius: 'var(--radius-md)', overflow: 'hidden', backgroundColor: 'var(--color-background-muted)' },
+  root: { position: 'relative', width: '100%', height: '100%', minHeight: 0, overflow: 'hidden', backgroundColor: 'var(--color-background-muted)' },
+  canvas: { position: 'absolute', inset: 0 },
+  glass: { backgroundColor: 'var(--color-background-surface)', border: 'thin solid var(--color-border)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-high)', backdropFilter: 'blur(var(--spacing-2))' },
+  area: { position: 'absolute', top: 'var(--spacing-4)', left: 'var(--spacing-4)', width: 'min(20rem, calc(100% - var(--spacing-8)))', padding: 'var(--spacing-3)', zIndex: 2 },
+  layers: { position: 'absolute', right: 'var(--spacing-4)', bottom: 'var(--spacing-12)', width: 'min(16rem, calc(100% - var(--spacing-8)))', maxHeight: 'min(70vh, 36rem)', overflowY: 'auto', padding: 'var(--spacing-3)', zIndex: 2, '@media (max-width: 599px)': { bottom: 'var(--spacing-16)', maxHeight: '26vh' } },
+  legend: { position: 'absolute', left: 'var(--spacing-4)', bottom: 'var(--spacing-12)', padding: 'var(--spacing-2)', zIndex: 2, maxWidth: 'calc(100% - var(--spacing-8))', '@media (max-width: 599px)': { bottom: 'calc(26vh + var(--spacing-20))' } },
+  notice: { position: 'absolute', top: 'var(--spacing-4)', right: 'var(--spacing-4)', zIndex: 3, width: 'min(22rem, 45%)' },
+  attribution: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 'var(--spacing-1) var(--spacing-2)', backgroundColor: 'var(--color-background-surface)', zIndex: 3, textAlign: 'right' },
+  zoom: { position: 'absolute', right: 'var(--spacing-4)', top: 'var(--spacing-4)', zIndex: 2 },
+  coord: { position: 'absolute', top: '50%', left: 'var(--spacing-1)', zIndex: 1, pointerEvents: 'none' },
+  ramp: { width: 'var(--spacing-3)', height: 'var(--spacing-3)', borderRadius: 'var(--radius-full)' },
+  tiny: { fontSize: 'var(--font-size-xs)' },
 });
-const featureCollection = (geometry: GeoJSON.Geometry | null): GeoJSON.FeatureCollection => ({type:'FeatureCollection',features:geometry ? [{type:'Feature',geometry,properties:{}}] : []});
-function areaGeometry(sel: AreaSel): GeoJSON.Geometry | null {
-  if ('geometry' in sel.area) { try { return JSON.parse(sel.area.geometry) as GeoJSON.Geometry; } catch { return null; } }
-  if ('lat' in sel.area) {
-    const {lat,lon,radius_km:radius} = sel.area; const coords: [number,number][]=[];
-    for (let i=0;i<=64;i++) { const angle=2*Math.PI*i/64; coords.push([lon+(radius/111.32/Math.max(0.1,Math.cos(lat*Math.PI/180)))*Math.cos(angle),lat+(radius/111.32)*Math.sin(angle)]); }
-    return {type:'Polygon',coordinates:[coords]};
-  }
-  const b = sel.bbox ?? ('bbox' in sel.area ? sel.area.bbox.split(',').map(Number) as [number,number,number,number] : null);
-  if (!b || b.some(n=>!Number.isFinite(n))) return null;
-  return {type:'Polygon',coordinates:[[[b[0],b[1]],[b[2],b[1]],[b[2],b[3]],[b[0],b[3]],[b[0],b[1]]]]};
+const empty = (): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: [] });
+const fc = (geometry: GeoJSON.Geometry | null): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: geometry ? [{ type: 'Feature', geometry, properties: {} }] : [] });
+const locale = { es: 'es-MX', en: 'en-US', pt: 'pt-BR' };
+const labels = {
+  es: { area: 'ÁREA SELECCIONADA', edit: 'Editar polígono', dates: 'Cambiar fechas', story: 'Modo historia ▸', layers: 'CAPAS', hotspots: 'Puntos de calor', recent: 'Detecciones recientes', goes: 'GOES geoestacionario', recurrence: 'Recurrencia', spread: 'Cono de propagación', exposure: 'Exposición', times: 'veces que ha ardido', active: 'evento activo + viento', places: 'localidades y ANP', vision: 'Visión · próximamente', needs: 'Requiere un evento activo y la capa en vivo', frp: 'PODER RADIATIVO (FRP)', low: 'bajo', high: 'alto', years: 'años con fuego', noData: 'Sin puntos de calor para este periodo', loading: 'Cargando mapa', recentNo: 'Sin detecciones recientes', map: 'Mapa de FIRELY' },
+  en: { area: 'SELECTED AREA', edit: 'Edit polygon', dates: 'Change dates', story: 'Story mode ▸', layers: 'LAYERS', hotspots: 'Hotspots', recent: 'Recent detections', goes: 'GOES geostationary', recurrence: 'Recurrence', spread: 'Spread cone', exposure: 'Exposure', times: 'years burned', active: 'active event + wind', places: 'localities and protected areas', vision: 'Vision · coming soon', needs: 'Requires an active event and the live layer', frp: 'RADIATIVE POWER (FRP)', low: 'low', high: 'high', years: 'years with fire', noData: 'No hotspots in this period', loading: 'Loading map', recentNo: 'No recent detections', map: 'FIRELY map' },
+  pt: { area: 'ÁREA SELECIONADA', edit: 'Editar polígono', dates: 'Alterar datas', story: 'Modo história ▸', layers: 'CAMADAS', hotspots: 'Pontos de calor', recent: 'Detecções recentes', goes: 'GOES geoestacionário', recurrence: 'Recorrência', spread: 'Cone de propagação', exposure: 'Exposição', times: 'vezes que queimou', active: 'evento ativo + vento', places: 'localidades e áreas protegidas', vision: 'Visão · em breve', needs: 'Requer evento ativo e camada ao vivo', frp: 'PODER RADIATIVO (FRP)', low: 'baixo', high: 'alto', years: 'anos com fogo', noData: 'Sem pontos de calor neste período', loading: 'Carregando mapa', recentNo: 'Sem detecções recentes', map: 'Mapa FIRELY' },
+};
+function apiError(e: unknown, lang: 'es' | 'en' | 'pt') { if (e instanceof ApiError) return e.status === 503 && e.code === 'firms_map_key_missing' ? { es: 'La capa en vivo necesita una llave de FIRMS en el servidor', en: 'The live layer needs a FIRMS key on the server', pt: 'A camada ao vivo precisa de uma chave FIRMS no servidor' }[lang] : `API ${e.status}${e.code ? ` · ${e.code}` : ''}`; return e instanceof Error ? e.message : String(e); }
+function source(map: Map, id: string, data: GeoJSON.FeatureCollection) { (map.getSource(id) as GeoJSONSource | undefined)?.setData(data); }
+function paint(map: Map) {
+  const node = map.getContainer(), css = getComputedStyle(node), token = (name: string) => css.getPropertyValue(name).trim();
+  const ramp = frpRamp.map(v => token(v.slice(4, -1)));
+  const max = 200;
+  map.setPaintProperty('firely-points', 'circle-color', ['step', ['coalesce', ['get', 'frp_mw'], 0], ramp[0], 50, ramp[1], 100, ramp[2], 150, ramp[3], max, ramp[4]] as ExpressionSpecification);
+  map.setPaintProperty('firely-recurrence', 'fill-color', ['step', ['get', 'years_burned'], ramp[0], 1, ramp[1], 2, ramp[2], 3, ramp[3], 4, ramp[4]]);
+  map.setPaintProperty('firely-border', 'line-color', token('--color-text-primary') || token('--color-data-neutral'));
+  map.setPaintProperty('firely-recent', 'circle-stroke-color', token('--color-text-primary'));
+  map.setPaintProperty('firely-localities', 'circle-color', token('--color-data-blue-2'));
+  map.setPaintProperty('firely-protected', 'line-color', token('--color-data-blue-2'));
+  for (const id of ['firely-protected-labels', 'firely-localities-labels']) { map.setPaintProperty(id, 'text-color', token('--color-text-primary')); map.setPaintProperty(id, 'text-halo-color', token('--color-background-surface')); }
+  map.setPaintProperty('firely-localities', 'circle-stroke-color', token('--color-background-surface'));
+  map.setPaintProperty('firely-points', 'circle-stroke-color', token('--color-on-dark'));
 }
-function bboxOfGeometry(g: GeoJSON.Polygon): [number,number,number,number] { const points=g.coordinates.flat(); return [Math.min(...points.map(p=>p[0])),Math.min(...points.map(p=>p[1])),Math.max(...points.map(p=>p[0])),Math.max(...points.map(p=>p[1]))]; }
-
 export default function MapPanel() {
-  const app = useApp(); const t=words[app.lang];
-  const node=useRef<HTMLDivElement>(null), mapRef=useRef<Map|null>(null), drawRef=useRef<TerraDraw|null>(null), drawing=useRef(false), areaRef=useRef(app.setArea);
-  const [ready,setReady]=useState(false),[drawError,setDrawError]=useState<string|null>(null),[liveError,setLiveError]=useState<string|null>(null),[recent,setRecent]=useState<RecentFeatureCollection|null>(null),[liveLoading,setLiveLoading]=useState(false);
-  areaRef.current=app.setArea;
+  const app = useApp(), t = labels[app.lang];
+  const node = useRef<HTMLDivElement>(null), mapRef = useRef<Map | null>(null), drawRef = useRef<TerraDraw | null>(null), drawing = useRef(false), areaRef = useRef(app.setArea);
+  areaRef.current = app.setArea;
+  const [latestMonth, setLatestMonth] = useState<{year:number;month:number}|null>(null);
+  const [ready, setReady] = useState(false), [hotspots, setHotspots] = useState<HotspotsGeoJson | null>(null), [recent, setRecent] = useState<RecentFeatureCollection | null>(null), [recurrence, setRecurrence] = useState<RecurrenceGeoJson | null>(null), [territory, setTerritory] = useState<TerritoryResponse | null>(null), [errors, setErrors] = useState<Record<string, string>>({}), [loading, setLoading] = useState<Record<string, boolean>>({}), [coords, setCoords] = useState(''), [drawError, setDrawError] = useState('');
+  const areaKey = JSON.stringify(app.area.area);
+  const [periodFrom, periodTo] = app.selected || latestMonth ? hotspotPeriod(app.selected ?? latestMonth, app.from, app.to) : [app.from, app.to];
+  const shownMonth = app.selected ?? latestMonth;
+  const month = shownMonth ? `${monthShort[app.lang][shownMonth.month - 1]} ${shownMonth.year}` : new Intl.DateTimeFormat(locale[app.lang], { month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${app.to.slice(0, 7)}-01T00:00:00Z`));
+  useEffect(() => { if (app.selected) return; const controller = new AbortController(); setLatestMonth(null); getCalendar(app.area.area, app.from, app.to, 'count', 'median', controller.signal).then(data => { const rows = data.rows.filter(r => (r.count_harm ?? 0) > 0).sort((a,b) => a.year - b.year || a.month - b.month); const last = rows.at(-1); if (last) setLatestMonth({year:last.year,month:last.month}); }).catch(e => { if (!controller.signal.aborted) setErrors(old => ({...old, latest: apiError(e, app.lang)})); }); return () => controller.abort(); }, [areaKey, app.from, app.to, app.selected, app.lang]);
   useEffect(() => {
     if (!node.current) return;
-    const map=new Map({container:node.current,style:{version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'osm',type:'raster',source:'osm'}]},center:[-100.55,25.45],zoom:8,attributionControl:false});
-    mapRef.current=map;
-    const observer=new ResizeObserver(()=>map.resize()); observer.observe(node.current);
-    map.on('load',()=>{
-      const token=emphasisSeries.harmonized.stroke.slice(4,-1);
-      const accent=getComputedStyle(node.current!).getPropertyValue(token).trim() || getComputedStyle(node.current!).getPropertyValue('--color-accent').trim();
-      map.addSource('firely-area',{type:'geojson',data:featureCollection(null)});
-      map.addLayer({id:'firely-fill',type:'fill',source:'firely-area',paint:{'fill-color':accent,'fill-opacity':0.14}});
-      map.addLayer({id:'firely-border',type:'line',source:'firely-area',paint:{'line-color':accent,'line-width':2}});
-      map.addSource('firely-live',{type:'geojson',data:featureCollection(null)});
-      map.addLayer({id:'firely-live-points',type:'circle',source:'firely-live',paint:{'circle-color':accent,'circle-opacity':0.75,'circle-radius':['interpolate',['linear'],['coalesce',['get','frp_mw'],0],0,3,100,12]}});
-      setReady(true);
+    const map = new Map({ container: node.current, style: { version: 8, sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '© OpenStreetMap contributors' } }, layers: [{ id: 'osm', type: 'raster', source: 'osm' }] }, center: [-100.55, 25.45], zoom: 8, attributionControl: false });
+    mapRef.current = map; map.addControl(new ScaleControl({ unit: 'metric', maxWidth: 100 }), 'bottom-left');
+    const observer = new ResizeObserver(() => map.resize()); observer.observe(node.current);
+    map.on('load', () => {
+      for (const id of ['firely-area', 'firely-points', 'firely-recent', 'firely-recurrence', 'firely-localities', 'firely-protected']) map.addSource(id, { type: 'geojson', data: empty() });
+      map.addLayer({ id: 'firely-recurrence', type: 'fill', source: 'firely-recurrence', paint: { 'fill-color': 'transparent', 'fill-opacity': 0.45 } });
+      map.addLayer({ id: 'firely-area-fill', type: 'fill', source: 'firely-area', paint: { 'fill-color': 'transparent', 'fill-opacity': 0.1 } });
+      map.addLayer({ id: 'firely-border', type: 'line', source: 'firely-area', paint: { 'line-color': 'transparent', 'line-width': 2, 'line-dasharray': [3, 2] } });
+      map.addLayer({ id: 'firely-protected', type: 'line', source: 'firely-protected', paint: { 'line-color': 'transparent', 'line-width': 2, 'line-dasharray': [2, 2] } });
+      map.addLayer({ id: 'firely-protected-labels', type: 'symbol', source: 'firely-protected', layout: { 'text-field': ['get', 'name'], 'text-size': 11, 'symbol-placement': 'point' }, paint: { 'text-color': 'transparent', 'text-halo-color': 'transparent', 'text-halo-width': 1 } });
+      map.addLayer({ id: 'firely-localities', type: 'circle', source: 'firely-localities', paint: { 'circle-color': 'transparent', 'circle-radius': 4, 'circle-stroke-width': 1, 'circle-stroke-color': 'transparent' } });
+      map.addLayer({ id: 'firely-localities-labels', type: 'symbol', source: 'firely-localities', layout: { 'text-field': ['get', 'name'], 'text-size': 11, 'text-offset': [0.8, 0], 'text-anchor': 'left', 'text-allow-overlap': false }, paint: { 'text-color': 'transparent', 'text-halo-color': 'transparent', 'text-halo-width': 1 } });
+      map.addLayer({ id: 'firely-points', type: 'circle', source: 'firely-points', paint: { 'circle-color': 'transparent', 'circle-radius': ['interpolate', ['linear'], ['coalesce', ['get', 'frp_mw'], 0], 0, 3, 200, 12], 'circle-opacity': 0.85, 'circle-stroke-width': ['case', ['==', ['get', 'selected_day'], true], 2, 0] } });
+      map.addLayer({ id: 'firely-recent', type: 'circle', source: 'firely-recent', paint: { 'circle-color': 'transparent', 'circle-radius': 7, 'circle-stroke-width': 2, 'circle-stroke-color': 'transparent' } });
+      paint(map); setReady(true);
     });
-    map.on('click',e=>{if(drawing.current)return;areaRef.current({kind:'point',label:`${e.lngLat.lat.toFixed(3)}, ${e.lngLat.lng.toFixed(3)} · 20 km`,area:{lat:e.lngLat.lat,lon:e.lngLat.lng,radius_km:20}});});
-    return ()=>{observer.disconnect();drawRef.current?.stop();drawRef.current=null;map.remove();mapRef.current=null;setReady(false);};
-  },[]);
-  const areaKey=JSON.stringify(app.area);
-  useEffect(()=>{const map=mapRef.current;if(!ready||!map)return;(map.getSource('firely-area') as GeoJSONSource).setData(featureCollection(areaGeometry(app.area)));let b=app.area.bbox; if(!b&&'lat' in app.area.area){const {lat,lon,radius_km:r}=app.area.area;b=[lon-r/100,lat-r/111,lon+r/100,lat+r/111];} if(b) map.fitBounds([[b[0],b[1]],[b[2],b[3]]],{padding:28,maxZoom:11,duration:window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:350});},[areaKey,ready]);
-  useEffect(()=>{const map=mapRef.current;if(!ready||!map)return;(map.getSource('firely-live') as GeoJSONSource).setData(recent ?? featureCollection(null));},[recent,ready]);
-  useEffect(()=>{const controller=new AbortController();setRecent(null);setLiveError(null);if(!app.live)return;setLiveLoading(true);getRecent(app.area.area,app.live,controller.signal).then(setRecent).catch(e=>{if(!controller.signal.aborted)setLiveError(e instanceof ApiError&&e.status===503&&e.code==='firms_map_key_missing'?'La capa en vivo necesita una llave de FIRMS en el servidor':`${t.map}: ${e instanceof ApiError ? `${e.status} ${e.code ?? ''}` : 'error'}`);}).finally(()=>{if(!controller.signal.aborted)setLiveLoading(false);});return()=>controller.abort();},[areaKey,app.live,app.lang]);
-  const beginDraw=()=>{const map=mapRef.current;if(!map)return;setDrawError(null);drawing.current=true;drawRef.current?.stop();const draw=new TerraDraw({adapter:new TerraDrawMapLibreGLAdapter({map}),modes:[new TerraDrawPolygonMode()]});drawRef.current=draw;draw.on('finish',()=>{const feature=draw.getSnapshot().find(f=>f.geometry.type==='Polygon');if(!feature)return;try{const geometry=simplifyPolygon((feature.geometry as GeoJSON.Polygon).coordinates[0]);const bbox=bboxOfGeometry(geometry);areaRef.current({kind:'drawn',label:'Área dibujada',area:{geometry:JSON.stringify(geometry)},bbox});}catch(e){setDrawError(e instanceof Error?e.message:String(e));}draw.stop();drawRef.current=null;drawing.current=false;});draw.start();draw.setMode('polygon');};
-  useEffect(()=>{const cancel=(e:KeyboardEvent)=>{if(e.key==='Escape'&&drawing.current){drawRef.current?.stop();drawRef.current=null;drawing.current=false;}};window.addEventListener('keydown',cancel);return()=>window.removeEventListener('keydown',cancel);},[]);
-  const newest=recent?.features.map(f=>f.properties.ts_utc).filter((v):v is string=>!!v).sort().at(-1);
-  return <Card xstyle={s.card}><VStack gap={3} xstyle={s.content}><Heading level={2}>{t.map}</Heading><HStack gap={2} wrap="wrap" vAlign="center"><Button size="sm" label="Dibujar área" onClick={beginDraw}/><Button size="sm" label="Borrar área" variant="ghost" onClick={()=>app.setArea(DEFAULT_AREA)}/><SegmentedControl label="En vivo" size="sm" value={String(app.live)} onChange={v=>app.setLive(Number(v) as 0|24|48)}><SegmentedControlItem value="0" label="Apagado"/><SegmentedControlItem value="24" label="24 h"/><SegmentedControlItem value="48" label="48 h"/></SegmentedControl></HStack>
-    {drawError&&<Banner status="error" title={drawError}/>} {liveError&&<Banner status="warning" title={liveError}/>}<div ref={node} {...stylex.props(s.map)} role="application" aria-label="Mapa de área y detecciones recientes"/><Text type="supporting" color="secondary">© OpenStreetMap contributors · Datos de fuego: NASA FIRMS</Text>{app.live>0&&(liveLoading?<Skeleton width="100%" height="var(--spacing-6)"/>:recent?.features.length?<Text type="supporting" color="secondary">{recent.features.length} detecciones · {newest ?? '—'}</Text>:!liveError?<EmptyState title="Sin detecciones recientes" isCompact/>:null)}</VStack></Card>;
+    map.on('click', e => { if (drawing.current) return; const hit = map.queryRenderedFeatures(e.point, { layers: ['firely-points', 'firely-recent'] })[0]; if (hit) { const p = hit.properties || {}; const content = document.createElement('p'); content.textContent = `${p.date || p.ts_utc || ''} · ${p.sensor || p.platform || ''} · FRP ${p.frp_mw ?? '—'} MW · ${p.confidence_h || ''}`; new Popup({ closeButton: true }).setLngLat(e.lngLat).setDOMContent(content).addTo(map); return; } areaRef.current({ kind: 'point', label: `${e.lngLat.lat.toFixed(3)}, ${e.lngLat.lng.toFixed(3)} · 20 km`, area: { lat: e.lngLat.lat, lon: e.lngLat.lng, radius_km: 20 } }); });
+    map.on('moveend', () => { const c = map.getCenter(); setCoords(`${c.lat.toFixed(2)}°N · ${Math.abs(c.lng).toFixed(2)}°${c.lng < 0 ? 'O' : 'E'}`); });
+    return () => { observer.disconnect(); drawRef.current?.stop(); drawRef.current = null; map.remove(); mapRef.current = null; };
+  }, []);
+  useEffect(() => { const map = mapRef.current; if (!ready || !map) return; const g = areaGeometry(app.area); source(map, 'firely-area', fc(g)); const b = app.area.bbox ?? geometryBbox(g); if (b) map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 32, maxZoom: 11, duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 350 }); }, [areaKey, ready]);
+  useEffect(() => { const map = mapRef.current; if (!ready || !map) return; paint(map); }, [ready, app.scheme]);
+  useEffect(() => { const map = mapRef.current; if (!ready || !map) return; source(map, 'firely-points', hotspots ? { type: 'FeatureCollection', features: hotspots.features.filter(f => !app.selectedDay || f.properties.date.slice(0, 10) === app.selectedDay).map(f => ({ ...f, properties: { ...f.properties, selected_day: !!app.selectedDay } })) } as GeoJSON.FeatureCollection : empty()); map.setLayoutProperty('firely-points', 'visibility', app.layers.hotspots ? 'visible' : 'none'); }, [ready, hotspots, app.selectedDay, app.layers.hotspots]);
+  useEffect(() => { const map = mapRef.current; if (!ready || !map) return; source(map, 'firely-recent', recent as GeoJSON.FeatureCollection ?? empty()); map.setLayoutProperty('firely-recent', 'visibility', app.layers.recent ? 'visible' : 'none'); }, [ready, recent, app.layers.recent]);
+  useEffect(() => { const map = mapRef.current; if (!ready || !map) return; source(map, 'firely-recurrence', recurrence as GeoJSON.FeatureCollection ?? empty()); map.setLayoutProperty('firely-recurrence', 'visibility', app.layers.recurrence ? 'visible' : 'none'); }, [ready, recurrence, app.layers.recurrence]);
+  useEffect(() => { const map = mapRef.current; if (!ready || !map) return; const localities = [...(territory?.localities ?? [])].sort((a, b) => (b.pop ?? 0) - (a.pop ?? 0)).slice(0, map.getZoom() >= 9 ? 30 : 12); source(map, 'firely-localities', { type: 'FeatureCollection', features: localities.map(l => ({ type: 'Feature', geometry: { type: 'Point', coordinates: [l.lon, l.lat] }, properties: { name: l.name } })) }); source(map, 'firely-protected', territory?.protected_areas as GeoJSON.FeatureCollection ?? empty()); for (const id of ['firely-localities', 'firely-localities-labels', 'firely-protected', 'firely-protected-labels']) map.setLayoutProperty(id, 'visibility', app.layers.exposure ? 'visible' : 'none'); }, [ready, territory, app.layers.exposure]);
+  useEffect(() => { const controller = new AbortController(); setHotspots(null); setErrors(old => ({...old, hotspots: ''})); if (!app.layers.hotspots || periodFrom > periodTo) { setHotspots(null); return; } setLoading(s => ({ ...s, hotspots: true })); getHotspotsGeoJson(app.area.area, periodFrom, periodTo, 20000, controller.signal).then(setHotspots).catch(e => { if (!controller.signal.aborted) setErrors(s => ({ ...s, hotspots: apiError(e, app.lang) })); }).finally(() => { if (!controller.signal.aborted) setLoading(s => ({ ...s, hotspots: false })); }); return () => controller.abort(); }, [areaKey, periodFrom, periodTo, app.layers.hotspots, app.lang]);
+  useEffect(() => { const controller = new AbortController(); setRecent(null); setErrors(old => ({...old, recent: ''})); if (!app.layers.recent || !app.live) { setRecent(null); return; } setLoading(s => ({ ...s, recent: true })); getRecent(app.area.area, app.live, controller.signal).then(setRecent).catch(e => { if (!controller.signal.aborted) setErrors(s => ({ ...s, recent: apiError(e, app.lang) })); }).finally(() => { if (!controller.signal.aborted) setLoading(s => ({ ...s, recent: false })); }); return () => controller.abort(); }, [areaKey, app.layers.recent, app.live, app.lang]);
+  useEffect(() => { const controller = new AbortController(); setRecurrence(null); setErrors(old => ({...old, recurrence: ''})); if (!app.layers.recurrence) { setRecurrence(null); return; } setLoading(s => ({ ...s, recurrence: true })); getRecurrence(app.area.area, app.from, app.to, controller.signal).then(setRecurrence).catch(e => { if (!controller.signal.aborted) setErrors(s => ({ ...s, recurrence: apiError(e, app.lang) })); }).finally(() => { if (!controller.signal.aborted) setLoading(s => ({ ...s, recurrence: false })); }); return () => controller.abort(); }, [areaKey, app.from, app.to, app.layers.recurrence, app.lang]);
+  useEffect(() => { const controller = new AbortController(); setTerritory(null); setErrors(old => ({...old, territory: ''})); setLoading(s => ({ ...s, territory: true })); getTerritory(app.area.area, controller.signal).then(setTerritory).catch(e => { if (!controller.signal.aborted) setErrors(s => ({ ...s, territory: apiError(e, app.lang) })); }).finally(() => { if (!controller.signal.aborted) setLoading(s => ({ ...s, territory: false })); }); return () => controller.abort(); }, [areaKey, app.lang]);
+  const beginDraw = () => { const map = mapRef.current; if (!map) return; setDrawError(''); drawing.current = true; drawRef.current?.stop(); const draw = new TerraDraw({ adapter: new TerraDrawMapLibreGLAdapter({ map }), modes: [new TerraDrawPolygonMode()] }); drawRef.current = draw; draw.on('finish', () => { const feature = draw.getSnapshot().find(f => f.geometry.type === 'Polygon'); if (!feature) return; try { const geometry = simplifyPolygon((feature.geometry as GeoJSON.Polygon).coordinates[0]); const bbox = geometryBbox(geometry) ?? undefined; areaRef.current({ kind: 'drawn', label: 'Área dibujada', area: { geometry: JSON.stringify(geometry) }, bbox }); } catch (e) { setDrawError(e instanceof Error ? e.message : String(e)); } draw.stop(); drawRef.current = null; drawing.current = false; }); draw.start(); draw.setMode('polygon'); };
+  useEffect(() => onMapDraw(beginDraw), [ready]);
+  useEffect(() => { const cancel = (e: KeyboardEvent) => { if (e.key === 'Escape' && drawing.current) { drawRef.current?.stop(); drawRef.current = null; drawing.current = false; } }; window.addEventListener('keydown', cancel); return () => window.removeEventListener('keydown', cancel); }, []);
+  const method = hotspots?.methodology_version || recurrence?.methodology_version || territory?.methodology_version;
+  const cutoff = hotspots?.data_cutoff || recent?.data_cutoff || territory?.data_cutoff;
+  return <VStack xstyle={s.root}><VStack ref={node} xstyle={s.canvas} role="application" aria-label={t.map} /><VStack xstyle={[s.area, s.glass]} gap={1}><Text type="supporting" color="secondary">{t.area}</Text><Heading level={3}>{app.area.label}</Heading>{loading.territory ? <Skeleton width="100%" height="var(--spacing-4)" /> : territory ? <Text type="supporting" color="secondary">{new Intl.NumberFormat(locale[app.lang]).format(territory.area_km2)} km² · {territory.admin?.source || '—'} · {territory.admin?.country || '—'}</Text> : null}<Text type="supporting" color="secondary">{app.from} – {app.to}</Text><HStack gap={1} wrap="wrap"><Button variant="ghost" size="sm" label={t.edit} onClick={beginDraw} /><Popover label={t.dates} content={<DateRangeInput label={t.dates} value={{ start: app.from as DateRange['start'], end: app.to as DateRange['end'] }} onChange={v => { if (v) app.setRange(v.start, v.end); }} numberOfMonths={1} />}><Button variant="ghost" size="sm" label={t.dates} /></Popover><Button variant="ghost" size="sm" label={t.story} onClick={() => app.navigate('historia')} /></HStack></VStack><VStack xstyle={[s.layers, s.glass]} gap={1}><Text type="supporting" color="secondary">{t.layers}</Text><Switch size="sm" label={t.hotspots} description={`${month}${hotspots ? ` · ${hotspots.features.length}${hotspots.truncated ? ' (truncado a 20 000)' : ''}` : ''}`} value={app.layers.hotspots} onChange={v => app.setLayer('hotspots', v)} /><Switch size="sm" label={t.recent} description="FIRMS casi en tiempo real" value={app.layers.recent} onChange={v => { app.setLayer('recent', v); if (v && !app.live) app.setLive(24); }} /><SegmentedControl label={t.recent} size="sm" value={String(app.live || 24)} onChange={v => { app.setLive(Number(v) as 24 | 48); app.setLayer('recent', true); }}><SegmentedControlItem value="24" label="24 h" /><SegmentedControlItem value="48" label="48 h" /></SegmentedControl><Switch size="sm" label={t.goes} description={t.vision} value={false} isDisabled disabledMessage={t.vision} /><Switch size="sm" label={t.recurrence} description={t.times} value={app.layers.recurrence} onChange={v => app.setLayer('recurrence', v)} /><Switch size="sm" label={t.spread} description={t.active} value={false} isDisabled disabledMessage={t.needs} /><Switch size="sm" label={t.exposure} description={t.places} value={app.layers.exposure} onChange={v => app.setLayer('exposure', v)} />{app.layers.recurrence && recurrence && <Text type="supporting" color="secondary">{t.years}: 0–{recurrence.max_years_burned}</Text>}{loading.recent && <Skeleton width="100%" height="var(--spacing-4)" />}{app.layers.recent && recent && <Text type="supporting" color="secondary">{recent.features.length} · FIRMS NRT · {recent.data_cutoff || '—'}</Text>}</VStack><VStack xstyle={[s.legend, s.glass]} gap={1}><Text type="supporting" color="secondary">{t.frp}</Text><HStack gap={1} vAlign="center"><Text type="supporting">{t.low}</Text>{frpRamp.map(color => <VStack key={color} xstyle={s.ramp} style={{ backgroundColor: color }} />)}<Text type="supporting">{t.high}</Text></HStack></VStack><VStack xstyle={s.zoom} gap={1}><Button size="sm" label="Acercar" onClick={() => mapRef.current?.zoomIn()} /><Button size="sm" label="Alejar" onClick={() => mapRef.current?.zoomOut()} /></VStack><Text xstyle={s.coord} type="supporting" color="secondary">{coords}</Text><VStack xstyle={s.notice} gap={1}>{drawError && <Banner status="error" title={drawError} />}{Object.entries(errors).filter(([key, message]) => !!message && key === 'territory' || (key === 'hotspots' && app.layers.hotspots) || (key === 'recent' && app.layers.recent) || (key === 'recurrence' && app.layers.recurrence)).map(([key, message]) => <Banner key={key} status="warning" title={message} />)}{loading.hotspots && <Skeleton width="100%" height="var(--spacing-4)" />}{app.layers.hotspots && hotspots && hotspots.features.length === 0 && <EmptyState title={t.noData} isCompact />}{app.layers.recent && recent && recent.features.length === 0 && <EmptyState title={t.recentNo} isCompact />}</VStack><Text xstyle={[s.attribution, s.tiny]} type="supporting" color="secondary">Mapa © OpenStreetMap · Datos de fuego: NASA FIRMS (MODIS C6.1, VIIRS 375 m) armonizados{method ? ` · ${method}` : ''}{cutoff ? ` · ${cutoff}` : ''}</Text></VStack>;
 }

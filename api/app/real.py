@@ -150,11 +150,23 @@ def _cutoff():
 def calendar(*, h3_list=None, bbox=None, lat=None, lon=None, radius_km=None,
              geometry=None, admin=None, from_=date(2001, 1, 1), to=None,
              metric="count", reference="median", burn_type=None):
-    if burn_type is not None:
-        raise HTTPException(422, "Harmonized burn type is unavailable in this dataset")
+    if burn_type not in (None, "agricola", "forestal"):
+        raise HTTPException(422, "burn_type must be agricola or forestal")
     if to is not None and from_ > to:
         raise HTTPException(422, "from must precede to")
     cells, area = _cells(h3_list, bbox, lat, lon, radius_km, geometry, admin)
+    if burn_type is not None:
+        paths = sorted((db.processed_root() / "cell_biome").glob("*.parquet"))
+        if paths:
+            with db.connection() as con:
+                where = "WHERE biome IN (4)" if burn_type == "agricola" else "WHERE biome IN (1,2,3)"
+                if cells is not None:
+                    where += " AND h3_r6 IN (SELECT unnest(?))"
+                params = [[str(p) for p in paths]] + ([cells] if cells is not None else [])
+                cells = [r[0] for r in con.execute(
+                    f"SELECT DISTINCT h3_r6 FROM read_parquet(?) {where}", params).fetchall()]
+        else:
+            cells = []
     all_rows = _monthly(db.parquet_files("cell_month_harmonized"), cells)
     cutoff = max((date(y, m, monthrange(y, m)[1]) for y, m, *_ in all_rows), default=None)
     last_full_year = cutoff.year if cutoff and cutoff.month == 12 else (cutoff.year - 1 if cutoff else 0)
@@ -193,7 +205,7 @@ def calendar(*, h3_list=None, bbox=None, lat=None, lon=None, radius_km=None,
     return _envelope(cutoff.isoformat() if cutoff else None, area=area,
                      reference=reference, metric=metric,
                      return_period_formula="percentile = 1 - descending_midrank/(n+1); years = min(50, 1/(1-percentile))",
-                     rows=rows)
+                     rows=rows, **({"burn_type_basis": "cobertura del suelo (aproximado): agrícola = cultivo; forestal = vegetación natural (bosque, matorral, pastizal/sabana)"} if burn_type else {}))
 
 
 def _hotspot_rows(files, cells, from_, to, min_confidence=None):

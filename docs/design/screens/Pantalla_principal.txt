@@ -1,0 +1,115 @@
+Rescoldo
+MODIS + VIIRS · 2000–2026
+Sierra de Arteaga, Coah.
+mar 2021
+Dibujar área
+Lat / Lon
+Cómo armonizamos
+ES
+MAPA BASE · RELIEVE SOMBREADO (MapLibre + OSM)
+25.45°N
+25.30°N
+25.15°N
+100.80°O
+100.55°O
+100.30°O
+ÁREA SELECCIONADA
+Sierra de Arteaga, Coahuila
+1,742 km² · límite municipal INEGI · México
+Editar polígono
+Cambiar fechas
+Comparar
+CAPAS
+Puntos ·
+mar 2021
+Recientes
+24 h
+48 h
+11 detecciones en las últimas 48 h · FIRMS NRT · ver datos
++
+−
+PODER RADIATIVO (FRP)
+bajo
+alto
+10 km
+Puntos de calor: NASA FIRMS (MODIS C6.1, VIIRS 375 m) armonizados · Mapa © OpenStreetMap · INEGI
+MES ACTUAL · MARZO 2026 · AL DÍA 18
+MUY POR ENCIMA
+2.8×
+Marzo va 2.8× sobre la mediana histórica para estas fechas.
+57 puntos en 18 días; lo normal serían ~20 · ver datos
+Un marzo así ocurre 1 vez cada 25 años · ver datos
+Calendario de actividad
+Puntos de calor armonizados por mes · 2000–2026
+Conteo
+Anomalía
+Tipo
+Todas
+Agrícola
+Forestal
+Referencia
+Mediana
+Promedio
+E
+F
+M
+A
+M
+J
+J
+A
+S
+O
+N
+D
+2026
+2025
+2024
+2023
+2022
+2021
+2020
+2019
+2018
+2017
+2016
+2015
+2014
+2013
+2012
+2011
+≈
+2010
+≈
+2009
+≈
+2008
+≈
+2007
+≈
+2006
+≈
+2005
+≈
+2004
+≈
+2003
+≈
+2002
+≈
+2001
+≈
+2000
+≈
+0
+312
+2000–11 estimación armonizada
+Nubes
+CELDA SELECCIONADA · MARZO 2021
+312 puntos, 8.9× la mediana de marzo. El marzo más activo desde 2000.
+Observado por MODIS y VIIRS · ver datos · desglose diario
+8.9×
+Descargar · Todas las quemas, 2000–2026
+CSV
+Imagen
+Ficha PDF

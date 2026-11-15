@@ -141,7 +141,58 @@ paths:
         - {$ref: '#/components/parameters/admin'}
       responses:
         '200': {description: Valores mensuales reportados, detecciones del estado y cobertura de datos por año}
-  /risk: {get: {summary: Riesgo próximo, exposición, índice de prioridad, responses: {'200': {description: OK}}}}
+  /hotspots.geojson:
+    get:
+      summary: Puntos FIRMS observados de confianza nominal o alta como GeoJSON
+      parameters:
+        - {$ref: '#/components/parameters/from'}
+        - {$ref: '#/components/parameters/to'}
+        - {name: limit, in: query, schema: {type: integer, default: 20000, minimum: 1, maximum: 20000}}
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/lat'}
+        - {$ref: '#/components/parameters/lon'}
+        - {$ref: '#/components/parameters/radius_km'}
+        - {$ref: '#/components/parameters/admin'}
+        - {name: geometry, in: query, schema: {type: string}}
+      responses: {'200': {description: FeatureCollection con n_total y truncated}}
+  /recurrence:
+    get:
+      summary: Años con al menos 1.0 detecciones equivalentes por celda H3 r6
+      parameters:
+        - {$ref: '#/components/parameters/from'}
+        - {$ref: '#/components/parameters/to'}
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/admin'}
+        - {name: geometry, in: query, schema: {type: string}}
+      responses: {'200': {description: FeatureCollection de hasta 5000 celdas}}
+  /territory:
+    get:
+      summary: Administración, localidades, áreas protegidas y cobertura del suelo
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/admin'}
+        - {name: geometry, in: query, schema: {type: string}}
+      responses: {'200': {description: Contexto territorial}}
+  /risk:
+    get:
+      summary: Índice de prioridad v0, transparente y normalizado a 0-100
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/admin'}
+        - {name: geometry, in: query, schema: {type: string}}
+      responses: {'200': {description: Índice, nivel, componentes y método}}
+  /watch:
+    get:
+      summary: Boletín mensual de unidades administrativas
+      parameters:
+        - {name: level, in: query, schema: {type: string, enum: [mun, ent, adm1, adm2], default: mun}}
+        - {name: country, in: query, schema: {type: string, default: Mexico}}
+        - {name: top, in: query, schema: {type: integer, default: 10, minimum: 1, maximum: 100}}
+      responses: {'200': {description: Ranking de anomalías por unidad}}
   /recent:
     get:
       summary: Detecciones NRT

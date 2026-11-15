@@ -1,0 +1,95 @@
+Mapa
+Asistente
+Método
+Alertas y API
+Historia
+Ficha
+Móvil
+Widget
+Identidad
+ASISTENTE ANALISTA · PANEL LATERAL
+Pregunta en tus palabras. Las cifras salen de los datos.
+
+El asistente decide qué consultar y qué mostrar; nunca calcula ni inventa números ni coordenadas. Cada cifra lleva su enlace a la consulta exacta.
+
+Asistente analista
+Sierra de Arteaga, Coahuila · 2000–2026
+✕
+Brigadista
+Científico
+ES
+EN
+PT
+¿Es normal lo que está pasando en Arteaga este marzo?
+
+No. Marzo va 2.8 veces por encima de lo normal para estas fechas. Un marzo así pasa 1 vez cada 25 años. ver datos
+
+MARZO, ÚLTIMOS 6 AÑOS
+ANOMALÍA
+E
+F
+M
+A
+M
+J
+J
+A
+S
+O
+N
+D
+2026
+2025
+2024
+2023
+2022
+2021
+
+El incendio de San Antonio de las Alazanas ya es el 4º más grande en la sierra desde 2000. ver datos
+
+INCENDIOS MÁS GRANDES DEL ÁREA
+1
+Los Lirios – El Tunal 2021
+268
+2
+Sierra de la Nieve 2012
+171
+3
+Cañón de San Lorenzo 2024
+154
+4
+San Antonio de las Alazanas 2026
+143
+¿Cómo podría cerrar la temporada?
+
+Los 3 años que empezaron parecido terminaron con entre 342 y 393 puntos de calor: una temporada muy por encima de lo normal. Conviene reforzar brigadas desde ya. ver datos
+
+ACUMULADO DEL AÑO VS HISTÓRICO
+— 2026
+— 2011 · 2012 · 2024
+▮ p10–p90
+Cifras de la serie armonizada MODIS + VIIRS · NASA FIRMS. Redacción automática.
+¿A quién afecta?
+¿Por qué este año?
+Generar ficha PDF
+CASO DE AMBIGÜEDAD
+Arteaga
+
+Hay dos municipios llamados Arteaga. ¿Cuál quieres ver?
+
+silueta
+INEGI
+Arteaga, Coahuila
+Municipio · 1,742 km² · Sierra de Arteaga, al sureste de Saltillo
+INEGI 05004
+silueta
+INEGI
+Arteaga, Michoacán
+Municipio · 3,4 mil km² · Sierra Madre del Sur, cerca de la costa
+INEGI 16010
+Otro lugar…
+Dibujar en el mapa
+La geometría viene del Marco Geoestadístico de INEGI (GADM fuera de México) y de OpenStreetMap. El asistente nunca genera coordenadas.
+SI EL SERVICIO DE IA FALLA
+Modo plantilla
+“Marzo 2026: 2.8× la mediana 2000–2025. Periodo de retorno: 25 años.” Las fichas, el modo historia y las descripciones accesibles siguen funcionando con texto de plantilla.

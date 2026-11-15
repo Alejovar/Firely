@@ -1,0 +1,223 @@
+Mapa
+Asistente
+Método
+Alertas y API
+Historia
+Ficha
+Móvil
+Widget
+Identidad
+Rescoldo
+MODIS + VIIRS · 2000–2026
+lugar: Sierra de Arteaga, Coah.
+fechas: mar 2021
+Dibujar área
+Lat / Lon + radio
+Municipio
+Alertas
+2
+ES · EN · PT
+MAPA BASE · RELIEVE SOMBREADO (MapLibre + OSM)
+25.45°N
+25.30°N
+25.15°N
+100.80°O
+100.55°O
+6 h
+12 h · 0.9 km/h → NE
+San Antonio de las Alazanas
+Los Lirios
+Jamé
+Arteaga (cabecera)
+Huachichil
+ANP Zapalinamé
+ÁREA SELECCIONADA
+Sierra de Arteaga, Coahuila
+1,742 km² · límite municipal INEGI · marzo 2021
+Editar polígono
+Cambiar fechas
+Modo historia ▸
+CAPAS
+Puntos de calor
+mar 2021
+Detecciones recientes
+FIRMS casi en tiempo real
+GOES geoestacionario
+visión · cada 5 min
+Recurrencia
+veces que ha ardido
+Cono de propagación
+evento activo + viento
+Exposición
+localidades y ANP
+24 h
+48 h
+PODER RADIATIVO (FRP)
+bajo
+alto
+10 km
+NASA FIRMS (MODIS C6.1 · VIIRS 375 m) armonizados · GOES · © OpenStreetMap · INEGI
+MES ACTUAL · MARZO 2026 · AL DÍA 18
+MUY POR ENCIMA · > P90
+2.8×
+Marzo va 2.8× sobre la mediana histórica para estas fechas.
+57 puntos en 18 días; lo normal serían ~20 · ver datos
+Un marzo así ocurre 1 vez cada 25 años · ver datos
+Calendario de actividad
+Puntos de calor armonizados por mes · 2000–2026
+♪ Escuchar 2021
+Comparar
+Conteo
+Anomalía
+Tipo
+Todas
+Agrícola
+Forestal
+Referencia
+Mediana
+Promedio
+E
+F
+M
+A
+M
+J
+J
+A
+S
+O
+N
+D
+ONI
+2026
+2025
+Niña
+2024
+2023
+Niño
+2022
+Niña
+2021
+Niña
+2020
+Niña
+2019
+2018
+Niño
+2017
+Niña
+2016
+Niña
+2015
+Niño
+2014
+2013
+2012
+2011
+≈
+Niña
+2010
+≈
+Niña
+2009
+≈
+Niño
+2008
+≈
+Niña
+2007
+≈
+Niña
+2006
+≈
+Niño
+2005
+≈
+2004
+≈
+Niño
+2003
+≈
+2002
+≈
+Niño
+2001
+≈
+2000
+≈
+Niña
+0
+312
+2000–11 estimación
+Nubes
+Niña · Niño
+CELDA SELECCIONADA · MARZO 2021
+312 puntos, 8.9× la mediana de marzo. El marzo más activo desde 2000.
+MODIS + VIIRS · ver datos
+8.9×
+Desglose diario · clic en un día para verlo en el mapa
+1
+8
+15
+22
+31
+Análisis
+Cifras de la serie armonizada · redacción automática
+Este incendio
+Años parecidos
+Temporada
+Contexto
+Riesgo
+Patrones
+Territorio
+
+El incendio activo en San Antonio de las Alazanas ya es el 4º más grande de 212 registrados en la sierra desde 2000, y sigue creciendo. ver datos
+
+#
+EVENTO
+PUNTOS ARMONIZADOS
+DÍAS
+EXTENSIÓN
+1
+Los Lirios – El Tunal
+19 mar 2021
+268
+14
+≈ 8,600 ha
+2
+Sierra de la Nieve
+02 abr 2012
+171
+11
+≈ 5,900 ha
+3
+Cañón de San Lorenzo
+08 abr 2024
+154
+9
+≈ 4,700 ha
+4
+San Antonio de las Alazanas
+12 mar 2026 · ACTIVO
+143
+7
+≈ 3,900 ha
+5
+Jamé – Mesa de las Tablas
+27 abr 2011
+128
+8
+≈ 3,100 ha
+6
+Huachichil
+15 mar 2008
+74
+6
+≈ 1,800 ha
+Eventos agrupados por cercanía en espacio (≤ 2 km) y tiempo (≤ 2 días). Extensión aproximada a partir de la huella de detecciones. ver datos
+Descargar · todas las quemas
+CSV puntos
+CSV mensual
+PNG / SVG
+GeoJSON · KML
+Ficha PDF

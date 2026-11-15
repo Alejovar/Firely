@@ -15,8 +15,10 @@ app = FastAPI(title=f"Firely API ({'real' if _real_mode else 'mock'})", version=
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 if _real_mode:  # registered before the mock routes so /season, /analogs... resolve to the real analyses
+    from .extra_routes import router as _extra_router
     from .ai_routes import router as _ai_router
     from .analysis_routes import router as _analysis_router
+    app.include_router(_extra_router)     # /hotspots.geojson, /recurrence, /territory, /risk, /watch
     app.include_router(_ai_router)        # POST /resolve-area, /describe
     app.include_router(_analysis_router)
 

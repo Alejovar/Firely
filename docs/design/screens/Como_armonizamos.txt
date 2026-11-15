@@ -1,0 +1,92 @@
+Mapa
+Asistente
+Método
+Alertas y API
+Historia
+Ficha
+Móvil
+Widget
+Identidad
+CÓMO ARMONIZAMOS · METODOLOGÍA v1.2
+En 2012 el fuego no aumentó de golpe. Cambió el satélite.
+
+Es como comparar fotos de una cámara vieja de 1 megapixel con las de un celular nuevo: el celular “ve” más incendios, pero no porque haya más fuego. Rescoldo traduce 12 años de MODIS al lenguaje de VIIRS para que 2003 y 2024 se puedan comparar.
+
+El salto falso de 2012
+Puntos de calor por año en el noreste de México (miles)
+Sin armonizar
+Armonizada
+Ambas
+Salto de +170% en un año: llega VIIRS, no más fuego.
+Banda azul: incertidumbre de la estimación 2000–2011 (±18%).
+2000
+2004
+2008
+2012
+2016
+2020
+2024
+Sin armonizar (MODIS → VIIRS)
+Armonizada Rescoldo
+Incertidumbre
+ver datos
+CUÁNTO MEJORA
+−46%
+de error
+
+Frente a la corrección simple (multiplicar MODIS por un factor fijo), nuestro método reduce el error mensual casi a la mitad.
+
+Factor fijo (×2.7)
+0.41
+Rescoldo
+0.22
+Error absoluto medio relativo, conteos mensuales por celda H3 · validación cruzada dejando un año fuera, 2013–2025 · ver datos
+CUÁNTO CONFIAR
+2012–hoy
+MODIS y VIIRS observan a la vez. Dato directo.
+±5%
+2000–2011
+Estimación armonizada desde MODIS.
+±18%
+Nublado
+Pocas observaciones válidas: celda rayada.
+baja
+Últimas 48 h
+Casi tiempo real; puede cambiar al consolidarse.
+prelim.
+Toda respuesta de la API incluye methodology_version y harmonization_uncertainty.
+EL MÉTODO EN 5 PASOS
+Para el brigadista, la idea. Para el científico, el detalle.
+01
+Limpiar
+Quitamos volcanes, quema de gas industrial y señales en el mar. Solo queda fuego de vegetación.
+Filtro por campo type de FIRMS; confianza MODIS 0–100 y VIIRS low/nominal/high homologadas.
+02
+Aprender del traslape
+Desde 2012 ambos satélites miran la misma tierra. Ahí aprendemos cómo “traducir” uno al otro.
+Pares Aqua-MODIS / S-NPP VIIRS (~13:30 y ~01:30). Terra (~10:30) calibrado por separado.
+03
+Traducir por paisaje y mes
+Un bosque en abril no se ve igual que un cultivo en enero. Ajustamos cada caso por separado.
+Quantile mapping por bioma (MODIS Land Cover) y mes sobre malla H3.
+04
+Corregir por nubes
+Un mes con pocos puntos puede ser tranquilo o nublado. Lo distinguimos y lo marcamos.
+Normalización por observaciones válidas por celda y mes.
+05
+Medir el error
+Probamos el método escondiendo un año y viendo si lo adivina. Publicamos cuánto se equivoca.
+Validación cruzada leave-one-year-out; comparación contra factor fijo; bandas de incertidumbre.
+Conteo y energía coinciden
+El FRP (poder radiativo) depende menos de la resolución. Ambas métricas armonizadas siguen la misma tendencia (r = 0.93): se validan entre sí.
+Meses nublados, marcados
+Contamos las observaciones válidas por celda y mes. Si las nubes taparon la vista, normalizamos y rayamos la celda en el calendario.
+“VIIRS virtual”
+EXPERIMENTAL · PILOTO
+Un modelo entrenado en el traslape estima dónde habría detectado VIIRS a 375 m en 2000–2011, a partir de MODIS, terreno y cobertura.
+Ciencia abierta
+Dataset armonizado 2000–2026 y notebook reproducible, con DOI. Cualquiera puede repetir el método y medir el error.
+Dataset · Zenodo DOI
+Notebook
+API /docs
+Datos: NASA FIRMS (MODIS C6.1, VIIRS 375 m S-NPP/NOAA-20/NOAA-21) · MODIS Land Cover (MCD12Q1) · H3
