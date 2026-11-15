@@ -3,6 +3,6 @@ export const glass = {
   border: 'thin solid var(--color-glass-edge)',
   borderRadius: 'var(--radius-page)',
   boxShadow: 'var(--shadow-glass)',
-  backdropFilter: 'blur(24px) saturate(1.3)',
-  WebkitBackdropFilter: 'blur(24px) saturate(1.3)',
+  backdropFilter: 'blur(1.5rem) saturate(1.3)',
+  WebkitBackdropFilter: 'blur(1.5rem) saturate(1.3)',
 };

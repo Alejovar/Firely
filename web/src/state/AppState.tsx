@@ -41,18 +41,37 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => stored('firely.lang', ['es', 'en', 'pt'] as const, 'es'));
   const [scheme, setScheme] = useState<Scheme>(() => stored('firely.scheme', ['dark', 'light'] as const, 'dark'));
   const [live, setLive] = useState<LiveHours>(0);
-  const writing = useRef(false);
+  const previousPage = useRef(url.page);
+  const externalNavigation = useRef(false);
 
   // state -> hash
   useEffect(() => {
     const next = buildHash(url);
-    if (next !== window.location.hash) { writing.current = true; window.history.replaceState(null, '', next); }
+    if (next !== window.location.hash) {
+      // Page changes need history entries for Android/browser Back. Filter changes
+      // only replace the current entry, so Back does not visit every slider change.
+      if (!externalNavigation.current && previousPage.current !== url.page) window.history.pushState(null, '', next);
+      else window.history.replaceState(null, '', next);
+    }
+    previousPage.current = url.page;
+    externalNavigation.current = false;
   }, [url]);
   // hash -> state (back/forward, pasted links)
   useEffect(() => {
-    const onHash = () => { if (writing.current) { writing.current = false; return; } setUrl((current) => parseHash(window.location.hash, current)); };
+    // replaceState/pushState do not emit hashchange; no suppression flag is needed.
+    const onHash = () => {
+      // Hash changes and Back/Forward already have a history entry: canonicalize
+      // that entry rather than adding a duplicate page on top of it.
+      const hash = window.location.hash;
+      externalNavigation.current = true;
+      setUrl((current) => parseHash(hash, current));
+    };
     window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    window.addEventListener('popstate', onHash);
+    return () => {
+      window.removeEventListener('hashchange', onHash);
+      window.removeEventListener('popstate', onHash);
+    };
   }, []);
   useEffect(() => { document.documentElement.lang = lang; }, [lang]);
 

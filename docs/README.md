@@ -25,4 +25,4 @@ docs/                 Documentación técnica
 
 `compose.yaml` es el único archivo Compose de la raíz y contiene `api`, `web` y `mobile`. Para iniciar web/API: `docker compose up --build api web`; para la vista móvil: `docker compose up --build -d mobile`.
 
-La app móvil todavía utiliza datos simulados: reunir los proyectos no la conecta automáticamente a la API. La API en modo real necesita los Parquet indicados en `infra/README.md`. Los datos pesados y las credenciales quedan fuera de Git. `mobile-smoke/` es una prueba local anterior, ignorada y no necesaria para compilar.
+La app Glass de `apps/mobile/` está conectada al mismo cliente de API que la web mediante `packages/contracts/api-client.ts`. En Android lleva su interfaz dentro del APK y puede consultar el servidor por el túnel TCP de ADB. La API en modo real necesita los Parquet indicados en `infra/README.md`; sin ellos la app muestra una respuesta vacía, no cifras ficticias. Los datos pesados y las credenciales quedan fuera de Git. `mobile-smoke/` es una prueba local anterior, ignorada y no necesaria para compilar.

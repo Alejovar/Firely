@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { App as NativeApp } from '@capacitor/app';
 import { Stack } from '@astryxdesign/core/Stack';
@@ -7,187 +7,174 @@ import { Heading } from '@astryxdesign/core/Heading';
 import { Button } from '@astryxdesign/core/Button';
 import { IconButton } from '@astryxdesign/core/IconButton';
 import { Dialog, DialogHeader } from '@astryxdesign/core/Dialog';
-import { Terrain } from './Terrain';
-import { months, monthlyValue, points, years } from './mock-data';
 import { FirelyIcon } from './FirelyIcon';
+import { MapSurface } from './MapSurface';
+import { CalendarView } from './CalendarView';
+import { AnalysisView } from './AnalysisView';
+import { AssistantView } from './AssistantView';
+import { Filters } from './Filters';
+import { LoadState, Metadata, Sparkline } from './DataViews';
+import { api, DEFAULT_AREA, DEFAULT_FILTERS, fmt, metricValue, periodLabel, useResource } from './data';
 import { glass } from './glass';
 
 const pages = { mapa: 'Mapa', calendario: 'Calendario', analisis: 'Análisis', asistente: 'Asistente' };
 const currentPage = () => Object.hasOwn(pages, location.hash.slice(1)) ? location.hash.slice(1) : 'mapa';
-const notice = 'Un punto de calor es una detección satelital, no un incendio confirmado. Este prototipo no muestra actividad real.';
-const panelStyle = { ...glass, borderRadius: 'var(--radius-container)' };
+const emptyFeatures = [];
 
 export function App() {
   const [page, setPage] = useState(currentPage);
-  const [hours, setHours] = useState(24);
-  const [selected, setSelected] = useState(0);
+  const [area, setArea] = useState(DEFAULT_AREA);
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const [liveHours, setLiveHours] = useState(0);
+  const [selected, setSelected] = useState(null);
   const [showArea, setShowArea] = useState(true);
+  const [drawing, setDrawing] = useState(false);
+  const [recenter, setRecenter] = useState(0);
+  const [mapError, setMapError] = useState('');
   const [dialog, setDialog] = useState(null);
-  const [month, setMonth] = useState(null);
-  const [answer, setAnswer] = useState(false);
-  const [status, setStatus] = useState('');
+  const current = useRef({ page, dialog, drawing });
+  current.current = { page, dialog, drawing };
   const heading = useRef(null);
-  const pageRef = useRef(page);
-  const dialogRef = useRef(dialog);
-  pageRef.current = page;
-  dialogRef.current = dialog;
+  const areaKey = JSON.stringify(area.query);
+  const calendar = useResource(`calendar:${areaKey}:${JSON.stringify(filters)}`, signal => api.getCalendar(area.query, filters.from, filters.to, filters.metric, filters.reference, signal));
+  const recent = useResource(`recent:${areaKey}:${liveHours}`, signal => liveHours ? api.getRecent(area.query, liveHours, signal) : null);
+  const features = recent.data?.features || emptyFeatures;
+  const rows = calendar.data?.rows || [];
+  const latest = rows.at(-1);
+  const point = selected === null ? null : features[selected];
 
   useEffect(() => {
     const navigate = () => {
-      setPage(currentPage());
+      setPage(currentPage()); setDrawing(false);
       window.scrollTo(0, 0);
       requestAnimationFrame(() => heading.current?.focus());
     };
     window.addEventListener('hashchange', navigate);
     return () => window.removeEventListener('hashchange', navigate);
   }, []);
-
+  useEffect(() => setSelected(null), [areaKey, liveHours]);
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     const listener = NativeApp.addListener('backButton', () => {
-      if (dialogRef.current) setDialog(null);
-      else if (pageRef.current !== 'mapa') location.hash = 'mapa';
+      if (current.current.dialog) setDialog(null);
+      else if (current.current.drawing) setDrawing(false);
+      else if (current.current.page !== 'mapa') location.hash = 'mapa';
       else NativeApp.exitApp();
     });
     return () => { listener.then(handle => handle.remove()); };
   }, []);
 
-  function filter(value) {
-    setHours(value);
-    if (points[selected].age > value) setSelected(0);
+  function apply(nextFilters, nextArea) {
+    setFilters(nextFilters);
+    if (nextArea) { setArea(nextArea); setMapError(''); }
+    setDialog(null);
   }
+  function chooseArea(next) { setArea(next); setMapError(''); }
+  function showFeature(index) { setSelected(index); setDialog('feature'); }
 
-  const point = points[selected];
-  const pointName = `Punto de ejemplo ${String(selected + 1).padStart(2, '0')}`;
+  return <Stack minHeight="100dvh" style={{ position: 'relative', isolation: 'isolate', background: 'var(--color-background-body)', color: 'var(--color-text-primary)', overflow: 'clip' }}>
+    {page === 'mapa' && <Stack style={{ position: 'absolute', inset: 0, zIndex: -1 }}>
+      <MapSurface area={area} features={features} selected={selected} onSelect={setSelected} onArea={chooseArea} showArea={showArea} recenter={recenter} drawing={drawing} onDrawingChange={setDrawing} onError={setMapError} />
+      <Stack style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(180deg, var(--color-map-shade), transparent 35%, var(--color-background-body))' }} />
+    </Stack>}
 
-  return (
-    <Stack minHeight="100dvh" style={{ position: 'relative', isolation: 'isolate', background: 'var(--color-background-body)', color: 'var(--color-text-primary)', overflow: 'clip' }}>
-      {page === 'mapa' && <Stack aria-label="Escenario de demostración" style={{ position: 'absolute', inset: 0, zIndex: -1 }}>
-        <Terrain points={points} hours={hours} selected={selected} onSelect={setSelected} showArea={showArea} />
-      </Stack>}
-      <Stack as="header" direction="horizontal" hAlign="between" vAlign="center" padding={4}
-        style={{ paddingTop: 'max(var(--spacing-5), env(safe-area-inset-top))', width: '100%', maxWidth: '48rem', marginInline: 'auto' }}>
-        <Button href="#mapa" label="Firely, inicio" variant="ghost" icon={<FirelyIcon name="flame" size="lg" color="orange" />}><Text type="large" weight="bold">Firely</Text></Button>
-        <Stack direction="horizontal" gap={2}>
-          <IconButton href="#asistente" label="Buscar" tooltip="Buscar un lugar" icon={<FirelyIcon name="search" />} />
-          <IconButton label="Información" tooltip="Acerca del prototipo" icon={<FirelyIcon name="bell" />} onClick={() => setDialog({ title: 'Una primera mirada a Firely', body: 'Prototipo con datos ficticios. El fondo es una imagen histórica NASA Blue Marble de diciembre de 2004, no una imagen en tiempo real. Los puntos son simulados. No hay conexión a NASA FIRMS, backend ni inteligencia artificial.' })} />
-        </Stack>
+    <Stack as="header" direction="horizontal" hAlign="between" vAlign="center" padding={4} style={{ paddingTop: 'max(var(--spacing-5), env(safe-area-inset-top))', width: '100%', maxWidth: '48rem', marginInline: 'auto' }}>
+      <Button href="#mapa" label="Firely, inicio" variant="ghost" icon={<FirelyIcon name="flame" size="lg" color="orange" />}><Text type="large" weight="bold">Firely</Text></Button>
+      <Stack direction="horizontal" gap={2}>
+        <IconButton href="#asistente" label="Buscar" tooltip="Buscar un lugar" icon={<FirelyIcon name="search" />} />
+        <IconButton label="Fuentes y metodología" tooltip="Fuentes y metodología" icon={<FirelyIcon name="info" />} onClick={() => setDialog('about')} />
       </Stack>
-
-      <Stack as="main" gap={page === 'mapa' ? 3 : 5} padding={4} width="100%" maxWidth="48rem"
-        style={{ marginInline: 'auto', flex: 1, pointerEvents: page === 'mapa' ? 'none' : 'auto' }}>
-        {page !== 'mapa' && <Stack gap={2} ref={heading} tabIndex={-1} style={{ outline: 'none' }}>
-          <Text type="supporting">COAHUILA, MX · DATOS SIMULADOS</Text>
-          <Heading level={1}>{pages[page]}</Heading>
-        </Stack>}
-
-        {page === 'mapa' && <>
-          <Stack direction="horizontal" hAlign="between" vAlign="start" gap={2} style={{ pointerEvents: 'auto' }}>
-            <Button label="Filtros" icon={<FirelyIcon name="layers" />} onClick={() => setDialog({ title: 'Filtros', filters: true })}>MODIS + VIIRS <FirelyIcon name="chevronDown" size="sm" /></Button>
-            <Stack gap={2}>
-              <IconButton label="Límite ilustrativo" tooltip="Mostrar límite ilustrativo" icon={<FirelyIcon name="layers" />} aria-pressed={showArea} onClick={() => setShowArea(value => !value)} />
-              <IconButton label="Centrar mapa" tooltip="Restablecer selección" icon={<FirelyIcon name="target" />} onClick={() => { setSelected(0); setStatus('Vista ilustrativa restablecida · sin usar tu ubicación'); }} />
-            </Stack>
-          </Stack>
-          <Stack height="clamp(7rem, 18dvh, 20rem)" style={{ pointerEvents: 'none' }} />
-          <Stack gap={3} padding={4} style={{ ...glass, marginTop: 'auto', pointerEvents: 'auto' }}>
-            <Stack width="2.5rem" height=".2rem" style={{ background: 'var(--color-glass-edge)', borderRadius: 'var(--radius-full)', marginInline: 'auto' }} />
-            <Stack direction="horizontal" hAlign="between" gap={2} vAlign="center">
-              <Stack gap={1}>
-                <Text type="supporting">Actividad en la región</Text>
-                <Heading level={1}>Coahuila, MX</Heading>
-              </Stack>
-              <Text type="supporting" weight="semibold" color="accent">SIMULADA</Text>
-            </Stack>
-            <Stack direction="horizontal" hAlign="between" gap={4} vAlign="center">
-              <Stack gap={1}>
-                <Text type="supporting">Últimas {hours} h · ejemplo</Text>
-                <Text type="large" weight="bold" hasTabularNumbers>{points.filter(item => item.age <= hours).length} puntos · VIIRS</Text>
-              </Stack>
-              <svg viewBox="0 0 140 48" width="36%" aria-hidden="true">
-                <defs><linearGradient id="trend-fill" x2="0" y2="1"><stop stopColor="var(--color-accent)" stopOpacity=".5" /><stop offset="1" stopColor="var(--color-accent)" stopOpacity="0" /></linearGradient></defs>
-                <path d="M0 42 14 32 27 34 40 25 54 27 68 15 82 18 96 7 110 2 124 9 140 4V48H0Z" fill="url(#trend-fill)" />
-                <path d="M0 42 14 32 27 34 40 25 54 27 68 15 82 18 96 7 110 2 124 9 140 4" fill="none" stroke="var(--color-accent)" strokeWidth="2" />
-              </svg>
-            </Stack>
-            <Text type="supporting">Tendencia ilustrativa · sin resultados científicos</Text>
-            <Stack direction="horizontal" hAlign="between" gap={2} vAlign="center">
-              <Heading level={2}>{pointName}</Heading>
-              <Text type="supporting">Hace {point.age} h ficticias</Text>
-            </Stack>
-            <Button label="Ver ficha de ejemplo" width="100%" onClick={() => setDialog({ title: pointName, body: `DATOS SIMULADOS. Sensor del escenario: VIIRS. Antigüedad ficticia: ${point.age} horas. FRP de ejemplo: ${point.frp} MW. Este punto no corresponde a una detección real. Una detección no confirma un incendio.` })} />
-            <Button href="#analisis" label="Ver análisis completo" variant="ghost" endContent={<FirelyIcon name="chevronRight" />} />
-            <Text type="supporting">{notice}</Text>
-          </Stack>
-          <Text type="supporting">Fondo: NASA Blue Marble · diciembre 2004</Text>
-          {status && <Stack role="status"><Text type="supporting">{status}</Text></Stack>}
-        </>}
-
-        {page === 'calendario' && <>
-          <Heading level={2}>Actividad mensual simulada</Heading>
-          <Text type="supporting">Valores ficticios para evaluar el diseño. No son resultados armonizados.</Text>
-          <Stack isScrollable style={{ ...panelStyle }} padding={3}>
-            <Stack style={{ display: 'grid', gridTemplateColumns: '3rem repeat(12, minmax(2.75rem, 1fr))', gap: 'var(--spacing-1)', minWidth: '39rem' }}>
-              <Text type="supporting">Año</Text>
-              {months.map(label => <Text key={label} type="supporting" justify="center">{label}</Text>)}
-              {years.map(year => <Fragment key={year}>
-                <Text type="supporting">{year}</Text>
-                {months.map((label, index) => {
-                  const value = monthlyValue(year, index);
-                  const active = month?.year === year && month?.index === index;
-                  return <Button key={label} label={`${label} ${year}: ${value} puntos ficticios`} size="sm" aria-pressed={active}
-                    variant={active ? 'primary' : 'secondary'} onClick={() => setMonth({ year, index, value })}>{value}</Button>;
-                })}
-              </Fragment>)}
-            </Stack>
-          </Stack>
-          <Text type="supporting">Desliza la tabla horizontalmente para ver todos los meses.</Text>
-          <Stack role="status"><Text>{month ? `${months[month.index]} ${month.year} · ${month.value} puntos ficticios. Selección de prueba; no modifica el mapa ilustrativo.` : 'Toca un mes para consultar el ejemplo.'}</Text></Stack>
-        </>}
-
-        {page === 'analisis' && <>
-          <Text type="supporting">VISTA PREVIA</Text>
-          <Heading level={2}>¿Cómo se compara esta temporada?</Heading>
-          <Text>Este espacio mostrará la actividad actual frente al historial armonizado, con su incertidumbre y fuentes.</Text>
-          <svg viewBox="0 0 400 160" width="100%" aria-hidden="true">
-            {[28, 40, 32, 65, 47, 85, 60, 75].map((value, index) => <rect key={index} x={index * 50 + 8} y={150 - value * 1.5} width="30" height={value * 1.5} rx="4" fill="var(--color-accent)" />)}
-          </svg>
-          <Text type="supporting">Gráfica decorativa · sin resultados científicos. La integración con el análisis del equipo está pendiente.</Text>
-        </>}
-
-        {page === 'asistente' && <>
-          <Heading level={2}>Tu territorio, en tus palabras.</Heading>
-          <Text>Explora cómo será consultar Firely.</Text>
-          <Button label="¿Qué pasa en la Sierra de Arteaga?" onClick={() => setAnswer(true)} />
-          {answer && <Stack role="status" padding={4} style={panelStyle}><Text>Esta es una demostración de la interfaz. Cuando conectemos la API, podrás elegir un área y consultar sus datos verificados. Por ahora no hay un modelo de IA conectado.</Text></Stack>}
-          <Text type="supporting">Asistente de demostración · sin conexión a IA</Text>
-        </>}
-      </Stack>
-
-      <Stack as="nav" aria-label="Navegación principal" direction="horizontal" gap={1} hAlign="between" padding={2}
-        style={{ ...glass, position: 'sticky', bottom: 'max(var(--spacing-3), env(safe-area-inset-bottom))', width: 'calc(100% - var(--spacing-6))', maxWidth: '45rem', marginInline: 'auto', marginBottom: 'max(var(--spacing-3), env(safe-area-inset-bottom))', zIndex: 1 }}>
-        {Object.entries(pages).map(([key, label]) => <Button key={key} href={`#${key}`} label={label} size="sm"
-          aria-current={page === key ? 'page' : undefined} variant="ghost" width="25%">
-          <Stack gap={1} hAlign="center" style={{ color: page === key ? 'var(--color-text-accent)' : 'var(--color-text-primary)', filter: page === key ? 'drop-shadow(var(--shadow-fire))' : 'none' }}>
-            <FirelyIcon name={key === 'mapa' ? 'map' : key === 'calendario' ? 'calendar' : key === 'analisis' ? 'chart' : 'spark'} size="lg" />
-            <Text type="supporting" color="inherit">{label}</Text>
-          </Stack>
-        </Button>)}
-      </Stack>
-
-      <Dialog isOpen={Boolean(dialog)} onOpenChange={open => { if (!open) setDialog(null); }} padding={4}>
-        <DialogHeader title={dialog?.title || 'Firely'} onOpenChange={() => setDialog(null)} />
-        <Stack gap={4} paddingBlockStart={4}>
-          {dialog?.filters ? <Stack gap={4}>
-            <Text>Sensor del escenario ficticio: VIIRS. Los filtros no consultan datos reales.</Text>
-            <Stack direction="horizontal" gap={2} wrap="wrap" role="group" aria-label="Antigüedad de las detecciones">
-              {[24, 48].map(value => <Button key={value} label={`Últimas ${value} h`} aria-pressed={hours === value} variant={hours === value ? 'primary' : 'secondary'} onClick={() => filter(value)} />)}
-            </Stack>
-            <Button href="#calendario" label="Elegir fecha" onClick={() => setDialog(null)} />
-          </Stack> : <Text>{dialog?.body}</Text>}
-          <Button label="Entendido" variant="primary" onClick={() => setDialog(null)} />
-        </Stack>
-      </Dialog>
     </Stack>
-  );
+
+    <Stack as="main" gap={page === 'mapa' ? 3 : 5} padding={4} width="100%" maxWidth="48rem" style={{ marginInline: 'auto', flex: 1, pointerEvents: page === 'mapa' ? 'none' : 'auto' }}>
+      {page !== 'mapa' && <Stack gap={3} ref={heading} tabIndex={-1} style={{ outline: 'none' }}>
+        <Stack direction="horizontal" gap={3} hAlign="between" vAlign="center">
+          <Heading level={1}>{pages[page]}</Heading>
+          <Button label="Filtros" size="sm" onClick={() => setDialog('filters')} />
+        </Stack>
+        {calendar.data?.mock && <Text type="label" color="accent">DATOS SIMULADOS DEL SERVIDOR</Text>}
+      </Stack>}
+
+      {page === 'mapa' && <>
+        <Stack direction="horizontal" hAlign="between" vAlign="start" gap={2} style={{ pointerEvents: 'auto' }}>
+          <Button label="Filtros" icon={<FirelyIcon name="layers" />} onClick={() => setDialog('filters')}>MODIS + VIIRS <FirelyIcon name="chevronDown" size="sm" /></Button>
+          <Stack gap={2}>
+            <IconButton label="Mostrar límite del área" tooltip="Mostrar límite del área" icon={<FirelyIcon name="layers" />} aria-pressed={showArea} onClick={() => setShowArea(value => !value)} />
+            <IconButton label="Centrar mapa" tooltip="Centrar en el área consultada" icon={<FirelyIcon name="target" />} onClick={() => { setRecenter(value => value + 1); setMapError(''); }} />
+            <IconButton label={drawing ? 'Cancelar dibujo' : 'Dibujar área'} tooltip={drawing ? 'Cancelar dibujo' : 'Dibujar un polígono'} icon={<FirelyIcon name="map" />} aria-pressed={drawing} onClick={() => setDrawing(value => !value)} />
+          </Stack>
+        </Stack>
+        {drawing && <Stack padding={3} style={{ ...glass, pointerEvents: 'auto' }}><Text role="status">Toca los vértices sobre el mapa y termina el polígono para consultar esa área.</Text><Button label="Cancelar dibujo" onClick={() => setDrawing(false)} /></Stack>}
+        <Stack height="clamp(7rem, 18dvh, 20rem)" style={{ pointerEvents: 'none' }} />
+        <Stack gap={3} padding={4} style={{ ...glass, marginTop: 'auto', pointerEvents: 'auto' }}>
+          <Stack width="2.5rem" height=".2rem" style={{ background: 'var(--color-glass-edge)', borderRadius: 'var(--radius-full)', marginInline: 'auto' }} />
+          <Text type="supporting">Actividad en la región</Text>
+          <Heading level={1}>{area.label}</Heading>
+          <Text type="supporting" color="accent">{calendar.data?.mock ? 'SIMULADA' : latest?.is_estimated ? 'ESTIMADA DESDE MODIS' : latest ? 'SERIE ARMONIZADA' : 'SIN SERIE DISPONIBLE'}</Text>
+          <LoadState resource={calendar} empty={!rows.length}>
+            <Stack direction="horizontal" gap={4} hAlign="between" vAlign="center">
+              <Stack gap={1}>
+                <Text type="supporting">{periodLabel(latest)}</Text>
+                <Text type="large" weight="bold" hasTabularNumbers>{fmt(metricValue(latest, filters.metric))} {filters.metric === 'frp' ? 'MW de FRP' : 'detecciones'}</Text>
+                <Text type="supporting">{fmt(latest?.anomaly_ratio)}× la {filters.reference === 'median' ? 'mediana' : 'media'} histórica</Text>
+              </Stack>
+              <Stack width="36%"><Sparkline rows={rows.slice(-12)} value={row => metricValue(row, filters.metric)} label="Actividad de los últimos meses disponibles" /></Stack>
+            </Stack>
+          </LoadState>
+          <Button href="#calendario" label="Ver calendario histórico" width="100%" />
+          <Button href="#analisis" label="Ver análisis completo" variant="ghost" endContent={<FirelyIcon name="chevronRight" />} />
+          {liveHours > 0 && <Stack gap={3}>
+            <Text type="label">Detecciones recientes · {liveHours} h</Text>
+            <LoadState resource={recent}>
+              <Text>{recent.data ? `${features.length} detecciones recibidas` : 'Sin respuesta disponible'}</Text>
+              {features.length > 0 && <Button label={point ? 'Ver detección seleccionada' : 'Ver detecciones recientes'} onClick={() => setDialog(point ? 'feature' : 'features')} />}
+              {recent.data && !features.length && <Text type="supporting">No se recibieron detecciones para esta consulta; no confirma ausencia de incendios.</Text>}
+            </LoadState>
+            <Metadata data={recent.data} />
+          </Stack>}
+          <Text type="supporting">Un punto de calor es una detección satelital, no un incendio confirmado. El fondo Blue Marble es histórico.</Text>
+          <Metadata data={calendar.data} />
+        </Stack>
+        <Text type="supporting">Fondo: NASA GIBS · Blue Marble · no es una imagen actual</Text>
+        {mapError && <Text role="status" type="supporting">{mapError}</Text>}
+      </>}
+      {page === 'calendario' && <CalendarView resource={calendar} area={area} filters={filters} />}
+      {page === 'analisis' && <AnalysisView area={area} filters={filters} cutoff={calendar.data?.data_cutoff} onArea={chooseArea} />}
+      {page === 'asistente' && <AssistantView area={area} filters={filters} calendar={calendar} onApply={apply} />}
+    </Stack>
+
+    <Stack as="nav" aria-label="Navegación principal" direction="horizontal" gap={1} hAlign="between" padding={2} style={{ ...glass, position: 'sticky', bottom: 'max(var(--spacing-3), env(safe-area-inset-bottom))', width: 'calc(100% - var(--spacing-6))', maxWidth: '45rem', marginInline: 'auto', marginBottom: 'max(var(--spacing-3), env(safe-area-inset-bottom))', zIndex: 1 }}>
+      {Object.entries(pages).map(([key, label]) => <Button key={key} href={`#${key}`} label={label} size="sm" aria-current={page === key ? 'page' : undefined} variant="ghost" width="25%">
+        <Stack gap={1} hAlign="center" style={{ color: page === key ? 'var(--color-text-accent)' : 'var(--color-text-primary)' }}>
+          <FirelyIcon name={key === 'mapa' ? 'map' : key === 'calendario' ? 'calendar' : key === 'analisis' ? 'chart' : 'spark'} size="lg" />
+          <Text type="supporting" color="inherit">{label}</Text>
+        </Stack>
+      </Button>)}
+    </Stack>
+
+    <Dialog isOpen={Boolean(dialog)} onOpenChange={open => { if (!open) setDialog(null); }} padding={4}>
+      <DialogHeader title={dialog === 'filters' ? 'Filtros' : dialog === 'feature' ? 'Detección reciente' : dialog === 'features' ? 'Detecciones recientes' : 'Fuentes y metodología'} onOpenChange={() => setDialog(null)} />
+      <Stack gap={4} paddingBlockStart={4}>
+        {dialog === 'filters' && <Filters filters={filters} area={area} liveHours={liveHours} onApply={apply} onLiveChange={setLiveHours} />}
+        {dialog === 'about' && <>
+          <Text>La API del equipo proporciona la serie armonizada, los análisis y la resolución de lugares. Las cifras no se rellenan si no hay datos. Los años estimados desde MODIS se distinguen de la referencia observada de VIIRS.</Text>
+          <Text>El mapa base NASA Blue Marble es histórico; no representa el estado actual del territorio. Las detecciones recientes requieren FIRMS y son independientes del intervalo del calendario.</Text>
+          <Metadata data={calendar.data} />
+        </>}
+        {dialog === 'features' && <>
+          <Text type="supporting">Se muestran hasta 50 detecciones de las {features.length} recibidas. Selecciona una para ver su ficha.</Text>
+          {features.slice(0, 50).map((feature, index) => <Button key={index} label={`Detección ${index + 1} · ${feature.properties?.platform || 'FIRMS'} · ${feature.properties?.ts_utc || 'hora no disponible'}`} onClick={() => showFeature(index)} />)}
+        </>}
+        {dialog === 'feature' && (point ? <>
+          <Text>Satélite: {point.properties?.platform || 'no disponible'}</Text>
+          <Text>Adquisición UTC: {point.properties?.ts_utc || 'no disponible'}</Text>
+          <Text>Latitud: {Number(point.geometry.coordinates[1]).toFixed(5)} · Longitud: {Number(point.geometry.coordinates[0]).toFixed(5)}</Text>
+          <Text>FRP: {fmt(point.properties?.frp_mw)} MW · Confianza: {point.properties?.confidence_h || 'no disponible'}</Text>
+          <Text type="supporting">Una detección no confirma un incendio.</Text>
+          <Metadata data={recent.data} />
+        </> : <Text>La detección ya no forma parte de la consulta actual.</Text>)}
+        <Button label="Cerrar" onClick={() => setDialog(null)} />
+      </Stack>
+    </Dialog>
+  </Stack>;
 }

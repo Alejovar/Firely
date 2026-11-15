@@ -4,6 +4,7 @@ WORKDIR /app/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY web/ ./
+COPY packages/contracts/ /app/packages/contracts/
 # Same-origin API through nginx (/api/ -> api:8000), so the browser needs no CORS.
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=${VITE_API_URL}

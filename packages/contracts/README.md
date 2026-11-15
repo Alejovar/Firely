@@ -1,5 +1,5 @@
 # Contratos compartidos
 
-Este directorio contendrá los tipos y esquemas de los contratos acordados con backend para que los clientes web y móvil interpreten las respuestas de la misma manera.
+`api-client.ts` contiene el cliente y los tipos de respuesta que comparten la web y la app móvil. Se trasladó aquí el cliente de `web/src/api/client.ts`; ese archivo mantiene una reexportación compatible con los imports existentes.
 
-Los endpoints descritos en `../../FIRELY_CONTEXTO_CODEX.md` son el punto de partida. Los contratos definitivos todavía deben acordarse con el equipo; esta carpeta no define una API nueva.
+Los endpoints siguen implementados en `api/app/`; esta carpeta no define una API nueva ni duplica cálculos científicos. `VITE_API_URL` fija el origen durante la compilación de cada interfaz. Las respuestas conservan fuente, versión del método, corte de datos y marcas de simulación.

@@ -10,6 +10,9 @@
 !ai/**
 !web/
 !web/**
+!packages/
+!packages/contracts/
+!packages/contracts/**
 !apps/
 !apps/mobile/
 !apps/mobile/package.json

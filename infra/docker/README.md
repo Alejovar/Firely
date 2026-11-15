@@ -1,6 +1,6 @@
 # Entorno Docker
 
-El servicio `mobile` compila la app React/Astryx de `apps/mobile/src/` con Node 24 y Vite en una primera etapa, y sirve `dist/` con Nginx. Las dependencias se instalan dentro de la imagen. El SDK de Android y la compilación de Capacitor siguen en la computadora.
+El servicio `mobile` compila la app Glass React/Astryx de `apps/mobile/src/` y el cliente compartido de `packages/contracts/` con Node 24 y Vite, y sirve `dist/` con Nginx. `/api/` se reenvía al servicio `api`; si este no está disponible, la interfaz puede abrirse y muestra un error de conexión. Las dependencias se instalan dentro de la imagen. El SDK de Android y la compilación de Capacitor siguen en la computadora.
 
 ## Iniciar
 
@@ -42,4 +42,4 @@ docker compose stop mobile
 
 El contenedor usa un usuario sin privilegios, sistema de archivos de solo lectura y almacenamiento temporal en `/tmp`. El contexto de construcción excluye los documentos, credenciales, dependencias y proyectos Android.
 
-La interfaz móvil es un prototipo visual con datos simulados. React, Astryx y Capacitor ya están integrados; conectar esta app con la API del equipo sigue pendiente. `apps/mobile/www/` conserva el prototipo anterior como referencia. Para generar el APK actual ejecuta `npm run apk` desde `apps/mobile/`.
+La interfaz Glass consulta los datos de la API y distingue respuestas vacías, errores y datos simulados del servidor. La API necesita sus Parquet reales para mostrar la serie histórica. Para iniciar los servicios de datos usa `docker compose up -d --build api web`; para generar e instalar el APK conectado por USB ejecuta `npm run android:usb` desde `apps/mobile/`. `apps/mobile/www/` conserva el prototipo anterior como referencia.

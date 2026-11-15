@@ -6,7 +6,7 @@ El archivo `compose.yaml` de la raíz reúne la API, la web y la app móvil:
 |---|---|---|
 | `api` | `infra/Dockerfile.api` (~480 MB) | FastAPI + DuckDB sobre los Parquet. Usuario sin privilegios, sistema de archivos de solo lectura, datos montados `:ro`, 2 workers, límite de 3 GB. |
 | `web` | `infra/Dockerfile.web` (~80 MB) | Compila Vite y sirve los estáticos con nginx; `/api/` se reenvía a la API (mismo origen, sin CORS) con **límite de 10 solicitudes/s por IP** (429 al exceder). |
-| `mobile` | `infra/docker/mobile.Dockerfile` | Compila la app móvil React/Astryx y sirve su prototipo en el puerto 5173. Actualmente usa datos simulados y no consulta la API. |
+| `mobile` | `infra/docker/mobile.Dockerfile` | Compila la interfaz Glass en el puerto 5173 y reenvía `/api/` al servicio API. Usa el mismo cliente de contrato que la web. |
 
 ## Local
 

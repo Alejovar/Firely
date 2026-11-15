@@ -1,81 +1,93 @@
-# Aplicación móvil de Firely
+# Firely Glass · Android
 
-App React 19 con componentes Astryx y tema propio Firely Glass, basado en Neutral: superficies translúcidas, acentos naranjas y mapa a pantalla completa. Está compilada con Vite y empaquetada para Android con Capacitor 8. Su identificador es `org.firely.mobile`; no reemplaza la prueba `org.firely.smoketest`.
+Interfaz móvil React/Astryx con el diseño Glass de `docs/2026-11-14_17-24-33.png`. Conserva sus cuatro pestañas y consulta la API del equipo: ya no carga la web de escritorio dentro de la app ni usa cifras de ejemplo como sustituto de los datos.
 
-La carpeta ya tiene un proyecto npm con React 19, React DOM, Astryx Core, el tema Neutral y StyleX. El CLI de Astryx está instalado como dependencia de desarrollo. Para restaurar las dependencias, ejecuta `npm ci` desde esta carpeta.
+El identificador Android es `org.firely.mobile`. La prueba anterior `mobile-smoke/` se conserva localmente, está ignorada por Git y no se necesita para compilar.
 
-## Desarrollo
+## Ejecutar en el teléfono por USB
 
-Requiere Node.js 22.13 o posterior (se recomienda Node 24). Desde `apps/mobile/`:
+Requiere Node 24 (mínimo 22.13), Java 21, SDK de Android y depuración USB autorizada. Desde la raíz:
 
 ```sh
+docker compose up -d --build --wait api web
+cd apps/mobile
+npm ci
+npm run android:usb
+```
+
+El comando comprueba el servidor, activa `adb reverse tcp:8080 tcp:8080`, compila Glass dentro del APK, lo instala y abre Firely. Solo la API se consulta a través de `http://localhost:8080/api`; Capacitor no configura `server.url` ni reemplaza la interfaz móvil por una página remota.
+
+Mantén el USB y Docker activos. Al reconectar el teléfono puedes restaurar el túnel con `adb reverse tcp:8080 tcp:8080`. Si hay varios dispositivos: `ANDROID_SERIAL=<serial> npm run android:usb`.
+
+Usa `ANDROID_HOME` o `ANDROID_SDK_ROOT` para un SDK fuera de `~/Android/Sdk`; el script de instalación también acepta `adb` en PATH. El permiso HTTP está en el manifiesto Android de debug; `FIRELY_USB_DEV=1` selecciona el esquema HTTP local únicamente para esta variante.
+
+El APK queda en `android/app/build/outputs/apk/debug/app-debug.apk`. Es una compilación para pruebas. `npm run apk` sin el modo USB también empaqueta Glass; para conectarlo a un servidor HTTPS configura la URL al compilar:
+
+```sh
+VITE_API_URL=https://TU_SERVIDOR/api npm run apk
+```
+
+## Desarrollo y vista local
+
+Con API/web activos en 8080:
+
+```sh
+cd apps/mobile
 npm ci
 npm run dev
 ```
 
-Abre `http://localhost:5173`. Vite actualiza la interfaz al editar `src/`. Desde el celular en la misma red puedes abrir `http://IP_DE_TU_COMPUTADORA:5173`.
+Vite sirve `http://localhost:5173` y reenvía `/api` al servidor del puerto 8080. Para el build estático, Docker incluye el mismo proxy:
 
 ```sh
-npm run build    # genera dist/
-npm run check    # valida Astryx y el build
-npm run preview # sirve dist/ en el puerto 4173
+docker compose up -d --build mobile
 ```
 
-## APK Android
-
-Requiere Java 21 y el SDK de Android con la plataforma indicada en `android/variables.gradle`, además de las herramientas de compilación. La primera compilación necesita internet para descargar dependencias de Gradle.
+Este último comando se ejecuta desde la raíz. Consulta `infra/docker/README.md` para acceder desde otro dispositivo por Wi-Fi. Las teselas del mapa requieren internet; no son imágenes de incendios actuales.
 
 ```sh
-npm run apk
+npm run build          # interfaz de producción en dist/
+npm run check          # comprobación de Astryx sobre dist/
+npm run android:sync   # recompila y sincroniza Android
+npm run android:open   # abre Android Studio
 ```
 
-Compila la interfaz, sincroniza `dist/` con Android y ejecuta `assembleDebug`. Busca el SDK en `ANDROID_HOME`, `ANDROID_SDK_ROOT` y las rutas convencionales de Android Studio; configura `ANDROID_HOME` si lo instalaste en otra ruta. Respeta `JAVA_HOME` para elegir Java.
+## Funciones conectadas
 
-El APK queda en `android/app/build/outputs/apk/debug/app-debug.apk`. Es una compilación debug para pruebas; para publicar en Google Play se necesita configurar la firma de distribución. Copia el APK al teléfono para instalarlo. La interfaz va incluida y no requiere tener abierto el servidor de desarrollo.
+- **Mapa:** fondo histórico NASA GIBS, desplazamiento/zoom, selección de un radio al tocar el mapa, dibujo de polígonos y límites del área. Filtros por fechas, conteo/FRP y mediana/promedio; coordenadas manuales como alternativa al mapa.
+- **Recientes:** consultas FIRMS de 24/48 horas y ficha de adquisición, plataforma, coordenadas, FRP y confianza. La capa es independiente de las fechas del calendario.
+- **Calendario:** meses devueltos por la API, actividad/anomalía, estimados señalados, bandas de incertidumbre, detalle diario observado, periodo de retorno descriptivo y enlace CSV.
+- **Análisis:** temporadas, años análogos, contexto climático, eventos agrupados, reportes CONAFOR por unidad mexicana y patrones semanales/nocturnos. Las temporadas y el patrón semanal usan todo el historial del área; el contexto limita cada consulta a cinco años.
+- **Asistente/búsqueda:** resolución de lugares y fechas, elección entre candidatos, aplicación de esos filtros al resto de las vistas y explicación del calendario consultado. Idioma de respuesta ES/EN/PT y perfil brigadista/científico. Sin llave de IA, el servidor utiliza reglas y redacción local.
 
-```sh
-npm run android:sync  # recompila y copia la interfaz a Android
-npm run android:open  # abre Android Studio
-```
+El cliente y los tipos de respuesta están en `packages/contracts/api-client.ts`, compartidos con `web/`. Las consultas cambian con el área/periodo y se cancelan al cambiar de selección. No se duplica la armonización en el teléfono.
 
-El proyecto `android/` ya está creado. Usa `npm run android:add` únicamente si preparas una copia sin esa carpeta.
+## Datos, cobertura y fuentes
 
-## Pruebas de interfaz
+Los Parquet reales deben estar disponibles para la API, según `infra/README.md`. No se incluyen en Git ni dentro del APK. Sin ellos se muestra «Sin datos»; un error de red se distingue de una respuesta vacía. La capa reciente necesita `FIRMS_MAP_KEY` en el servidor. Las respuestas simuladas de una API en modo mock se marcan en pantalla.
+
+El calendario es mensual y armonizado. El detalle diario es observado y crudo; los días sin registro no se rellenan con ceros. El conteo de eventos agrupados todavía es crudo y su extensión no es superficie quemada. Un punto de calor no confirma un incendio. No se presenta el endpoint mock de riesgo como una predicción real.
+
+El mapa navegable usa Blue Marble histórico a través de NASA GIBS; el fondo local de reserva se acredita en `public/maps/README.md`. Los valores, fuente, versión del método y corte de datos vienen de las respuestas de la API.
+
+## Pruebas
 
 ```sh
 npx playwright install chromium
+npm run build
 npm test
 ```
 
-Para usar un navegador Chromium instalado: `FIRELY_BROWSER=/usr/bin/brave-browser npm test`.
+Para usar Brave instalado: `FIRELY_BROWSER=/usr/bin/brave-browser npm test`. Las pruebas de Glass usan respuestas controladas en `tests/`, marcadas como fixtures; nunca se importan en la app. Comprueban cifras, filtros, detalle diario, búsqueda/fechas, análisis, fallos FIRMS y adaptación de anchura.
 
-Las pruebas recorren filtros, selección por teclado, fichas, capas, calendario, análisis y asistente; también verifican anchuras de 320, 390 y 1280. La prueba funcional bloquea peticiones externas. Firely Glass utiliza fuentes del sistema y el fondo se incluye en el APK; no necesitan descargas al abrir la app.
+`FIRELY_BROWSER=/usr/bin/brave-browser npm run test:usb` ejecuta las comprobaciones adicionales de la web/API del equipo en el puerto 8080, incluyendo el historial corregido en `test`.
 
-## Diseño
+## Tema y referencia anterior
 
-La referencia visual está en `../../docs/2026-11-14_17-24-33.png`. La adaptación conserva las vistas existentes; los filtros de 24/48 horas se abren desde el selector MODIS + VIIRS. La campana muestra información del prototipo, no alertas operativas.
-
-El tema editable vive en `themes/firely-glass/`. Para reconstruirlo después de editar `firely-glass.theme.ts`:
+El tema editable está en `themes/firely-glass/`; su copia de la app en `src/themes/firely-glass/` es generada por Astryx:
 
 ```sh
 npx astryx experimental theme compile themes/firely-glass/firely-glass.theme.ts
 ```
 
-Astryx actualiza su copia de la app en `src/themes/firely-glass/`. Las vistas usan tokens del tema; no sobrescribas los archivos generados. Los PNG y HTML de previsualización quedan fuera de Git.
-
-## Alcance
-
-La prueba de instalación anterior se conserva localmente en `../../mobile-smoke/`, excluida de Git. No es necesaria para compilar esta app y no se incluye al clonar el repositorio.
-
-`www/` conserva el prototipo original HTML/CSS/JavaScript como referencia. La interfaz activa está en `src/`. Para servir el build con Docker desde la raíz, ejecuta `docker compose up --build -d mobile` y abre `http://localhost:5173`.
-
-Incluye:
-
-- Fondo histórico NASA Blue Marble de diciembre de 2004, puntos simulados seleccionables y fichas de ejemplo. Fuente y atribución en `public/maps/README.md`.
-- Filtros de 24/48 horas y control para mostrar el límite ilustrativo.
-- Navegación entre Mapa, Calendario, Análisis y Asistente.
-- Calendario de ejemplo con selección de mes; análisis y asistente como vistas previas.
-
-Todos los datos de actividad son ficticios. El fondo histórico no representa el estado actual del territorio y los puntos superpuestos no son ubicaciones verificadas. No es un mapa navegable y no solicita geolocalización. No hay conexión a backend, NASA FIRMS ni IA. El calendario no filtra el mapa todavía. La navegación incluye soporte del botón Atrás de Android.
-
-La configuración de Docker está en `../../infra/docker/README.md`.
+Las previsualizaciones quedan fuera de Git. `www/` conserva el primer prototipo HTML/CSS/JS como referencia histórica; el código activo está en `src/`.
