@@ -41,8 +41,7 @@ export function NativeSupport() {
   useEffect(() => setStored(null), [app.page, app.area, app.from, app.to, app.metric, app.reference, app.burn]);
   const en = app.lang === 'en', pt = app.lang === 'pt';
   if (isMobileApp && !API_URL) return <Banner container="section" status="info"
-    title={en ? 'Connect to your Firely server' : pt ? 'Conecte ao servidor Firely' : 'Conecta con tu servidor Firely'}
-    endContent={<Button label={en ? 'Configure' : pt ? 'Configurar' : 'Configurar'} onClick={() => app.navigate('campo')} />} />;
+    title={en ? 'Service currently unavailable' : pt ? 'Serviço indisponível no momento' : 'Servicio no disponible en este momento'} />;
   if (!online || stored) return <Banner container="section" status="warning"
     title={en ? 'Field data · not current conditions' : pt ? 'Dados guardados · não são condições atuais' : 'Datos de campo · no son condiciones actuales'}
     description={stored ? `${stored.label} · ${en ? 'Downloaded' : pt ? 'Baixado' : 'Descargado'} ${new Date(stored.savedAt).toLocaleString(app.lang)}` :

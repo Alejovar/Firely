@@ -7,14 +7,15 @@ const calendar = {
   reference: 'median', mock: false,
   rows: [{ year: 2021, month: 3, count_harm: 42, frp_harm: 21, anomaly_ratio: 2, percentile: .9, is_estimated: false }],
 };
-async function connect(page) {
+async function openField(page) {
+  await page.addInitScript(base => localStorage.setItem('firely.mobile.backend.v1', base), api);
   await page.goto('/#/campo?from=2021-01-01&to=2021-12-31');
-  await page.getByLabel('Dirección pública de la API').fill(api);
-  await page.getByRole('button', { name: 'Comprobar y conectar', exact: true }).click();
-  await expect(page.getByText(`API activa: ${api}`, { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Áreas de campo', exact: true })).toBeVisible();
+  await expect(page.getByText('Servidor Firely', { exact: true })).toHaveCount(0);
+  await expect(page.getByText(api, { exact: false })).toHaveCount(0);
 }
 
-test('checks remote connection, persists a download across reload, opens it offline and deletes it', async ({ page }) => {
+test('preserves the configured connection, persists a download across reload, opens it offline and deletes it', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   let offline = false;
@@ -25,7 +26,7 @@ test('checks remote connection, persists a download across reload, opens it offl
     if (url.pathname.endsWith('/calendar')) return route.fulfill({ json: calendar });
     return route.fulfill({ status: 503, json: { detail: { code: 'fixture_unavailable' } } });
   });
-  await connect(page);
+  await openField(page);
   await page.getByRole('button', { name: 'Guardar área para campo', exact: true }).click();
   await expect(page.getByText('Área guardada. Puedes consultar sus datos sin señal.', { exact: false })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Abrir área', exact: true })).toBeVisible();
@@ -42,13 +43,4 @@ test('checks remote connection, persists a download across reload, opens it offl
   await page.getByRole('button', { name: 'Borrar descarga?', exact: true }).click();
   await expect(page.getByText('Todavía no tienes áreas descargadas.', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
-});
-
-test('rejects a simulated backend and retains the configuration screen', async ({ page }) => {
-  await page.route(`${api}/**`, route => route.fulfill({ json: { info: { title: 'Firely API (mock)' }, paths: { '/calendar': {} } } }));
-  await page.goto('/#/campo');
-  await page.getByLabel('Dirección pública de la API').fill(api);
-  await page.getByRole('button', { name: 'Comprobar y conectar', exact: true }).click();
-  await expect(page.getByText('La API está en modo simulado.', { exact: false })).toBeVisible();
-  await expect(page.getByText('API activa: —', { exact: true })).toBeVisible();
 });

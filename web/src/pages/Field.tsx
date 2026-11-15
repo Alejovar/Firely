@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Layout, LayoutContent, LayoutHeader, VStack, HStack } from '@astryxdesign/core/Layout';
 import { Text, Heading } from '@astryxdesign/core/Text';
-import { TextInput } from '@astryxdesign/core/TextInput';
 import { Button } from '@astryxdesign/core/Button';
 import { List, ListItem } from '@astryxdesign/core/List';
 import { Divider } from '@astryxdesign/core/Divider';
@@ -10,19 +9,17 @@ import { Banner } from '@astryxdesign/core/Banner';
 import { useApp } from '../state/AppState';
 import type { UrlState } from '../state/hash';
 import { API_URL } from '../api/client';
-import { checkBackend, isMobileApp, rememberBackend } from '../mobile/backend';
 import { fieldStore, type FieldPack } from '../mobile/fieldStore';
 import { downloadFieldPack } from '../mobile/fieldDownload';
 
 const copy = {
-  es: { title: 'Áreas de campo', server: 'Servidor Firely', url: 'Dirección pública de la API', connect: 'Comprobar y conectar', connection: 'Conexión comprobada. Reiniciando la interfaz…', active: 'API activa', download: 'Guardar área para campo', downloads: 'Áreas descargadas', empty: 'Todavía no tienes áreas descargadas.', open: 'Abrir área', remove: 'Borrar descarga', cancel: 'Cancelar', loading: 'Descargando', saved: 'Área guardada. Puedes consultar sus datos sin señal.', error: 'No se pudo completar la operación', partial: 'Algunos análisis no están disponibles en esta descarga.', scope: 'Se guardan el calendario y los análisis disponibles para esta área, periodo y filtros. El detalle diario se incluye solo para el mes seleccionado.', limit: 'El mapa base, las detecciones recientes, los pronósticos y el asistente requieren conexión. Las descargas no describen las condiciones actuales.', date: 'Descargada', cutoff: 'Datos hasta', optional: 'Consultas no incluidas', noServer: 'Configura y comprueba el servidor antes de descargar un área.' },
-  en: { title: 'Field areas', server: 'Firely server', url: 'Public API address', connect: 'Check and connect', connection: 'Connection verified. Restarting the interface…', active: 'Active API', download: 'Download field area', downloads: 'Downloaded areas', empty: 'No areas downloaded yet.', open: 'Open area', remove: 'Delete download', cancel: 'Cancel', loading: 'Downloading', saved: 'Area saved. You can view its data without a connection.', error: 'Could not complete the operation', partial: 'Some analyses are unavailable in this download.', scope: 'Saves the calendar and available analyses for this area, period and filters. Daily detail is included only for the selected month.', limit: 'The basemap, recent detections, forecasts and assistant need a connection. Downloads do not describe current conditions.', date: 'Downloaded', cutoff: 'Data until', optional: 'Queries not included', noServer: 'Configure and check the server before downloading an area.' },
-  pt: { title: 'Áreas de campo', server: 'Servidor Firely', url: 'Endereço público da API', connect: 'Verificar e conectar', connection: 'Conexão verificada. Reiniciando a interface…', active: 'API ativa', download: 'Baixar área para campo', downloads: 'Áreas baixadas', empty: 'Nenhuma área baixada ainda.', open: 'Abrir área', remove: 'Excluir download', cancel: 'Cancelar', loading: 'Baixando', saved: 'Área salva. Você pode consultar seus dados sem conexão.', error: 'Não foi possível concluir a operação', partial: 'Algumas análises não estão disponíveis neste download.', scope: 'Salva o calendário e as análises disponíveis para esta área, período e filtros. O detalhe diário inclui apenas o mês selecionado.', limit: 'O mapa base, as detecções recentes, as previsões e o assistente precisam de conexão. Os downloads não descrevem as condições atuais.', date: 'Baixada', cutoff: 'Dados até', optional: 'Consultas não incluídas', noServer: 'Configure e verifique o servidor antes de baixar uma área.' },
+  es: { title: 'Áreas de campo', download: 'Guardar área para campo', downloads: 'Áreas descargadas', empty: 'Todavía no tienes áreas descargadas.', open: 'Abrir área', remove: 'Borrar descarga', cancel: 'Cancelar', loading: 'Descargando', saved: 'Área guardada. Puedes consultar sus datos sin señal.', error: 'No se pudo completar la operación', partial: 'Algunos análisis no están disponibles en esta descarga.', scope: 'Se guardan el calendario y los análisis disponibles para esta área, periodo y filtros. El detalle diario se incluye solo para el mes seleccionado.', limit: 'El mapa base, las detecciones recientes, los pronósticos y el asistente requieren conexión. Las descargas no describen las condiciones actuales.', date: 'Descargada', cutoff: 'Datos hasta', optional: 'Consultas no incluidas', noServer: 'Las descargas no están disponibles en este momento.' },
+  en: { title: 'Field areas', download: 'Download field area', downloads: 'Downloaded areas', empty: 'No areas downloaded yet.', open: 'Open area', remove: 'Delete download', cancel: 'Cancel', loading: 'Downloading', saved: 'Area saved. You can view its data without a connection.', error: 'Could not complete the operation', partial: 'Some analyses are unavailable in this download.', scope: 'Saves the calendar and available analyses for this area, period and filters. Daily detail is included only for the selected month.', limit: 'The basemap, recent detections, forecasts and assistant need a connection. Downloads do not describe current conditions.', date: 'Downloaded', cutoff: 'Data until', optional: 'Queries not included', noServer: 'Downloads are currently unavailable.' },
+  pt: { title: 'Áreas de campo', download: 'Baixar área para campo', downloads: 'Áreas baixadas', empty: 'Nenhuma área baixada ainda.', open: 'Abrir área', remove: 'Excluir download', cancel: 'Cancelar', loading: 'Baixando', saved: 'Área salva. Você pode consultar seus dados sem conexão.', error: 'Não foi possível concluir a operação', partial: 'Algumas análises não estão disponíveis neste download.', scope: 'Salva o calendário e as análises disponíveis para esta área, período e filtros. O detalhe diário inclui apenas o mês selecionado.', limit: 'O mapa base, as detecções recentes, as previsões e o assistente precisam de conexão. Os downloads não descrevem as condições atuais.', date: 'Baixada', cutoff: 'Dados até', optional: 'Consultas não incluídas', noServer: 'Os downloads estão indisponíveis no momento.' },
 };
 
 export default function Field() {
   const app = useApp(), t = copy[app.lang];
-  const [backend, setBackend] = useState(API_URL);
   const [packs, setPacks] = useState<FieldPack[]>([]);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState('');
@@ -52,13 +49,7 @@ export default function Field() {
     setPacks(await fieldStore.list(API_URL));
     setMessage(pack.unavailable.length ? `${t.saved} ${t.partial}` : t.saved);
   });
-  const connect = () => run(async signal => {
-    const base = await checkBackend(backend, signal);
-    signal.throwIfAborted();
-    rememberBackend(base);
-    setMessage(t.connection);
-    window.location.reload();
-  });
+
 
   return <Layout height="auto" contentWidth={1440}
     header={<LayoutHeader hasDivider><Heading level={1}>{t.title}</Heading></LayoutHeader>}
@@ -97,15 +88,6 @@ export default function Field() {
               {pendingDelete === pack.id && <Button label={t.cancel} variant="ghost" onClick={() => setPendingDelete(null)} />}
             </HStack>
           </VStack>} />)}</List>
-      </VStack>
-      <Divider />
-      <VStack gap={4}>
-        <Heading level={2}>{t.server}</Heading>
-        <Text type="supporting">{t.active}: {API_URL || '—'}</Text>
-        {isMobileApp && <>
-          <TextInput label={t.url} type="url" value={backend} onChange={setBackend} placeholder="https://servidor/api" />
-          <Button label={t.connect} isDisabled={busy || !backend.trim()} onClick={() => void connect()} />
-        </>}
       </VStack>
     </VStack></LayoutContent>} />;
 }

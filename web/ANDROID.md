@@ -31,17 +31,15 @@ incluida en el APK y abre sin depender del servidor web de EC2.
 
 ## Servidor remoto de EC2
 
-Al abrir un APK sin servidor configurado, entra en **Campo**. Introduce la URL
-pública HTTPS de la API y pulsa **Comprobar y conectar**. La comprobación consulta
-`/openapi.json`, verifica el contrato de Firely y rechaza el modo simulado.
-La dirección queda guardada en ese dispositivo y la interfaz se recarga.
+La dirección del backend se configura al compilar. Campo muestra las descargas
+y las áreas guardadas; no expone la URL ni controles de configuración del servidor.
 
 Con el nginx de este repositorio, la URL suele tener la forma
 `https://TU_HOST/api`; confirmar el host y el prefijo reales. El móvil accede al
 proxy público, que reenvía las solicitudes a `api:8000` dentro de Docker. El teléfono
 no ejecuta Docker ni accede a las credenciales AWS o a los Parquet del servidor.
 
-También se puede fijar la URL al compilar:
+Configura la URL al compilar:
 
 ```sh
 env VITE_API_URL=https://TU_HOST/api npm run apk
@@ -70,8 +68,8 @@ autorizar la depuración USB. Si hay varios dispositivos, establece
 env FIRELY_USB_API_URL=http://localhost:8080/api npm run android:usb
 ```
 
-Si ya se guardó un servidor en esa instalación, cambiarlo en **Campo** para
-probar la API local. Para volver a la variante remota, ejecutar `npm run apk`.
+Las instalaciones anteriores pueden conservar una dirección guardada, que tiene
+prioridad sobre la del build. Para volver a la variante remota, ejecutar `npm run apk`.
 
 ## EC2 por SSH durante el desarrollo
 
