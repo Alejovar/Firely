@@ -325,3 +325,20 @@ export const createServerSubscription = (body: SubscriptionInput, signal?: Abort
   postJson<{ attribution: string; subscription: ServerSubscription; note: string }>('/subscriptions', body, signal);
 export const deleteServerSubscription = (id: string, signal?: AbortSignal) =>
   request<{ deleted: string }>(`/subscriptions/${encodeURIComponent(id)}`, { method: 'DELETE', signal });
+
+export interface OutlookItem {
+  country: string; issue: string; target: string; horizon: 1 | 2 | 3;
+  expected_detections: number; normal_detections: number; ratio_to_normal: number | null;
+  observed_detections: number | null; show: 'forecast' | 'climatology';
+  skill: { beats_climatology: boolean | null; skill_vs_climatology?: number; rpss?: number; capture10?: number; capture10_climatology?: number };
+  modelled_cells?: number; cells_without_fire_history?: number | null; cells_likely_above_normal?: number;
+  interval_10_90?: [number, number]; probabilities?: { below: number; near: number; above: number };
+  most_likely?: 'below' | 'near' | 'above';
+}
+export interface OutlookResponse {
+  methodology_version: string; data_cutoff: string | null; attribution: string; kind: 'forecast' | 'backtest';
+  area?: Record<string, unknown>; note: string; empty_reason: string | null;
+  validation?: { train: [number, number]; validation: number; test: [number, number] };
+  forecasts: OutlookItem[];
+}
+export const getOutlook = (area: Area, signal?: AbortSignal) => request<OutlookResponse>(`/forecast?${withArea(area)}`, { signal });

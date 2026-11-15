@@ -61,3 +61,28 @@ labelled `source=NRT`. Scientific SP tables remain unchanged. When newer SP
 hotspots cover an NRT date, the next run removes that date from NRT derivatives
 while keeping the raw NRT audit file. The API shows post-SP NRT months/days
 and events with `is_provisional=true`.
+
+## 1-3 month fire-activity outlook
+
+Plan and decisions: `docs/plan-modelo-predictivo.md` (§14 adapts it to Firely). Run in this order, inside the
+`.venv`; the training steps peak at ~4-5 GB, so on a 14 GB laptop cap them:
+`systemd-run --user --scope -p MemoryMax=7G <command>`.
+
+```bash
+.venv/bin/python -m pipeline.forecast_climate    # NASA POWER regional monthly 2001-2025 (IPv4, cached in data/interim/power)
+.venv/bin/python -m pipeline.forecast_climate --recent 2026-10   # current year from POWER daily, aggregated to months
+.venv/bin/python -m pipeline.static_sources --country Bolivia    # (and Chile, Paraguay, Uruguay) NRT static-source masks
+.venv/bin/python -m pipeline.snpp_recent         # provisional observed S-NPP months after the harmonized table (2026)
+.venv/bin/python -m pipeline.forecast_features   # panel cell x issue month (26 M rows, 6 countries) + feature dictionary
+.venv/bin/python -m pipeline.forecast_train      # main split: train 2012-21, validate 2022, test 2023-25
+.venv/bin/python -m pipeline.forecast_train --split rolling   # rolling origin 2019-2025 (~1 h)
+.venv/bin/python -m pipeline.forecast_evaluate   # metrics + calibration (validation year) + forecast_summary.json
+.venv/bin/python -m pipeline.snpp_recent --validate   # re-counts Argentina 2026-01..07 against the official table
+.venv/bin/python -m pipeline.forecast_export     # forecast_cell / forecast_area for GET /forecast (final model 2012-2025)
+.venv/bin/python -m pipeline.forecast_conafor    # Mexico: state-year sums vs CONAFOR reported fires
+.venv/bin/python -m pipeline.forecast_report     # docs/reporte-pronostico.md (numbers generated, never typed)
+```
+
+Leakage rules are asserted in code and in `tests/test_forecast_features.py`: features read months <= t only, the
+climatologies used as features are expanding (previous years), and the test years never enter training,
+early stopping or calibration.

@@ -79,6 +79,9 @@ class FirelyClient:
     def events(self, bbox: str) -> dict:
         return self.request("GET", "/events", params={"bbox": bbox})
 
+    def outlook(self, bbox: str) -> dict:
+        return self.request("GET", "/forecast", params={"bbox": bbox})
+
     def risk(self, bbox: str) -> dict:
         return self.request("GET", "/risk", params={"bbox": bbox})
 

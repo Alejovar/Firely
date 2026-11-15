@@ -133,3 +133,10 @@ export const ANIMATION_RAMP: [number, string][] = [0, 0.25, 0.5, 0.75, 1].map(t 
 export const ANIMATION_GRADIENT = `linear-gradient(90deg, ${ANIMATION_RAMP.map(([, c]) => c).join(', ')})`;
 /** Burned-in video captions: a dark card with light ink, legible over either basemap. */
 export const videoInk = { card: 'rgba(16,20,18,.78)', text: '#f1f3ef', muted: '#b9c0b7', estimated: '#e0a526' } as const;
+
+/** Seasonal outlook (/forecast): tercile categories on the diverging scale (below = blue, above = red), and the
+ *  expected-vs-normal bars (normal = neutral context, expected = accent). */
+export const outlookInk = {
+  below: DIVERGING[1], near: DIVERGING[3], above: DIVERGING[5],
+  normal: 'var(--color-data-neutral)', expected: 'var(--color-data-categorical-orange)',
+} as const;

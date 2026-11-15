@@ -17,3 +17,4 @@ scikit-learn>=1.4
 requests>=2.31
 anthropic>=0.40
 scipy>=1.11
+lightgbm>=4.3

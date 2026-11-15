@@ -44,6 +44,8 @@ if _real_mode:  # registered before the mock routes so /season, /analogs... reso
     app.include_router(_forecast_router)       # /risk/forecast (pronóstico GFWED GEOS-5, §8.11)
     app.include_router(_priority_router)       # /priority/cells (índice por celda, §8.16)
     app.include_router(_subscriptions_router)  # /subscriptions (alertas por suscripción, §10.1)
+    from .outlook_routes import router as _outlook_router
+    app.include_router(_outlook_router)        # /forecast (perspectiva de actividad 1-3 meses por celda)
 
 
 def envelope(**extra):
