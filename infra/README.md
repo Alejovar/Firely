@@ -34,3 +34,34 @@ El pipeline de datos (ingesta, H3, armonización) **no** va en estas imágenes: 
 docker compose ps                                  # api y web "healthy"
 curl "localhost:8080/api/calendar?bbox=-100.9,25.2,-100.2,25.7&from=2021-03-01&to=2021-03-31"
 ```
+
+## Jobs diarios (cron en el servidor)
+
+Los dos jobs corren **dentro del contenedor `api`** (ya trae el código y escribe solo en el volumen `/state`). Son idempotentes: correrlos dos veces no duplica envíos ni filas.
+
+| Job | Qué hace | Requiere |
+|---|---|---|
+| `pipeline.alerts_job` | Evalúa cada suscripción (`POST /subscriptions`) con el índice de prioridad real (`/risk`) y la anomalía del último mes; si supera su umbral envía por Telegram un mensaje marcado **EJERCICIO / PRUEBA**. Cada (suscripción, mes de datos) se envía una sola vez. | `TELEGRAM_BOT_TOKEN` en `.env` (sin él: dry-run, solo registra en `/state/alerts_log.jsonl`) |
+| `pipeline.nrt` | Guarda las detecciones FIRMS NRT de las últimas 48 h de México y Argentina en Parquet, deduplicadas, en `/state/nrt/<País>/date=AAAA-MM-DD/`. | `FIRMS_MAP_KEY` (sin ella sale con código 2 y un mensaje claro) |
+
+**Aprobación humana.** Una suscripción nueva queda `approved=false` y no recibe nada hasta que el operador la aprueba en el servidor:
+
+```bash
+docker compose exec -T api python -m pipeline.alerts_job --list          # chat_id enmascarado
+docker compose exec -T api python -m pipeline.alerts_job --approve <id>
+docker compose exec -T api python -m pipeline.alerts_job --dry-run       # ver qué se enviaría
+```
+
+**Cron** (`crontab -e` del usuario que corre Docker, en la carpeta del repo; horas en UTC del servidor):
+
+```cron
+# NRT a Parquet a las 06:10 y alertas a las 06:30, todos los días
+10 6 * * * cd /home/ubuntu/Firely && docker compose exec -T api python -m pipeline.nrt --out /state/nrt >> /var/log/firely-nrt.log 2>&1
+30 6 * * * cd /home/ubuntu/Firely && docker compose exec -T api python -m pipeline.alerts_job >> /var/log/firely-alerts.log 2>&1
+```
+
+`-T` evita pedir una TTY desde cron. Los logs no contienen la llave de FIRMS, el token de Telegram ni el `chat_id`.
+
+## Riesgo próximo (GFWED)
+
+`GET /risk/forecast` baja en vivo solo los renglones del pronóstico GEOS-5 de 8 días que cruzan el área (peticiones HTTP Range, IPv4) y guarda el resultado en `/state/cache/gfwed_forecast`. La climatología 1981–2010 sale de `context/fwi_longterm_month.parquet`, que se genera en local con `python -m pipeline.fwi_climatology` antes de `export-runtime-data.sh` (solo cubre Coahuila; fuera de ahí se usa la clase EFFIS absoluta).

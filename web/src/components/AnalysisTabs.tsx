@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Tab, TabList } from '@astryxdesign/core/TabList';
+import * as stylex from '@stylexjs/stylex';
+import { Box, Inline } from '../ui/kit';
 import { VStack } from '@astryxdesign/core/VStack';
 import { Card } from '@astryxdesign/core/Card';
 import { Heading } from '@astryxdesign/core/Heading';
@@ -15,7 +16,16 @@ import { clampContextRange } from './analysis/helpers';
 import { SeasonPanel, AnalogsPanel, ContextPanel, ReportedPanel, WeekdayNightPanel } from './analysis/Panels';
 import { CumulativeChart, FireEvents, RecurrencePanel, RiskPanel, TerritoryPanel } from './analysis/ExpandedPanels';
 import { RiskWeightsPanel, WeatherPanel, WindPanel } from './analysis/ContextExtras';
+import { ForecastPanel, PriorityPanel } from './analysis/ForecastPriority';
 
+const sx = stylex.create({
+  head: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' },
+  title: { fontWeight: 600, fontSize: '15px' },
+  subtitle: { fontSize: '11.5px', color: 'var(--color-text-disabled)' },
+  tabs: { display: 'flex', flexWrap: 'wrap', gap: '4px', paddingBottom: '10px', borderBottomWidth: '1px', borderBottomStyle: 'solid', borderBottomColor: 'var(--color-border)' },
+  tab: { height: '28px', paddingInline: '10px', borderRadius: '7px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'transparent', backgroundColor: 'transparent', color: { default: 'var(--color-text-secondary)', ':hover': 'var(--color-text-primary)' }, fontFamily: 'inherit', fontSize: '12.5px', fontWeight: 500, cursor: 'pointer', ':focus-visible': { outline: '2px solid var(--color-accent)' } },
+  tabOn: { borderColor: 'var(--color-border-emphasized)', backgroundColor: 'var(--color-background-muted)', color: { default: 'var(--color-text-primary)', ':hover': 'var(--color-text-primary)' } },
+});
 const labels = {
   es: ['Este incendio', 'Años parecidos', 'Temporada', 'Contexto', 'Riesgo', 'Patrones', 'Territorio'],
   en: ['This fire', 'Similar years', 'Season', 'Context', 'Risk', 'Patterns', 'Territory'],
@@ -82,16 +92,16 @@ export default function AnalysisTabs() {
   }[app.lang];
   const fallback = (err: unknown) => unavailable(err) ? <EmptyState title={c.unavailable} description={c.unavailableDetail} /> : <Banner status="error" title={c.error} description={`${c.retry}${err instanceof ApiError ? ` (${err.status}${err.code ? `: ${err.code}` : ''})` : ''}`} />;
   const footer = data ? envelope(data) : undefined;
-  return <VStack gap={5}><VStack gap={1}><Heading level={3}>{c.title}</Heading><Text type="supporting" color="secondary">{c.subtitle}</Text></VStack>
-    <TabList value={selected} onChange={value => setSelected(value as TabKey)} role="tablist" aria-label={c.title} hasDivider>{keys.map((tab, index) => <Tab key={tab} value={tab} label={labels[app.lang][index]} panelId="firely-analysis-panel" />)}</TabList>
-    <section id="firely-analysis-panel" role="tabpanel" tabIndex={0} aria-label={labels[app.lang][keys.indexOf(selected)]}><VStack gap={4}>
+  return <VStack gap={4}><Box xs={sx.head}><Inline xs={sx.title}>{c.title}</Inline><Inline xs={sx.subtitle}>{c.subtitle}</Inline></Box>
+    <Box role="tablist" aria-label={c.title} xs={sx.tabs}>{keys.map((tab, index) => <button key={tab} type="button" role="tab" id={`firely-tab-${tab}`} aria-selected={selected === tab} aria-controls="firely-analysis-panel" tabIndex={selected === tab ? 0 : -1} onClick={() => setSelected(tab)} onKeyDown={e => { const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (d) { const next = keys[(index + d + keys.length) % keys.length]; setSelected(next); (e.currentTarget.parentElement?.querySelector(`#firely-tab-${next}`) as HTMLElement | null)?.focus(); } }} {...stylex.props(sx.tab, selected === tab && sx.tabOn)}>{labels[app.lang][index]}</button>)}</Box>
+    <section id="firely-analysis-panel" role="tabpanel" aria-labelledby={`firely-tab-${selected}`} tabIndex={0} aria-label={labels[app.lang][keys.indexOf(selected)]}><VStack gap={4}>
       {selected === 'context' && <Typeahead<AdminItem> label={c.admin} placeholder={c.admin} searchSource={adminSearch} value={reportedAdmin} onChange={setReportedAdmin} emptySearchText={c.unavailable} width="100%" />}
       {error ? fallback(error) : !data ? <Card padding={5}><VStack gap={3}><Skeleton width="40%" height="var(--spacing-6)" /><Skeleton width="100%" height="var(--spacing-10)" /><Skeleton width="100%" height="var(--spacing-10)" /></VStack></Card> : <VStack gap={4}>
         {data.tab === 'events' && <FireEvents data={data.events} territory={data.territory.data} lang={app.lang} live={app.layers.recent && app.live > 0} />}
         {data.tab === 'analogs' && <><AnalogsPanel data={data.analogs} lang={app.lang} />{data.calendar.data ? <CumulativeChart calendar={data.calendar.data} analogs={data.analogs} lang={app.lang} currentYear={Number(data.analogs.date.slice(0, 4))} /> : data.calendar.error && fallback(data.calendar.error)}</>}
         {data.tab === 'season' && <SeasonPanel data={data.season} lang={app.lang} />}
         {data.tab === 'context' && <><ContextPanel data={data.context} lang={app.lang} /><WeatherPanel area={area} from={contextFrom} to={contextTo} lang={app.lang} /><Card padding={5}><VStack gap={3}><Heading level={3}>CONAFOR</Heading>{data.reported?.data ? <ReportedPanel data={data.reported.data} lang={app.lang} /> : data.reported?.error ? fallback(data.reported.error) : <EmptyState title={c.admin} description={c.choose} />}</VStack></Card></>}
-        {data.tab === 'risk' && <><RiskPanel data={data.risk} territory={data.territory.data} lang={app.lang} /><RiskWeightsPanel area={area} lang={app.lang} /><WindPanel area={area} lang={app.lang} /></>}
+        {data.tab === 'risk' && <><ForecastPanel area={area} lang={app.lang} /><RiskPanel data={data.risk} territory={data.territory.data} lang={app.lang} /><PriorityPanel area={area} lang={app.lang} /><RiskWeightsPanel area={area} lang={app.lang} /><WindPanel area={area} lang={app.lang} /></>}
         {data.tab === 'patterns' && <><WeekdayNightPanel data={{ weekday: data.weekday, night: data.night }} lang={app.lang} />{data.recurrence.data ? <RecurrencePanel data={data.recurrence.data} lang={app.lang} /> : data.recurrence.error && fallback(data.recurrence.error)}</>}
         {data.tab === 'territory' && <TerritoryPanel data={data.territory} lang={app.lang} />}
       </VStack>}

@@ -513,17 +513,28 @@ Revisión del repositorio contra los criterios de "terminado" de §2. **Hecho** 
 
 Pruebas: `tests/test_api_new.py` (18) y `tests/test_bot_extra.py` (8). La suite de Python (129) y la de la web (46) pasan, y `vite build` compila.
 
+**Segunda ronda (backend, sin cambios en `web/`):**
+
+| Función | Qué se hizo | Dónde |
+|---|---|---|
+| Riesgo próximo GFWED (§8.11) | `GET /risk/forecast`: baja del pronóstico GEOS-5 de 8 días (corrida más reciente, retrocede hasta 6 días) solo los renglones que cruzan el área con peticiones HTTP Range (IPv4, sin librerías NetCDF en la imagen); FWI medio diario frente a la climatología 1981–2010 (`pipeline.fwi_climatology` → `context/fwi_longterm_month.parquet`), o percentil del histórico del área, o clase EFFIS absoluta; frase "esta semana el peligro meteorológico es X". Caché en `FIRELY_STATE_DIR`; sin red sirve la última corrida en caché como `stale` o responde 503 `gfwed_forecast_unavailable`. Probado contra NASA el 14-nov-2026 | `api/app/forecast_routes.py`, `pipeline/fwi_climatology.py` |
+| Índice de prioridad por celda (§8.16) | `GET /priority/cells`: GeoJSON H3 r6 con índice 0–100, desglose por componente y top 10; mismos pesos y helpers que `/risk` (refactorizados, sin duplicar). Celdas sin historia armonizada salen como "sin datos" | `api/app/priority_routes.py`, `extra_routes.py` |
+| Alertas por suscripción (§10.1) | `POST/GET/DELETE /subscriptions` (almacén JSON en `FIRELY_STATE_DIR`, `chat_id` enmascarado) y job diario idempotente `pipeline.alerts_job`: evalúa con el índice real y la anomalía del último mes, envía por Telegram (`bot/client.py`) solo suscripciones **aprobadas por el operador** (`--approve`), mensajes marcados EJERCICIO/PRUEBA, una vez por (suscripción, mes); sin token = dry-run. Cron documentado en `infra/README.md` | `api/app/subscriptions_routes.py`, `pipeline/alerts_job.py` |
+| Ingesta NRT a tablas (§17.3 paso 2) | `python -m pipeline.nrt`: job diario que guarda las detecciones NRT de 48 h de México y Argentina en `nrt/<País>/date=AAAA-MM-DD/part.parquet`, filtradas al país y deduplicadas; sin `FIRMS_MAP_KEY` sale con código 2 y mensaje claro | `pipeline/nrt.py` |
+
+Pruebas: `tests/test_jobs_forecast.py` (7, red simulada). Suite de Python: 136 en verde.
+
 ### 17.2 Estado por nivel
 
 | Nivel | Función | Estado | Nota |
 |---|---|---|---|
 | 0 | Descarga, limpieza, armonización, validación, Parquet | Hecho | Armonización v1.2; validación año-fuera contra factor fijo (`harmonization_summary.json`) |
 | 0 | Gráfica estrella, "Cómo armonizamos", calendario, desglose, CSV/PNG, atribución | Hecho | |
-| 0 | Capa 24/48 h | Parcial | `/recent` requiere `FIRMS_MAP_KEY` en el servidor; el NRT no está ingerido en las tablas |
+| 0 | Capa 24/48 h | Parcial | `/recent` requiere `FIRMS_MAP_KEY` en el servidor. El job `pipeline.nrt` ya guarda NRT en Parquet, pero no se ha corrido con clave real (no hay `FIRMS_MAP_KEY` en este equipo) y ninguna ruta lee aún `nrt/` |
 | 0 | Despliegue | Parcial | `docker compose up --build` listo; falta URL pública probada desde otra red |
 | 1 | Lenguaje natural, años análogos, curva de ritmo, temporada, retorno, día de la semana, nocturno, El Niño, recurrencia, comparador, perfiles, multilenguaje, widget, GeoJSON/KML, API + `/docs` | Hecho | |
 | 1 | Contexto meteorológico (POWER) | Hecho | Nuevo en esta revisión |
-| 1 | Índice de prioridad | Hecho | v1 con pesos ajustables; el mapa por celda sigue pendiente (hoy es un índice por área) |
+| 1 | Índice de prioridad | Hecho | v1 con pesos ajustables, por área (`/risk`) y por celda (`/priority/cells`, GeoJSON + top 10). La capa por celda aún no se dibuja en la web |
 | 1 | Agrícola vs forestal | Parcial | Filtro por cobertura del suelo; sin clasificador temporal |
 | 1 | Ficha PDF | Parcial | Falta el código QR a la vista en vivo |
 | 1 | CAP | Hecho | Feed Atom de ejercicios aprobados |
@@ -531,8 +542,8 @@ Pruebas: `tests/test_api_new.py` (18) y `tests/test_bot_extra.py` (8). La suite 
 | 2 | Corrección por nubes | Parcial | Celdas con `clear_frac < 0.5` marcadas en el calendario (solo Coahuila); sin vista corregida |
 | 2 | Superresolución "VIIRS virtual" | Pendiente | Necesita el DEM de Coahuila y un modelo entrenado |
 | 2 | Regímenes, cono, viento, detectados vs reportados, SQL, vigía, comunicados, extracción, bot, PWA, modo historia, sonificación, OGC | Hecho | PWA v1 guarda respuestas de la API, no Parquet + DuckDB-WASM |
-| 2 | Riesgo próximo GFWED (pronóstico de 8 días) | Parcial | El FWI histórico entra al índice; falta bajar el pronóstico GEOS-5 diario |
-| 2 | Alertas por suscripción | Parcial | Suscripciones y evaluación en el navegador; faltan el job diario y los envíos por correo o Telegram |
+| 2 | Riesgo próximo GFWED (pronóstico de 8 días) | Hecho (API) | `/risk/forecast` con el pronóstico GEOS-5 real; climatología 1981–2010 solo en Coahuila (fuera: clase EFFIS absoluta). Falta mostrarlo en la web |
+| 2 | Alertas por suscripción | Parcial | Endpoints + job diario + envío por Telegram con aprobación humana listos y probados con mocks; sin correo, sin envío real probado (no hay `TELEGRAM_BOT_TOKEN` aquí), la web aún usa sus suscripciones locales y la evaluación es mensual (último mes armonizado), no sobre NRT |
 | 2 | Animación de 25 años | Parcial | Animación mes a mes del área en Historia; sin globo continental ni exportación a video |
 | 3 | Capa GOES | Pendiente | Visible como "Visión · próximamente" en el mapa |
 | 3 | Escenarios de simulacro | Hecho | Nuevo en esta revisión |
@@ -541,8 +552,8 @@ Pruebas: `tests/test_api_new.py` (18) y `tests/test_bot_extra.py` (8). La suite 
 ### 17.3 Siguientes pasos sugeridos (en orden)
 
 1. **Desplegar y probar desde otra red** con `FIRELY_API_MODE=real` (Nivel 0): ahora están montados todos los routers.
-2. **Ingerir NRT** y programar el job diario (`pipeline/nrt.py`), que además habilita alertas por suscripción y el vigía nocturno.
-3. **Pronóstico GFWED de 8 días** para la frase de riesgo de la semana (§8.11).
+2. **Correr el job NRT con clave real** y programar el cron (`infra/README.md`); después, que `/recent` y las alertas lean `nrt/` para avisar con detecciones del día.
+3. **Web**: capa por celda de `/priority/cells`, tarjeta de `/risk/forecast` y formulario que use `/subscriptions`.
 4. **QR en la ficha PDF** y prueba de impresión en blanco y negro.
 5. **DOI** del dataset y del notebook (§15).
 6. Superresolución y GOES quedan como visión en el pitch si no hay tiempo.

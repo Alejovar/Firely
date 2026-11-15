@@ -13,6 +13,8 @@ services:
       FIRMS_MAP_KEY: ${FIRMS_MAP_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       FIRELY_LLM_MODEL: ${FIRELY_LLM_MODEL:-}
+      # daily alerts job (pipeline.alerts_job); without it the job runs in dry-run mode
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       # writable state (CAP drafts approved for exercise, NASA POWER cache); the data stays read-only
       FIRELY_STATE_DIR: /state
     volumes:

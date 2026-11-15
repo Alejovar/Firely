@@ -12,3 +12,5 @@ requests==2.34.2
 urllib3==2.8.0
 # optional: natural-language and rewording via the Claude API (needs ANTHROPIC_API_KEY); rules work without it
 anthropic==2.8.0
+# Telegram client of the daily alerts job (bot/client.py)
+httpx==0.28.1

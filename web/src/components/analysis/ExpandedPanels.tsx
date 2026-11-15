@@ -8,17 +8,28 @@ import { Grid } from '@astryxdesign/core/Grid';
 import { Heading } from '@astryxdesign/core/Heading';
 import { HStack } from '@astryxdesign/core/HStack';
 import { ProgressBar } from '@astryxdesign/core/ProgressBar';
-import { Table, type TableColumn } from '@astryxdesign/core/Table';
+import { Table } from '@astryxdesign/core/Table';
 import { Text } from '@astryxdesign/core/Text';
 import { VStack } from '@astryxdesign/core/VStack';
 import type { AnalogsResponse, CalendarResponse, EventsResponse, RecurrenceGeoJson, RiskResponse, TerritoryResponse } from '../../api/client';
 import type { Lang } from '../../i18n';
 import { monthShort } from '../../i18n';
-import { categorical, chartInk, emphasisSeries } from '../../lib/dataviz';
+import { categorical, chartInk, dailyBar, emphasisSeries } from '../../lib/dataviz';
+import { Box, Caption, Inline } from '../../ui/kit';
 import { compactEventDates, formatNumber } from './helpers';
 import { closestLocality, cumulativeCalendar, recurrenceStats } from './newHelpers';
 
 const s = stylex.create({
+  lead: { fontSize: '16px', lineHeight: 1.45, textWrap: 'pretty' },
+  evGrid: { display: 'grid', gridTemplateColumns: '22px minmax(0, 1.6fr) minmax(0, 2fr) 40px 76px', gap: '6px 10px', alignItems: 'center', fontSize: '12.5px', '@media (max-width: 520px)': { gridTemplateColumns: '18px minmax(0, 1.4fr) minmax(0, 1.2fr) 30px 64px', gap: '6px' } },
+  evRank: { fontFamily: '"IBM Plex Mono", ui-monospace, monospace', color: 'var(--color-text-disabled)' },
+  evName: { display: 'flex', flexDirection: 'column', lineHeight: 1.25, minWidth: 0 },
+  evTitle: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+  evTop: { fontWeight: 600 },
+  evSub: { fontSize: '11px', color: 'var(--color-text-disabled)' },
+  evBarCell: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
+  evBar: { display: 'block', height: '10px', borderRadius: '2px', flexShrink: 0, minWidth: '2px' },
+  evNum: { fontFamily: '"IBM Plex Mono", ui-monospace, monospace', fontSize: '11.5px', whiteSpace: 'nowrap' },
   chart: { width: '100%', minWidth: 0 },
   segment: { width: '100%', minHeight: 'var(--spacing-8)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingInline: 'var(--spacing-3)', color: 'var(--color-text-on-dark)', overflow: 'hidden' },
   gauge: { width: '100%', height: 'var(--spacing-5)', overflow: 'hidden', borderRadius: 'var(--radius-full)', backgroundColor: 'var(--color-background-muted)' },
@@ -44,12 +55,21 @@ export function FireEvents({ data, territory, lang, live }: { data: EventsRespon
     name: closestLocality(e, territory?.localities ?? [])?.name ?? `${formatNumber(e.centroid_lat, lang, 3)}, ${formatNumber(e.centroid_lon, lang, 3)}`,
     date: compactEventDates(e.start_date, e.end_date, lang), points: formatNumber(e.n_hotspots_harm, lang), days: formatNumber(e.duration_days, lang), extent: `≈ ${formatNumber(e.area_approx_km2, lang, 2)}`,
     active: live && Number.isFinite(cutoff) && cutoff - Date.parse(`${e.end_date.slice(0, 10)}T00:00:00Z`) >= 0 && cutoff - Date.parse(`${e.end_date.slice(0, 10)}T00:00:00Z`) <= 3 * 86400000, top: i === 0 }));
-  const columns: TableColumn<EventRow>[] = [
-    { key: 'rank', header: '#' },
-    { key: 'name', header: t.event, renderCell: r => <VStack gap={1} xstyle={r.top ? s.top : undefined}><Text>{r.name}</Text><Text type="supporting" color="secondary">{r.date}</Text>{r.active && <Badge label={t.active} variant="warning" />}</VStack> },
-    { key: 'points', header: t.points }, { key: 'days', header: t.days }, { key: 'extent', header: t.extent },
-  ];
-  return <Card padding={5}><VStack gap={4}><Text>{t.greatest} {rows[0].name}: {t.of} {formatNumber(rows.length, lang)} {t.registered}.</Text><Table data={rows} columns={columns} idKey="id" density="compact" /><Text type="supporting" color="secondary">{t.note}</Text></VStack></Card>;
+  const shown = rows.slice(0, 8), peak = Math.max(1, ...ordered.slice(0, 8).map(e => e.n_hotspots_harm));
+  return <VStack gap={3}>
+    <Text xstyle={s.lead}>{t.greatest} <strong>{rows[0].name}</strong>: {t.of} {formatNumber(rows.length, lang)} {t.registered}.</Text>
+    <Box xs={s.evGrid} role="table" aria-label={t.event}>
+      <Box role="row" style={{ display: 'contents' }}>{['#', t.event, t.points, t.days, t.extent].map(h => <Caption key={h} role="columnheader">{h}</Caption>)}</Box>
+      {shown.map((r, i) => <Box key={r.id} role="row" style={{ display: 'contents' }}>
+        <Inline role="cell" xs={s.evRank}>{r.rank}</Inline>
+        <Inline role="cell" xs={s.evName}><Inline xs={[s.evTitle, r.top && s.evTop]}>{r.name}</Inline><Inline xs={s.evSub}>{r.date}{r.active ? ` · ${t.active}` : ''}</Inline></Inline>
+        <Inline role="cell" xs={s.evBarCell}><Inline xs={s.evBar} style={{ width: `calc((100% - 52px) * ${ordered[i].n_hotspots_harm / peak})`, backgroundColor: r.top ? dailyBar.picked : dailyBar.base }} /><Inline xs={s.evNum}>{r.points}</Inline></Inline>
+        <Inline role="cell" xs={s.evNum}>{r.days}</Inline>
+        <Inline role="cell" xs={s.evNum}>{r.extent}</Inline>
+      </Box>)}
+    </Box>
+    <Text type="supporting" color="secondary">{t.note}</Text>
+  </VStack>;
 }
 
 export function CumulativeChart({ calendar, analogs, lang, currentYear }: { calendar: CalendarResponse; analogs: AnalogsResponse; lang: Lang; currentYear: number }) {

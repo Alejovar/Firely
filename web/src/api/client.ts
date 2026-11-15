@@ -275,8 +275,39 @@ export interface SpreadResponse extends Envelope {
   direction: { toward_deg: number; toward_compass: string }; reach_km: number; half_angle_deg: number; method: string;
 }
 export interface WindLocalitiesResponse extends SpreadResponse {
-  n_localities: number; localities: { name: string; country: string; pop: number | null; distance_km: number; bearing_deg: number; compass: string }[];
+  n_localities: number; localities: { name: string; country: string; pop: number | null; lat: number; lon: number; distance_km: number; bearing_deg: number; compass: string }[];
 }
 export const getSpread = (area: Area, hours = 24, signal?: AbortSignal) => request<SpreadResponse>(`/spread?${withArea(area, { hours })}`, { signal });
 export const getWindLocalities = (area: Area, hours = 12, signal?: AbortSignal) =>
   request<WindLocalitiesResponse>(`/wind-localities?${withArea(area, { hours })}`, { signal });
+
+// ---- risk forecast, priority cells, server subscriptions (api/app/forecast + priority + subscriptions_routes) ----
+export interface ForecastDay { date: string; fwi_mean: number | null; fwi_max: number | null; n_grid: number; fwi_ltm: number | null; ratio_ltm: number | null; effis_class: string | null }
+export interface RiskForecastResponse extends Envelope {
+  centroid: { lat: number; lon: number }; source: string; forecast_run: string; stale: boolean; days: ForecastDay[];
+  level: 'bajo' | 'normal' | 'alto' | 'muy alto' | string; fwi_week_mean: number | null; effis_class: string | null; month: number;
+  climatology: { basis: 'longterm_mean' | 'history_percentile' | 'effis_absolute' | string; reference?: string; fwi_ltm?: number | null; ratio?: number | null; percentile?: number | null };
+  summary_es: string; method: string; note?: string;
+}
+export const getRiskForecast = (area: Area, signal?: AbortSignal) => request<RiskForecastResponse>(`/risk/forecast?${withArea(area)}`, { signal });
+
+export type PriorityComponents = Partial<Record<'anomaly' | 'recurrence' | 'exposure' | 'season' | 'fwi', number | null>>;
+export interface PriorityCell { h3: string; index: number; level: string; components: PriorityComponents; current_count?: number | null; population_10km?: number | null }
+export interface PriorityCellsResponse extends Envelope {
+  type: 'FeatureCollection';
+  features: Array<{ type: 'Feature'; geometry: { type: 'Polygon'; coordinates: number[][][] }; properties: PriorityCell }>;
+  top10: PriorityCell[]; period: string; weights: RiskWeights; labels: Record<string, string>; summary_es: string; method: string; disclaimer?: string;
+}
+export const getPriorityCells = (area: Area, weights?: Partial<RiskWeights>, signal?: AbortSignal) =>
+  request<PriorityCellsResponse>(`/priority/cells?${withArea(area, Object.fromEntries(Object.entries(weights ?? {}).map(([k, v]) => [`w_${k}`, v])))}`, { signal });
+
+export interface ServerSubscription {
+  id: string; created_at: string; name: string; area: Record<string, string | number>; area_cells: number; chat_id_masked: string | null;
+  min_index: number; min_anomaly_ratio: number | null; lang: 'es' | 'en' | 'pt'; approved: boolean; approved_at: string | null;
+}
+export interface SubscriptionInput { name: string; area: Area; chat_id: number; min_index?: number; min_anomaly_ratio?: number; lang?: 'es' | 'en' | 'pt' }
+export const listServerSubscriptions = (signal?: AbortSignal) => request<{ attribution: string; rows: ServerSubscription[] }>('/subscriptions', { signal });
+export const createServerSubscription = (body: SubscriptionInput, signal?: AbortSignal) =>
+  postJson<{ attribution: string; subscription: ServerSubscription; note: string }>('/subscriptions', body, signal);
+export const deleteServerSubscription = (id: string, signal?: AbortSignal) =>
+  request<{ deleted: string }>(`/subscriptions/${encodeURIComponent(id)}`, { method: 'DELETE', signal });

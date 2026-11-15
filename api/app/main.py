@@ -33,6 +33,12 @@ if _real_mode:  # registered before the mock routes so /season, /analogs... reso
     app.include_router(_weather_router)   # /weather (NASA POWER, §8.10)
     app.include_router(_reports_router)   # POST /reports/extract (§11.2)
     app.include_router(_drill_router)     # /drill (escenarios de simulacro, §11.2)
+    from .forecast_routes import router as _forecast_router
+    from .priority_routes import router as _priority_router
+    from .subscriptions_routes import router as _subscriptions_router
+    app.include_router(_forecast_router)       # /risk/forecast (pronóstico GFWED GEOS-5, §8.11)
+    app.include_router(_priority_router)       # /priority/cells (índice por celda, §8.16)
+    app.include_router(_subscriptions_router)  # /subscriptions (alertas por suscripción, §10.1)
 
 
 def envelope(**extra):

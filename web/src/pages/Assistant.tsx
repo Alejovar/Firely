@@ -23,6 +23,7 @@ import { monthShort, type Lang } from '../i18n';
 import { useApp } from '../state/AppState';
 import type { AreaSel } from '../state/hash';
 import { calendarQuery, candidateArea, contextWindow, formatAnomaly, formatCount, largestLocalities, latestContextRow, latestRow, localSummary, monthIndex, peakRow, returnPeriodQuery } from '../components/assistant/helpers';
+import { Caption } from '../ui/kit';
 
 type Profile = 'brigadista' | 'cientifico';
 type FollowUp = { id: number; turnId: number; kind: 'territory' | 'context'; status: 'running' | 'complete' | 'error'; territory?: TerritoryResponse; context?: ContextResponse; analogs?: AnalogsResponse; error?: string };
@@ -63,7 +64,7 @@ function readableError(error: unknown, lang: Lang): string {
 function monthLabel(row: { year: number; month: number }, lang: Lang) { return `${monthShort[lang][row.month - 1]} ${row.year}`; }
 function DataLink({ queries, lang }: { queries: string[]; lang: Lang }) {
   const t = messages[lang];
-  return <Popover label={queryListLabel[lang]} presentation="adaptive" content={<VStack gap={2}><Text type="label">{queryListLabel[lang]}</Text>{queries.map((query) => <VStack key={query} gap={1}><Text type="code" as="p" wordBreak="break-all">{`${API_URL}${query}`}</Text><Button label={copyLabel[lang]} variant="ghost" size="sm" onClick={() => void navigator.clipboard?.writeText(`${API_URL}${query}`)} /></VStack>)}</VStack>}><Button label={t.data} variant="ghost" size="sm" /></Popover>;
+  return <Popover label={queryListLabel[lang]} presentation="adaptive" content={<VStack gap={2}><Caption>{queryListLabel[lang]}</Caption>{queries.map((query) => <VStack key={query} gap={1}><Text type="code" as="p" wordBreak="break-all">{`${API_URL}${query}`}</Text><Button label={copyLabel[lang]} variant="ghost" size="sm" onClick={() => void navigator.clipboard?.writeText(`${API_URL}${query}`)} /></VStack>)}</VStack>}><Button label={t.data} variant="ghost" size="sm" /></Popover>;
 }
 function Result({ turn, lang, profile, onProfile, onMap, onMethod }: { turn: Turn; lang: Lang; profile: Profile; onProfile: (value: Profile) => void; onMap: () => void; onMethod: () => void }) {
   const t = messages[lang], response = turn.calendar!, query = turn.query!;
@@ -110,7 +111,7 @@ function FollowUpResult({ item, lang }: { item: FollowUp; lang: Lang }) {
     const protectedNames = [...new Set(data.protected_areas.features.map(x => x.properties.name).filter(Boolean))];
     return <Card padding={4}><VStack gap={3}><Heading level={4}>{t.affected}</Heading>
       {localities.length ? <Table aria-label={t.locality} data={localities} columns={[{key:'name',header:t.locality},{key:'population',header:t.population}]} idKey="name" density="compact"/> : <EmptyState title={t.none} isCompact/>}
-      <Text type="label">{t.protected}</Text><Text>{protectedNames.length ? protectedNames.join(' · ') : t.none}</Text>
+      <Caption>{t.protected}</Caption><Text>{protectedNames.length ? protectedNames.join(' · ') : t.none}</Text>
       <Text type="supporting">{data.attribution || 'NASA FIRMS'} · {data.data_cutoff} · v{data.methodology_version}</Text>
     </VStack></Card>;
   }
@@ -235,7 +236,7 @@ export default function Assistant() {
   const resultCard = latestTurn && <Result turn={latestTurn} lang={lang} profile={profile} onProfile={value => updateProfile(value, latestTurn)} onMap={() => app.patch({ area: latestTurn.selected!, from: latestTurn.from!, to: latestTurn.to!, page: 'explorar' })} onMethod={() => app.navigate('metodo')} />;
   return <Layout height="fill" content={<LayoutContent padding={0} isScrollable={false}><VStack xstyle={styles.page}>
     <VStack gap={3} xstyle={styles.header}>
-      <VStack gap={1}><Text type="label" color="accent">{ext.eyebrow}</Text><Heading level={1}>{t.title}</Heading><Text type="supporting">{t.subtitle}</Text></VStack>
+      <VStack gap={1}><Caption>{ext.eyebrow}</Caption><Heading level={1}>{t.title}</Heading><Text type="supporting">{t.subtitle}</Text></VStack>
       <HStack gap={2} wrap="wrap" vAlign="center"><Token label={`${ext.area}: ${app.area.label}`} /><Token label={`${ext.range}: ${app.from} – ${app.to}`} /></HStack>
       <HStack gap={3} wrap="wrap" hAlign="between"><SegmentedControl label={t.profile} value={profile} onChange={value => { setProfile(value as Profile); if (latestTurn) change(latestTurn.id, { profile: value as Profile }); }} size="sm"><SegmentedControlItem value="brigadista" label={t.brigade}/><SegmentedControlItem value="cientifico" label={t.scientist}/></SegmentedControl><SegmentedControl label="Idioma / Language / Idioma" value={lang} onChange={value => app.setLang(value as Lang)} size="sm"><SegmentedControlItem value="es" label="ES"/><SegmentedControlItem value="en" label="EN"/><SegmentedControlItem value="pt" label="PT"/></SegmentedControl></HStack>
     </VStack>

@@ -371,3 +371,67 @@ paths:
         - {name: min_hotspots, in: query, schema: {type: integer, minimum: 3, default: 10}}
         - {name: pick, in: query, schema: {type: string, enum: [largest, longest, recent], default: largest}}
       responses: {'200': {description: "event, stages (deteccion, exposicion, evolucion, desenlace), disclaimer"}, '404': {description: sin eventos}}
+  /risk/forecast:
+    get:
+      summary: Riesgo próximo (§8.11) - FWI del pronóstico GFWED GEOS-5 de 8 días sobre el área, comparado con la climatología mensual; frase "esta semana el peligro meteorológico es X"
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/admin'}
+        - {name: lat, in: query, schema: {type: number}}
+        - {name: lon, in: query, schema: {type: number}}
+        - {name: radius_km, in: query, schema: {type: number}}
+        - {name: geometry, in: query, schema: {type: string}}
+      responses: {'200': {description: "forecast_run, stale, days (fwi_mean, fwi_ltm, ratio_ltm, effis_class), level, climatology (basis longterm_mean | history_percentile | effis_absolute), summary_es"}, '503': {description: gfwed_forecast_unavailable}}
+  /priority/cells:
+    get:
+      summary: Índice de prioridad por celda H3 r6 (§8.16), mismos componentes y pesos que /risk; GeoJSON y top 10
+      parameters:
+        - {$ref: '#/components/parameters/h3'}
+        - {$ref: '#/components/parameters/bbox'}
+        - {$ref: '#/components/parameters/admin'}
+        - {name: lat, in: query, schema: {type: number}}
+        - {name: lon, in: query, schema: {type: number}}
+        - {name: radius_km, in: query, schema: {type: number}}
+        - {name: geometry, in: query, schema: {type: string}}
+        - {name: w_anomaly, in: query, schema: {type: number, minimum: 0, maximum: 10, default: 0.35}}
+        - {name: w_recurrence, in: query, schema: {type: number, minimum: 0, maximum: 10, default: 0.25}}
+        - {name: w_exposure, in: query, schema: {type: number, minimum: 0, maximum: 10, default: 0.25}}
+        - {name: w_season, in: query, schema: {type: number, minimum: 0, maximum: 10, default: 0.15}}
+        - {name: w_fwi, in: query, schema: {type: number, minimum: 0, maximum: 10, default: 0.15}}
+      responses: {'200': {description: "FeatureCollection (h3, index, level, components, current_count, population_10km), top10, period, weights, method"}, '422': {description: area_too_large (más de 3000 celdas)}}
+  /subscriptions:
+    get:
+      summary: Suscripciones de alerta (§10.1); el chat_id se devuelve enmascarado
+      responses: {'200': {description: rows}}
+    post:
+      summary: Crea una suscripción (área, umbral, chat de Telegram). Queda pendiente de aprobación humana; los mensajes son de ejercicio/prueba
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, area, chat_id]
+              properties:
+                name: {type: string, maxLength: 80}
+                area:
+                  type: object
+                  properties:
+                    h3: {type: string}
+                    bbox: {type: string}
+                    lat: {type: number}
+                    lon: {type: number}
+                    radius_km: {type: number}
+                    admin: {type: string}
+                chat_id: {type: integer}
+                min_index: {type: number, minimum: 0, maximum: 100, default: 55}
+                min_anomaly_ratio: {type: number, exclusiveMinimum: 0}
+                lang: {type: string, enum: [es, en, pt], default: es}
+      responses: {'201': {description: "subscription (approved=false)"}, '422': {description: área inválida o vacía}}
+  /subscriptions/{sub_id}:
+    delete:
+      summary: Borra una suscripción
+      parameters:
+        - {name: sub_id, in: path, required: true, schema: {type: string}}
+      responses: {'200': {description: deleted}, '404': {description: no existe}}

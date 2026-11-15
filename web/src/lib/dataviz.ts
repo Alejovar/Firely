@@ -1,29 +1,42 @@
-// Data-encoding colors. They are DATA, not styling, and they come from Astryx's own data tokens
-// (`npx astryx docs tokens/tokens-data`) so themes and color modes stay in charge. Rules (dataviz skill):
-// sequential = one hue, diverging = two hues + a neutral midpoint, series identity = categorical slots in a fixed
-// order, and the "emphasis" form (one accent series over neutral context) when one series is the point.
+// Data-encoding colors. They are DATA, not styling: every chart, map layer and calendar takes its colors from here.
+// Rules (dataviz skill + Firely identity guide): counts = cividis (dark blue -> yellow, colour-blind safe, same in both
+// modes), anomalies = diverging blue-white-red with a neutral midpoint, series identity = categorical slots in fixed order,
+// and the "emphasis" form (one accent series over neutral context) when one series is the point.
+// The ember accent is for UI only, never for data -- except the exposure markers on the map, which mark people at risk.
 import type { CalendarRow, Metric } from '../api/client';
 import type { CalendarMode, } from '../state/hash';
 
 export type Scheme = 'dark' | 'light';
 
 /** Zero or missing cells recede into the surface. */
-export const EMPTY_CELL = 'var(--color-background-muted)';
+export const EMPTY_CELL = 'light-dark(#e6e4de, #1c2024)';
 
-// five sequential steps; on a dark surface more activity is BRIGHTER, on a light one DARKER
-const SEQ_LIGHT = ['--color-data-blue-1', '--color-data-blue-2', '--color-data-blue-3', '--color-data-blue-4', '--color-data-blue-5'] as const;
-const SEQ_DARK = ['--color-data-blue-5', '--color-data-blue-4', '--color-data-blue-3', '--color-data-blue-2', '--color-data-blue-1'] as const;
-// diverging: cool (below the reference) <- neutral -> warm (above), equal arms
-const DIV = ['--color-data-blue-4', '--color-data-blue-3', '--color-data-blue-2', '--color-data-neutral', '--color-data-red-2', '--color-data-red-3', '--color-data-red-4'] as const;
+/** Cividis, sampled. 0 detections -> #00204D, maximum -> #FDE34A. */
+export const CIVIDIS = ['#00204d', '#1f3a6e', '#4a5470', '#6f6f72', '#958f78', '#c0b26d', '#fde34a'] as const;
+/** Diverging RdBu (reversed): below the reference = blue, above = red. */
+export const DIVERGING = ['#2166ac', '#67a9cf', '#d1e5f0', '#f2f0eb', '#fddbc7', '#ef8a62', '#b2182b'] as const;
+export const CIVIDIS_GRADIENT = `linear-gradient(90deg, ${CIVIDIS.join(', ')})`;
+export const DIVERGING_GRADIENT = `linear-gradient(90deg, ${DIVERGING.join(', ')})`;
 
+function hex(c: string) { const n = parseInt(c.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+/** Continuous cividis lookup, t in 0..1. */
+export function cividis(t: number): string {
+  const x = Math.max(0, Math.min(1, t)) * (CIVIDIS.length - 1);
+  const i = Math.min(CIVIDIS.length - 2, Math.floor(x)), f = x - i;
+  const a = hex(CIVIDIS[i]), b = hex(CIVIDIS[i + 1]);
+  return `rgb(${a.map((v, j) => Math.round(v + (b[j] - v) * f)).join(',')})`;
+}
+
+const SEQ5 = [0, 0.25, 0.5, 0.75, 1].map(cividis);
 export const cssVar = (name: string) => `var(${name})`;
-export const sequentialSteps = (scheme: Scheme) => (scheme === 'dark' ? SEQ_DARK : SEQ_LIGHT).map(cssVar);
-export const divergingSteps = () => DIV.map(cssVar);
+/** Five sequential steps (cividis). The scheme argument is kept for callers; cividis reads on both surfaces. */
+export const sequentialSteps = (_scheme?: Scheme) => SEQ5;
+export const divergingSteps = () => [...DIVERGING];
 
 /** Text that stays legible on top of a cell of the given step (index 0..n-1 of its ramp). */
-export function onCellText(step: number, steps: number, scheme: Scheme, diverging = false): string {
-  const bright = diverging ? step === 3 || step === 2 || step === 4 : (scheme === 'dark' ? step >= steps - 2 : step <= 1);
-  return bright ? 'var(--color-text-on-light, #11151a)' : 'var(--color-text-on-dark, #ffffff)';
+export function onCellText(step: number, steps: number, _scheme: Scheme, diverging = false): string {
+  const bright = diverging ? step >= 2 && step <= 4 : step >= steps - 2;
+  return bright ? '#11151a' : '#ffffff';
 }
 
 export interface CellEncoding { background: string; color: string; step: number | null }
@@ -44,13 +57,36 @@ export function encodeCell(row: CalendarRow | undefined, mode: CalendarMode, met
     const ratio = row.anomaly_ratio;
     if (ratio == null || !Number.isFinite(ratio)) return { background: EMPTY_CELL, color: 'var(--color-text-secondary)', step: null };
     const step = divStep(ratio);
-    return { background: divergingSteps()[step], color: onCellText(step, 7, scheme, true), step };
+    return { background: DIVERGING[step], color: onCellText(step, 7, scheme, true), step };
   }
   const value = metric === 'frp' ? row.frp_harm : row.count_harm;
-  if (value == null || !Number.isFinite(value) || value <= 0) return { background: EMPTY_CELL, color: 'var(--color-text-secondary)', step: null };
+  if (value == null || !Number.isFinite(value)) return { background: EMPTY_CELL, color: 'var(--color-text-secondary)', step: null };
+  if (value <= 0) return { background: CIVIDIS[0], color: '#ffffff', step: 0 };
+  const t = max > 0 ? Math.sqrt(value / max) : 0;
   const step = seqStep(value, max);
-  return { background: sequentialSteps(scheme)[step], color: onCellText(step, 5, scheme), step };
+  return { background: cividis(0.06 + 0.94 * t), color: onCellText(step, 5, scheme), step };
 }
+
+/** Selected calendar cell / big ratio badge: the brightest cividis yellow. */
+export const SELECTED_FILL = CIVIDIS[CIVIDIS.length - 1];
+export const SELECTED_INK = '#1a1c1e';
+
+/** Map: fire radiative power. Grey for weak fires, cividis yellow for strong ones. */
+export const FRP_STOPS: [number, string][] = [[0, '#7c7b78'], [5, '#958f78'], [15, '#bcaf6f'], [40, '#fde34a']];
+export const FRP_LEGEND = ['#7c7b78', '#bcaf6f', '#fde34a'] as const;
+/** Map: recurrence (years burned), cividis from 1 year to the maximum. */
+export const RECURRENCE_STOPS = [0.15, 0.4, 0.65, 0.85, 1].map(cividis);
+/** Map overlays. */
+export const mapInk = {
+  protectedArea: '#7fb48a',
+  exposedLocality: '#e8803f',
+  otherLocality: '#8a9097',
+  goes: '#67a9cf',
+  semaphore: { red: '#b2182b', redGlow: 'rgba(178,24,43,.8)', amber: '#e0a526', green: '#4f9d69' },
+  alertLabel: { bg: 'rgba(178,24,43,.16)', fg: '#e5707e' },
+  nina: '#67a9cf',
+  nino: '#ef8a62',
+} as const;
 
 /** Star-chart series: the harmonized series is THE point (accent), raw series are neutral context told apart by dash. */
 export const emphasisSeries = {
@@ -58,6 +94,9 @@ export const emphasisSeries = {
   modisRaw: { stroke: 'var(--color-data-neutral)', strokeWidth: 1.75, dash: undefined as string | undefined },
   viirsRaw: { stroke: 'var(--color-data-neutral)', strokeWidth: 1.75, dash: '6 4' },
 } as const;
+
+/** Daily breakdown bars: cividis mid-tone, the picked day in full yellow. */
+export const dailyBar = { base: '#958f78', picked: '#fde34a' } as const;
 
 /** Categorical slots in FIXED order (never cycled): use for entities that must be told apart, e.g. countries. */
 export const categorical = [
@@ -69,5 +108,15 @@ export const categorical = [
 export const chartInk = {
   axis: 'var(--color-text-secondary)',
   grid: 'var(--color-border-subtle, var(--color-background-muted))',
-  tick: { fontSize: 12, fill: 'var(--color-text-secondary)' },
+  tick: { fontSize: 11, fill: 'var(--color-text-secondary)', fontFamily: '"IBM Plex Mono", ui-monospace, monospace' },
 } as const;
+
+/** A month is drawn hatched ("cloudy") when less than this share of the area was seen clear (MYD08 cloud fraction). */
+export const CLOUDY_CLEAR_FRAC = 0.35;
+/** Semaphore tag for the amber level. */
+export const amberLabel = { bg: 'rgba(224,165,38,.16)', fg: '#e0a526' } as const;
+
+/** Priority index (0–100) per H3 cell: cividis, so "more urgent" is brighter, never the ember accent. */
+export const PRIORITY_STOPS: [number, string][] = [0, 25, 50, 75, 100].map(v => [v, cividis(v / 100)]);
+/** FWI forecast bars (cividis by value relative to the climatology) and the climatology reference line. */
+export const fwiInk = { climatology: 'var(--color-text-secondary)' } as const;

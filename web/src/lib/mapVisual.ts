@@ -1,5 +1,4 @@
 import type { AreaSel } from '../state/hash';
-export const frpRamp = ['var(--color-data-neutral)', 'var(--color-data-yellow-5)', 'var(--color-data-yellow-4)', 'var(--color-data-yellow-3)', 'var(--color-data-yellow-1)'];
 export function hotspotPeriod(selected: { year: number; month: number } | null, from: string, to: string): [string, string] {
   if (!selected) { const year = to.slice(0, 4), month = to.slice(5, 7); return [`${year}-${month}-01`, to]; }
   const start = `${selected.year}-${String(selected.month).padStart(2, '0')}-01`;

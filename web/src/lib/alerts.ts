@@ -1,14 +1,24 @@
-// Local alert subscriptions (stored in the browser). Owned by the "platform pages" job; TopBarTools only reads the count.
-export interface Subscription { id: string; label: string; areaKey: string; threshold: 'p90'; channels: string[]; createdAt: string }
-const KEY = 'firely.alerts';
-export function loadSubscriptions(): Subscription[] {
-  try { return JSON.parse(window.localStorage.getItem(KEY) ?? '[]') as Subscription[]; } catch { return []; }
+// Alert subscriptions live on the server (GET/POST/DELETE /subscriptions). The browser keeps nothing but a change
+// signal so the header counter refreshes after the Platform page adds or removes one.
+import type { Area } from '../api/client';
+
+const EVENT = 'firely:subscriptions';
+export function notifySubscriptionsChanged(): void { window.dispatchEvent(new Event(EVENT)); }
+export function onSubscriptionsChanged(listener: () => void): () => void {
+  window.addEventListener(EVENT, listener);
+  return () => window.removeEventListener(EVENT, listener);
 }
-export function saveSubscriptions(list: Subscription[]): void {
-  try { window.localStorage.setItem(KEY, JSON.stringify(list)); } catch { /* private mode */ }
+
+/** The server accepts h3, bbox, lat+lon(+radius_km) or admin; drawn polygons are not subscribable yet. */
+export function subscribableArea(area: Area): Area | null {
+  if ('geometry' in area) return null;
+  return area;
 }
-export function addSubscription(list:Subscription[], label:string, areaKey:string):Subscription[] {
- if(list.some(s=>s.areaKey===areaKey)) return list;
- return [...list,{id:crypto.randomUUID(),label,areaKey,threshold:'p90',channels:['feed CAP'],createdAt:new Date().toISOString()}];
+
+/** Telegram chat ids are integers (groups are negative). */
+export function parseChatId(text: string): number | null {
+  const t = text.trim();
+  if (!/^-?\d{3,20}$/.test(t)) return null;
+  const n = Number(t);
+  return Number.isSafeInteger(n) ? n : null;
 }
-export function removeSubscription(list:Subscription[],id:string):Subscription[] { return list.filter(s=>s.id!==id); }

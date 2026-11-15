@@ -156,6 +156,35 @@ def recurrence(h3: str | None = None, bbox: str | None = None, lat: float | None
     return result
 
 
+def _locality_points(cells, country_groups=None):
+    """Localities whose r6 cell is in `cells`: ([(name, pop, lat, lon, h3_r6)], population total or None when no
+    country with locality data covers the area)."""
+    cellset = set(cells)
+    if country_groups is None:
+        country_groups = {c: _country_cells(cells, c) for c in COUNTRIES}
+    out, pop_total = [], None
+    for c in COUNTRIES:
+        path = db.file_path("geo/localities.parquet", c)
+        if not path or not country_groups.get(c):
+            continue
+        if pop_total is None:
+            pop_total = 0
+        # Bounding box reduces the locality scan before exact H3 membership.
+        points = [h3.cell_to_latlng(x) for x in country_groups[c]]
+        south, north = min(x[0] for x in points) - .05, max(x[0] for x in points) + .05
+        west, east = min(x[1] for x in points) - .05, max(x[1] for x in points) + .05
+        with db.connection() as con:
+            rows = con.execute("SELECT name, pop, lat, lon FROM read_parquet(?) WHERE lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?", [path, south, north, west, east]).fetchall()
+        for name, pop, lat, lon in rows:
+            if lat is None or lon is None:
+                continue
+            cell = h3.latlng_to_cell(lat, lon, 6)
+            if cell in cellset:
+                pop_total += pop or 0
+                out.append((name, pop, lat, lon, cell))
+    return out, pop_total
+
+
 def _territory(cells, area):
     if cells is None:
         raise HTTPException(422, "territory requires an area selector")
@@ -174,25 +203,10 @@ def _territory(cells, area):
         mun = next((r[2] for r in matched if r[0] == mun_level), None)
         admin_result = {"country": country, "state": state, "municipality": mun,
                         "source": "INEGI Marco Geoestadístico 2020" if country == "Mexico" else "geoBoundaries"}
-    localities, pop_total = [], None
-    for c in COUNTRIES:
-        path = db.file_path("geo/localities.parquet", c)
-        if not path or not country_groups[c]:
-            continue
-        if pop_total is None:
-            pop_total = 0
-        # Bounding box reduces the locality scan before exact H3 membership.
-        points = [h3.cell_to_latlng(x) for x in country_groups[c]]
-        south, north = min(x[0] for x in points) - .05, max(x[0] for x in points) + .05
-        west, east = min(x[1] for x in points) - .05, max(x[1] for x in points) + .05
-        with db.connection() as con:
-            rows = con.execute("SELECT name, pop, lat, lon FROM read_parquet(?) WHERE lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?", [path, south, north, west, east]).fetchall()
-        for name, pop, lat, lon in rows:
-            if lat is None or lon is None or h3.latlng_to_cell(lat, lon, 6) not in cellset:
-                continue
-            pop_total += pop or 0
-            localities.append({"name": name, "pop": pop, "lat": lat, "lon": lon,
-                               "dist_km": h3.great_circle_distance(center, (lat, lon), unit="km")})
+    points, pop_total = _locality_points(cells, country_groups)
+    localities = [{"name": name, "pop": pop, "lat": lat, "lon": lon,
+                   "dist_km": h3.great_circle_distance(center, (lat, lon), unit="km")}
+                  for name, pop, lat, lon, _cell in points]
     localities.sort(key=lambda x: x["pop"] or 0, reverse=True)
     protected = []
     if cells:
@@ -237,6 +251,33 @@ def territory(h3: str | None = None, bbox: str | None = None, lat: float | None 
     return _territory(cells, area)
 
 
+def _percentile(current, refs):
+    """Mid-rank percentile of `current` among `refs` (0..1)."""
+    return (sum(v < current for v in refs) + .5 * sum(v == current for v in refs)) / len(refs)
+
+
+def _season_value(month, medians):
+    """1 if `month` is one of the three months with the highest historical median, .5 if adjacent, else 0."""
+    top = sorted(medians, key=lambda m: (-medians[m], m))[:3]
+    return (1 if month in top else .5 if any((month - m) % 12 in (1, 11) for m in top) else 0), top
+
+
+def _exposure_value(population):
+    """Logarithmic exposure scale: 0 people -> 0, one million or more -> 1."""
+    return min(1.0, math.log1p(max(population, 0)) / math.log1p(1_000_000))
+
+
+def _combine(components, weights):
+    """Weighted mean (0..100) over the components with data; missing ones are renormalized away."""
+    used = [c for c in components if weights.get(c["key"], 0) > 0]
+    total = sum(weights[c["key"]] for c in used)
+    return (round(100 * sum(c["value"] * weights[c["key"]] for c in used) / total, 1) if total else 0), total
+
+
+def _level(index):
+    return "baja" if index < 30 else "media" if index < 55 else "alta" if index < 75 else "extrema"
+
+
 DEFAULT_WEIGHTS = {"anomaly": .35, "recurrence": .25, "exposure": .25, "season": .15, "fwi": .15}
 
 
@@ -276,7 +317,7 @@ def risk(h3: str | None = None, bbox: str | None = None, lat: float | None = Non
     refs = [v for y, m, v in monthly if m == month and y != year]
     components = []
     if refs:
-        percentile = (sum(v < current for v in refs) + .5 * sum(v == current for v in refs)) / len(refs)
+        percentile = _percentile(current, refs)
         components.append({"key": "anomaly", "label": "Anomalía", "value": percentile, "weight": weights["anomaly"],
                            "note": f"{current:.1f} detecciones equivalentes en {MONTHS[month-1].lower()} {year}; percentil {percentile:.2f} frente a {len(refs)} años comparables."})
     # Only the 15 complete calendar years before the current year are considered.
@@ -293,23 +334,21 @@ def risk(h3: str | None = None, bbox: str | None = None, lat: float | None = Non
     if population is not None:
         # Exposure also counts localities within 10 km of the area centroid.
         near = sum((l["pop"] or 0) for l in territory_data["localities"] if l["dist_km"] <= 10)
-        exposure = min(1.0, math.log1p(population + near) / math.log1p(1_000_000))
+        exposure = _exposure_value(population + near)
         components.append({"key": "exposure", "label": "Exposición", "value": exposure, "weight": weights["exposure"],
                            "note": f"{population} habitantes dentro del área y {near} en localidades a 10 km del centro; escala logarítmica hasta un millón."})
     medians = {m: statistics.median([v for y, mm, v in monthly if mm == m and y < year]) for m in range(1,13)
                if any(mm == m and y < year for y, mm, v in monthly)}
     if medians:
-        top = sorted(medians, key=lambda m: (-medians[m], m))[:3]
-        season = 1 if month in top else .5 if any((month-m) % 12 in (1,11) for m in top) else 0
+        season, top = _season_value(month, medians)
         components.append({"key": "season", "label": "Temporada", "value": season, "weight": weights["season"],
                            "note": f"Mes actual {MONTHS[month-1].lower()}; tres meses con mayor mediana histórica: {', '.join(MONTHS[m-1].lower() for m in top)}."})
     fwi_component = _fwi_component(cells, year, month)
     if fwi_component:
         components.append({**fwi_component, "weight": weights["fwi"]})
     components = [c for c in components if c["weight"] > 0]
-    weight_sum = sum(c["weight"] for c in components)
-    index = round(100 * sum(c["value"] * c["weight"] for c in components) / weight_sum, 1) if weight_sum else 0
-    level = "baja" if index < 30 else "media" if index < 55 else "alta" if index < 75 else "extrema"
+    index, weight_sum = _combine(components, weights)
+    level = _level(index)
     dropped = {k for k, w in weights.items() if w > 0} - {c["key"] for c in components}
     shown = ", ".join(f"{label} ({weights[key]:g})" for key, label in (("anomaly", "anomalía"), ("recurrence", "recurrencia"),
                       ("exposure", "exposición"), ("season", "temporada"), ("fwi", "peligro meteorológico FWI")) if weights[key] > 0)
@@ -335,7 +374,7 @@ def _fwi_component(cells, year, month):
     if year not in series or len(series) < 4:
         return None
     current, refs = series[year], [v for y, v in series.items() if y != year]
-    pct = (sum(v < current for v in refs) + .5 * sum(v == current for v in refs)) / len(refs)
+    pct = _percentile(current, refs)
     return {"key": "fwi", "label": "Peligro meteorológico (FWI)", "value": pct,
             "note": f"FWI medio de {MONTHS[month-1].lower()} {year}: {current:.1f}; percentil {pct:.2f} frente a {len(refs)} años con dato (NASA GFWED)."}
 

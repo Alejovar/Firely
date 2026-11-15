@@ -6,8 +6,8 @@ export type Lang = 'es' | 'en' | 'pt';
 export type Scheme = 'dark' | 'light';
 export type LiveHours = 0 | 24 | 48;
 /** Map layers (design: 'Capas'). hotspots = the month's harmonized points; recent = FIRMS NRT; goes = vision, no data yet. */
-export interface Layers { hotspots: boolean; recent: boolean; goes: boolean; recurrence: boolean; spread: boolean; exposure: boolean }
-export const DEFAULT_LAYERS: Layers = { hotspots: true, recent: false, goes: false, recurrence: false, spread: false, exposure: true };
+export interface Layers { hotspots: boolean; recent: boolean; goes: boolean; recurrence: boolean; priority: boolean; spread: boolean; exposure: boolean }
+export const DEFAULT_LAYERS: Layers = { hotspots: true, recent: false, goes: false, recurrence: false, priority: false, spread: true, exposure: true };
 
 interface AppContextValue extends UrlState {
   lang: Lang;
