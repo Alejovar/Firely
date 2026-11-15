@@ -388,19 +388,18 @@ def events(*, h3_list=None, bbox=None, lat=None, lon=None, radius_km=None,
     for source,files in sources:
         if not files:
             continue
-        where = ["n_hotspots_harm >= ?"]
-        params = [files, min_hotspots]
-        if cells is not None:
-            where.append("len(list_intersect(cells, ?)) > 0")
-            params.append(cells)
-        sql = f"""SELECT event_id, start_date, end_date, duration_days, n_hotspots_harm,
+        # events touching the area; see db.events_in_area for the large-area semi-join
+        rel, extra = db.events_in_area(db.table_sql(files), "n_hotspots_harm >= ?", cells)
+        params = [files, min_hotspots] + extra
+        sql = f"""WITH e AS ({rel})
+        SELECT event_id, start_date, end_date, duration_days, n_hotspots_harm,
         frp_total, area_approx_km2, night_ratio, burn_type, centroid_lat,
         centroid_lon, hex(geometry), cells, rank, estimated,
         rank() OVER (ORDER BY n_hotspots_harm DESC) AS area_rank,
         rank() OVER (ORDER BY duration_days DESC) AS duration_rank,
         rank() OVER (ORDER BY frp_total DESC) AS frp_rank,
         rank() OVER (ORDER BY area_approx_km2 DESC) AS extent_rank
-        FROM {db.table_sql(files)} WHERE {' AND '.join(where)}"""
+        FROM e"""
         with db.connection() as con:
             records = con.execute(sql, params).fetchall()
         for record in records:

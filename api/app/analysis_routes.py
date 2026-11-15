@@ -36,12 +36,18 @@ def analogs(date_: Optional[date] = Query(None, alias="date"),
             radius_km: Optional[float] = None, geometry: Optional[str] = None,
             admin: Optional[str] = None):
     cells, area = _area(h3, bbox, lat, lon, radius_km, geometry, admin)
-    if date_ is None:
-        # The latest partition may be partial; use the last available month.
-        monthly = analysis._monthly(cells)
-        date_ = analysis._cutoff(monthly) or date.today()
+    # Analogs use only the harmonized (SP) series. The calendar may already show provisional NRT
+    # months, so a date past the harmonized cutoff is clamped to it instead of failing; the
+    # response says which date was used and which one was asked for.
+    cutoff = analysis._cutoff(analysis._monthly(cells))
+    requested = date_
+    if date_ is None or (cutoff is not None and date_ > cutoff):
+        date_ = cutoff or date.today()
     try:
-        return _wrap(analysis.analogs(cells, date_), area)
+        out = analysis.analogs(cells, date_)
+        if requested is not None and requested != date_:
+            out["date_requested"] = requested.isoformat()
+        return _wrap(out, area)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
 

@@ -239,16 +239,12 @@ def weekday(cells):
     with at least 3 hotspots are used."""
     import duckdb
     files = str(db.processed_root() / "events" / "*" / "year=*" / "part-0.parquet")
-    where = "NOT estimated AND n_hotspots_harm >= 3"
-    params = []
-    if cells is not None:
-        where += " AND list_has_any(cells, ?)"
-        params.append(list(cells))
+    rel, params = db.events_in_area("read_parquet(?, union_by_name=true)", "NOT estimated AND n_hotspots_harm >= 3", cells)
     con = duckdb.connect()
     con.execute("SET memory_limit='1GB'")
     try:
-        rows = con.execute(f"SELECT dayofweek(start_date) AS dow, count(*) FROM read_parquet(?, union_by_name=true) "
-                           f"WHERE {where} GROUP BY 1", [files] + params).fetchall()
+        rows = con.execute(f"WITH e AS ({rel}) SELECT dayofweek(start_date) AS dow, count(*) FROM e GROUP BY 1",
+                           [files] + params).fetchall()
     except duckdb.IOException:
         rows = []
     counts = [0] * 7

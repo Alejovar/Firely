@@ -89,9 +89,9 @@ def test_routes_envelope_and_area(data):
     assert body["attribution"] == "NASA FIRMS"
     assert body["data_cutoff"] == "2023-04-30"
     assert body["area"]["cells"] == 1
-    with pytest.raises(HTTPException) as exc:
-        analogs_route(date_=date(2024, 3, 31), h3=CELL)
-    assert exc.value.status_code == 422
+    # past the harmonized cutoff (e.g. the calendar already shows NRT months): clamp, don't fail
+    late = analogs_route(date_=date(2024, 3, 31), h3=CELL)
+    assert late["date"] == "2023-04-30" and late["date_requested"] == "2024-03-31"
 
 
 def test_router_and_significant_statistics(data, monkeypatch):
