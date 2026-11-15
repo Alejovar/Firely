@@ -140,3 +140,10 @@ export const outlookInk = {
   below: DIVERGING[1], near: DIVERGING[3], above: DIVERGING[5],
   normal: 'var(--color-data-neutral)', expected: 'var(--color-data-categorical-orange)',
 } as const;
+
+/** Gotita (assistant mascot) glow behind the large figure, one per mode: decorative, not data. */
+export const gotitaGlow = {
+  curioso: 'radial-gradient(closest-side, color-mix(in srgb, var(--color-data-categorical-green) 26%, transparent), transparent)',
+  brigadista: 'radial-gradient(closest-side, color-mix(in srgb, var(--color-accent) 28%, transparent), transparent)',
+  cientifico: 'radial-gradient(closest-side, color-mix(in srgb, var(--color-data-categorical-blue) 28%, transparent), transparent)',
+} as const;

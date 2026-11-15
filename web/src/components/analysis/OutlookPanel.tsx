@@ -31,15 +31,18 @@ const T = {
   es: { title: 'Perspectiva 1-3 meses', exp: 'esperadas', normal: 'normal (promedio 2012-2025)', climOnly: 'Se muestra lo normal: aquí el modelo no superó a la climatología en la prueba 2023-2025.',
         issued: 'Con datos hasta', skill: 'mejor que lo normal en la prueba 2023-2025', above: 'por encima', near: 'cerca', below: 'por debajo',
         likely: 'celdas con probabilidad ≥ 50 % de quedar por encima de lo normal', obs: 'observado', interval: 'intervalo 10-90 %',
-        unavailable: 'Perspectiva no disponible', none: 'Sin pronóstico para esta área.', ofNormal: 'de lo normal' },
+        unavailable: 'Perspectiva no disponible', none: 'Sin pronóstico para esta área.', ofNormal: 'de lo normal',
+        simpleNote: 'La barra naranja es lo que Gotita espera; la gris, lo normal para ese mes. Es una estimación, no una certeza.' },
   en: { title: '1-3 month outlook', exp: 'expected', normal: 'normal (2012-2025 mean)', climOnly: 'Showing normal: here the model did not beat climatology in the 2023-2025 test.',
         issued: 'Data up to', skill: 'better than normal in the 2023-2025 test', above: 'above', near: 'near', below: 'below',
         likely: 'cells with ≥ 50% chance of above-normal activity', obs: 'observed', interval: '10-90% interval',
-        unavailable: 'Outlook unavailable', none: 'No outlook for this area.', ofNormal: 'of normal' },
+        unavailable: 'Outlook unavailable', none: 'No outlook for this area.', ofNormal: 'of normal',
+        simpleNote: 'The orange bar is what Gotita expects; the grey one is normal for that month. It is an estimate, not a certainty.' },
   pt: { title: 'Perspectiva 1-3 meses', exp: 'esperadas', normal: 'normal (média 2012-2025)', climOnly: 'Mostra-se o normal: aqui o modelo não superou a climatologia no teste 2023-2025.',
         issued: 'Dados até', skill: 'melhor que o normal no teste 2023-2025', above: 'acima', near: 'perto', below: 'abaixo',
         likely: 'células com probabilidade ≥ 50 % de ficar acima do normal', obs: 'observado', interval: 'intervalo 10-90 %',
-        unavailable: 'Perspectiva indisponível', none: 'Sem previsão para esta área.', ofNormal: 'do normal' },
+        unavailable: 'Perspectiva indisponível', none: 'Sem previsão para esta área.', ofNormal: 'do normal',
+        simpleNote: 'A barra laranja é o que a Gotita espera; a cinza, o normal para esse mês. É uma estimativa, não uma certeza.' },
 };
 
 type Load = { key: string; data?: OutlookResponse; error?: unknown };
@@ -56,7 +59,7 @@ function label(target: string, lang: Lang) {
   return m >= 1 && m <= 12 ? `${monthShort[lang][m - 1]} ${target.slice(0, 4)}` : target;
 }
 
-function Row({ item, top, lang, many }: { item: OutlookItem; top: number; lang: Lang; many: boolean }) {
+function Row({ item, top, lang, many, simple }: { item: OutlookItem; top: number; lang: Lang; many: boolean; simple?: boolean }) {
   const t = T[lang], fmt = (x: number) => x.toLocaleString(lang === 'en' ? 'en-US' : 'es-MX', { maximumFractionDigits: x < 10 ? 1 : 0 });
   const climOnly = item.show === 'climatology';
   const p = item.probabilities;
@@ -75,7 +78,7 @@ function Row({ item, top, lang, many }: { item: OutlookItem; top: number; lang: 
       <Inline xs={s.seg} style={{ width: `${p.near * 100}%`, backgroundColor: outlookInk.near }} />
       <Inline xs={s.seg} style={{ width: `${p.above * 100}%`, backgroundColor: outlookInk.above }} />
     </Box>}
-    {!climOnly && <Caption>
+    {!climOnly && !simple && <Caption>
       {t.exp} {fmt(item.expected_detections)}, {t.normal} {fmt(item.normal_detections)}
       {item.interval_10_90 ? `, ${t.interval} ${fmt(item.interval_10_90[0])}-${fmt(item.interval_10_90[1])}` : ''}
       {item.cells_likely_above_normal != null ? `, ${item.cells_likely_above_normal} ${t.likely}` : ''}
@@ -84,7 +87,8 @@ function Row({ item, top, lang, many }: { item: OutlookItem; top: number; lang: 
   </VStack>;
 }
 
-export function OutlookPanel({ area, lang }: { area: Area; lang: Lang }) {
+/** `simple` (assistant in curious mode): no per-row figures, intervals or skill line; the bars and words stay. */
+export function OutlookPanel({ area, lang, simple = false }: { area: Area; lang: Lang; simple?: boolean }) {
   const t = T[lang], st = useOutlook(area);
   if (st.error) return <Banner status={st.error instanceof ApiError && st.error.status === 503 ? 'warning' : 'error'} title={t.unavailable} description={st.error instanceof ApiError ? `API ${st.error.status}${st.error.code ? `, ${st.error.code}` : ''}` : String(st.error)} />;
   if (!st.data) return <Skeleton width="100%" height="10rem" />;
@@ -105,10 +109,10 @@ export function OutlookPanel({ area, lang }: { area: Area; lang: Lang }) {
         <Caption><Inline xs={s.key} style={{ backgroundColor: outlookInk.near }} />{t.near}</Caption>
         <Caption><Inline xs={s.key} style={{ backgroundColor: outlookInk.above }} />{t.above}</Caption>
       </HStack>
-      <VStack gap={2}>{items.map(i => <Row key={`${i.country}-${i.horizon}`} item={i} top={top} lang={lang} many={many} />)}</VStack>
+      <VStack gap={2}>{items.map(i => <Row key={`${i.country}-${i.horizon}`} item={i} top={top} lang={lang} many={many} simple={simple} />)}</VStack>
     </>}
     <Text type="supporting">
-      {d.note}{skills.length ? ` h=1-3: ${skills.map(i => `${i.skill.skill_vs_climatology! > 0 ? '+' : ''}${Math.round(i.skill.skill_vs_climatology! * 100)} %`).join(' / ')} ${t.skill}.` : ''} {d.methodology_version}, {d.attribution}.
+      {simple ? t.simpleNote : d.note}{!simple && skills.length ? ` h=1-3: ${skills.map(i => `${i.skill.skill_vs_climatology! > 0 ? '+' : ''}${Math.round(i.skill.skill_vs_climatology! * 100)} %`).join(' / ')} ${t.skill}.` : ''} {d.methodology_version}, {d.attribution}.
     </Text>
   </VStack></Card>;
 }

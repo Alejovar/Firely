@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { futureSummary, monthHistory, monthsBetween } from '../components/assistant/helpers';
+import { futureSummary, monthHistory, monthsBetween, versusNormal } from '../components/assistant/helpers';
 import type { CalendarRow } from '../api/client';
 
 const rows: CalendarRow[] = [];
@@ -24,5 +24,25 @@ describe('future questions in the assistant', () => {
     expect(text).toContain('lo más probable es que haya actividad');
     const inside = futureSummary(['2027-01'], [{ target: '2027-01', expected: 2, normal: 2.1, show: 'forecast' }], {}, 'es');
     expect(inside).toContain('se esperan');
+  });
+  it('changes wording, not numbers, with the profile', () => {
+    const histories = { 3: monthHistory(rows, 3, 2025) };
+    const item = { target: '2027-01', horizon: 3, expected: 2, normal: 2.1, show: 'forecast' as const, probabilities: { below: 0.2, near: 0.5, above: 0.3 }, interval: [0, 6] as [number, number], skill: 0.09 };
+    const curious = futureSummary(['2027-01', '2027-03'], [item], histories, 'es', 'curioso');
+    expect(curious).toContain('Gotita espera unos 2 puntos de calor, parecido a lo normal');
+    expect(curious).toContain('en 20 de 25 años hubo fuego en marzo');
+    expect(curious).toContain('Así que es muy probable');
+    expect(curious).not.toContain('h=3');
+    const sci = futureSummary(['2027-01'], [item], histories, 'es', 'cientifico', 'forecast-1.0');
+    expect(sci).toContain('h=3');
+    expect(sci).toContain('20/50/30 %');
+    expect(sci).toContain('+9 %');
+    expect(sci).toContain('Modelo forecast-1.0');
+  });
+  it('says how a month compares with normal in plain words', () => {
+    expect(versusNormal(2.5, 'es')).toBe('mucho más que lo normal');
+    expect(versusNormal(1, 'es')).toBe('parecido a lo normal');
+    expect(versusNormal(0.3, 'en')).toBe('less than normal');
+    expect(versusNormal(null, 'es')).toBeNull();
   });
 });

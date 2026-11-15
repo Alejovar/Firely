@@ -12,27 +12,57 @@ import { Table } from '@astryxdesign/core/Table';
 import { Banner } from '@astryxdesign/core/Banner';
 import { Token } from '@astryxdesign/core/Token';
 import { Badge } from '@astryxdesign/core/Badge';
+import { Avatar } from '@astryxdesign/core/Avatar';
 import { SelectableCard } from '@astryxdesign/core/SelectableCard';
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
 import { Popover } from '@astryxdesign/core/Popover';
 import { Skeleton } from '@astryxdesign/core/Skeleton';
 import { EmptyState } from '@astryxdesign/core/EmptyState';
 import { API_URL, ApiError, getAnalogs, getCalendar, getContext, getOutlook, getReturnPeriod, getTerritory, resolveArea, type OutlookResponse, type AreaCandidate, type AnalogsResponse, type CalendarResponse, type ContextResponse, type ResolveAreaResponse, type TerritoryResponse } from '../api/client';
-import { chartInk, emphasisSeries } from '../lib/dataviz';
+import { chartInk, emphasisSeries, gotitaGlow } from '../lib/dataviz';
 import { monthShort, type Lang } from '../i18n';
 import { useApp } from '../state/AppState';
 import type { AreaSel } from '../state/hash';
-import { calendarQuery, candidateArea, contextWindow, formatAnomaly, formatCount, futureSummary, largestLocalities, latestContextRow, latestRow, localSummary, monthHistory, monthIndex, monthsBetween, peakRow, returnPeriodQuery, type MonthHistory } from '../components/assistant/helpers';
+import { calendarQuery, candidateArea, contextWindow, formatAnomaly, formatCount, futureSummary, largestLocalities, type FutureItem, type Profile, latestContextRow, latestRow, localSummary, monthHistory, monthIndex, monthsBetween, peakRow, returnPeriodQuery, type MonthHistory } from '../components/assistant/helpers';
 import { OutlookPanel } from '../components/analysis/OutlookPanel';
-import { Caption } from '../ui/kit';
+import { Box, Caption } from '../ui/kit';
 
-type Profile = 'brigadista' | 'cientifico';
+/** Gotita, the assistant, changes costume and voice with the profile. Images in web/public/gotita/. */
+const GOTITA: Record<Profile, { src: string; name: Record<Lang, string>; tagline: Record<Lang, string> }> = {
+  curioso: { src: 'gotita/curioso.png', name: { es: 'Gotita curiosa', en: 'Curious Gotita', pt: 'Gotita curiosa' },
+    tagline: { es: 'Te lo explico con palabras sencillas, sin tecnicismos.', en: 'I explain it in plain words, no jargon.', pt: 'Explico com palavras simples, sem termos técnicos.' } },
+  brigadista: { src: 'gotita/brigadista.png', name: { es: 'Gotita bombera', en: 'Firefighter Gotita', pt: 'Gotita bombeira' },
+    tagline: { es: 'Lo esencial para planear: cuánto, cuándo y dónde.', en: 'What you need to plan: how much, when and where.', pt: 'O essencial para planejar: quanto, quando e onde.' } },
+  cientifico: { src: 'gotita/cientifico.png', name: { es: 'Gotita científica', en: 'Scientist Gotita', pt: 'Gotita cientista' },
+    tagline: { es: 'Con percentiles, intervalos, probabilidades y método.', en: 'With percentiles, intervals, probabilities and method.', pt: 'Com percentis, intervalos, probabilidades e método.' } },
+};
+const curiousLabel: Record<Lang, string> = { es: 'Curioso', en: 'Curious', pt: 'Curioso' };
+const askGotita: Record<Lang, string> = { es: 'Pregunta a Gotita', en: 'Ask Gotita', pt: 'Pergunte à Gotita' };
+function GotitaFigure({ profile, lang }: { profile: Profile; lang: Lang }) {
+  const g = GOTITA[profile], c = gotitaCopy[lang];
+  return <VStack gap={3} xstyle={styles.stage}>
+    <Box xs={styles.glow} aria-hidden="true" style={{ backgroundImage: gotitaGlow[profile] }} />
+    <img {...stylex.props(styles.figure, styles.above)} src={`${import.meta.env.BASE_URL}${g.src}`} alt={g.name[lang]} />
+    <VStack gap={1} xstyle={[styles.above, styles.stageText]}><Heading level={2}>{c.hello(g.name[lang])}</Heading><Text>{g.tagline[lang]}</Text><Text type="supporting">{c.help}</Text></VStack>
+  </VStack>;
+}
+function PersonaPicker({ profile, lang, onChange }: { profile: Profile; lang: Lang; onChange: (p: Profile) => void }) {
+  return <VStack gap={2} xstyle={styles.personaRow}><Text type="label" color="secondary">{gotitaCopy[lang].who}</Text>
+    <Grid columns={{ minWidth: 200, max: 3 }} gap={2}>{(['curioso', 'brigadista', 'cientifico'] as Profile[]).map(p =>
+      <SelectableCard key={p} label={GOTITA[p].name[lang]} isSelected={profile === p} onChange={() => onChange(p)} variant={CARD_VARIANT[p]} padding={2} width="100%">
+        <HStack gap={2} vAlign="center"><GotitaAvatar profile={p} lang={lang} size="lg" /><VStack gap={0.5}><Text weight="semibold">{GOTITA[p].name[lang]}</Text><Text type="supporting">{GOTITA[p].tagline[lang]}</Text></VStack></HStack>
+      </SelectableCard>)}</Grid>
+  </VStack>;
+}
+function GotitaAvatar({ profile, lang, size = 'md' }: { profile: Profile; lang: Lang; size?: 'sm' | 'md' | 'lg' | 'xl' }) {
+  return <Avatar src={`${import.meta.env.BASE_URL}${GOTITA[profile].src}`} name={GOTITA[profile].name[lang]} size={size} />;
+}
 type FollowUp = { id: number; turnId: number; kind: 'territory' | 'context'; status: 'running' | 'complete' | 'error'; territory?: TerritoryResponse; context?: ContextResponse; analogs?: AnalogsResponse; error?: string };
 type Turn = {
   id: number; prompt: string; resolveStatus: 'running' | 'complete' | 'error';
   calendarStatus?: 'running' | 'complete' | 'error'; resolved?: ResolveAreaResponse;
   selected?: AreaSel; from?: string; to?: string; calendar?: CalendarResponse;
-  future?: { status: 'running' | 'complete' | 'error'; months: string[]; outlook?: OutlookResponse; histories?: Record<number, MonthHistory>; summary?: string };
+  future?: { status: 'running' | 'complete' | 'error'; months: string[]; outlook?: OutlookResponse; histories?: Record<number, MonthHistory>; items?: FutureItem[] };
   query?: string; contextQuery?: string; context?: CalendarResponse; contextStatus?: 'running' | 'complete' | 'error'; returnQuery?: string; referenceYears?: number; error?: string; profile: Profile;
 };
 const messages = {
@@ -40,7 +70,17 @@ const messages = {
   en: { title: 'Ask about fire in a place', subtitle: 'Describe a place and period. Firely interprets your request and shows verifiable data.', ask: 'Ask about a place and period…', send: 'Send question', limit: 'The assistant only interprets and writes; figures come from the harmonized NASA FIRMS series.', place: 'Place', from: 'From', to: 'To', rules: 'local rules', ai: 'AI', choose: 'Choose the place you meant', noPlace: 'We could not find that place', noPlaceHelp: 'Try a municipality, state, or country, such as “Arteaga, Coahuila” or “Chilecito, La Rioja”.', noData: 'No data for this period', noDataHelp: 'Try another place or date range.', peak: 'Peak month', latest: 'Latest month', anomaly: 'Anomaly', returnPeriod: 'Return period', unavailable: 'Unavailable', detections: 'harmonized detections', years: 'years', data: 'View data', map: 'View on map', method: 'How it was calculated', profile: 'Explanation profile', brigade: 'Firefighter', scientist: 'Scientist', source: 'Source', methodology: 'Methodology', cutoff: 'Data cutoff', query: 'Exact query', resolving: 'Finding place…', calendar: 'Reading calendar…', apiDown: 'Could not connect to the Firely API. Check that it is running and try again.', apiError: 'The API could not complete the request', retry: 'You can rephrase the question and try again.', descriptionError: 'The explanation could not be written. Figures shown come from the calendar.', dataDescription: 'Monthly harmonized detections; the exact query provides the numerical detail.' },
   pt: { title: 'Pergunte sobre o fogo de um lugar', subtitle: 'Descreva um lugar e período. Firely interpreta a pergunta e mostra dados verificáveis.', ask: 'Pergunte sobre um lugar e período…', send: 'Enviar pergunta', limit: 'O assistente apenas interpreta e redige; os números vêm da série harmonizada da NASA FIRMS.', place: 'Lugar', from: 'Desde', to: 'Até', rules: 'regras locais', ai: 'IA', choose: 'Escolha o lugar desejado', noPlace: 'Não encontramos esse lugar', noPlaceHelp: 'Tente um município, estado ou país, como “Arteaga, Coahuila” ou “Chilecito, La Rioja”.', noData: 'Sem dados para o período', noDataHelp: 'Tente outro lugar ou intervalo de datas.', peak: 'Mês de maior atividade', latest: 'Último mês', anomaly: 'Anomalia', returnPeriod: 'Período de retorno', unavailable: 'Indisponível', detections: 'detecções harmonizadas', years: 'anos', data: 'Ver dados', map: 'Ver no mapa', method: 'Como foi calculado', profile: 'Perfil da explicação', brigade: 'Brigadista', scientist: 'Cientista', source: 'Fonte', methodology: 'Metodologia', cutoff: 'Corte dos dados', query: 'Consulta exata', resolving: 'Buscando lugar…', calendar: 'Consultando calendário…', apiDown: 'Não foi possível conectar à API Firely. Verifique se está ativa e tente novamente.', apiError: 'A API não concluiu a consulta', retry: 'Reformule a pergunta e tente novamente.', descriptionError: 'Não foi possível redigir a explicação. Os números exibidos vêm do calendário.', dataDescription: 'Série mensal de detecções harmonizadas; a consulta exata fornece o detalhe numérico.' },
 } as const;
-const suggestions = ['Incendios en la sierra de Arteaga en marzo de 2021', 'Chilecito julio 2026', '¿Cómo fue la temporada en Coahuila?', 'fires in La Rioja last 6 months'];
+const SUGGESTIONS: Record<Profile, string[]> = {
+  curioso: ['¿Hay incendios cerca de Saltillo, Coahuila?', '¿Es probable que haya fuego en Arteaga, Coahuila, en marzo de 2027?', '¿Cómo fue la temporada en Chilecito, La Rioja?'],
+  brigadista: ['¿Cómo viene diciembre en Arteaga, Coahuila?', 'Incendios en la sierra de Arteaga en marzo de 2021', 'Chilecito, La Rioja, julio 2026'],
+  cientifico: ['Arteaga, Coahuila, enero de 2027', 'Incendios en Coahuila en 2024', 'fires in La Rioja last 6 months'],
+};
+const CARD_VARIANT: Record<Profile, 'green' | 'orange' | 'cyan'> = { curioso: 'green', brigadista: 'orange', cientifico: 'cyan' };
+const gotitaCopy = {
+  es: { who: '¿Quién te responde?', try: 'Prueba con', hello: (n: string) => `Hola, soy ${n}.`, help: 'Pregúntame por un lugar y un periodo: lo que pasó, cómo viene la temporada o si es probable que haya fuego.' },
+  en: { who: 'Who answers you?', try: 'Try', hello: (n: string) => `Hi, I am ${n}.`, help: 'Ask me about a place and a period: what happened, how the season looks or whether fire is likely.' },
+  pt: { who: 'Quem responde?', try: 'Experimente', hello: (n: string) => `Olá, sou a ${n}.`, help: 'Pergunte sobre um lugar e um período: o que aconteceu, como vem a temporada ou se é provável haver fogo.' },
+} as const;
 const summaryLabel: Record<Lang, string> = { es: 'Resumen automático', en: 'Automatic summary', pt: 'Resumo automático' };
 const queryListLabel: Record<Lang, string> = { es: 'Consultas exactas usadas', en: 'Exact queries used', pt: 'Consultas exatas usadas' };
 const copyLabel: Record<Lang, string> = { es: 'Copiar consulta', en: 'Copy query', pt: 'Copiar consulta' };
@@ -54,6 +94,17 @@ const styles = stylex.create({
   resultColumn: { minWidth: 0, overflowY: 'auto', '@media (max-width: 56.25rem)': { display: 'none' } },
   resultMobile: { width: '100%', '@media (min-width: 56.251rem)': { display: 'none' } },
   header: { padding: 'var(--spacing-4)', borderBottom: 'thin solid var(--color-border)', width: '100%' },
+  // Gotita's stage: the large figure melts into the page (radial mask + soft glow of the mode's colour)
+  stage: { position: 'relative', minHeight: '100%', paddingBlock: 'var(--spacing-6)', alignItems: 'center', justifyContent: 'center', textAlign: 'center' },
+  figure: { width: 'min(400px, 86%)', aspectRatio: '1', objectFit: 'contain', display: 'block', marginInline: 'auto',
+    maskImage: 'radial-gradient(closest-side, black 72%, transparent)', WebkitMaskImage: 'radial-gradient(closest-side, black 72%, transparent)',
+    filter: 'drop-shadow(0 18px 40px rgba(0, 0, 0, 0.35))' },
+  glow: { position: 'absolute', insetInline: '6%', top: '2%', aspectRatio: '1', pointerEvents: 'none', zIndex: 0 },
+  above: { position: 'relative', zIndex: 1 },
+  backdrop: { width: '260px', aspectRatio: '1', objectFit: 'contain', alignSelf: 'flex-end', opacity: 0.32, pointerEvents: 'none',
+    maskImage: 'radial-gradient(closest-side, black 55%, transparent)', WebkitMaskImage: 'radial-gradient(closest-side, black 55%, transparent)' },
+  personaRow: { width: '100%' },
+  stageText: { maxWidth: '34rem' },
 });
 const extras = {
   es: { eyebrow: 'Asistente analista, panel lateral', result: 'Resultado', area: 'Área activa', range: 'Rango activo', template: 'Modo plantilla', templateHelp: 'El servicio de IA no intervino: Firely usa reglas locales y redacta respuestas con plantillas a partir de cifras de la API.', affected: '¿A quién afecta?', why: '¿Por qué este año?', pdf: 'Generar ficha PDF', other: 'Otro lugar…', draw: 'Dibujar en el mapa', geometry: 'La geometría viene de límites de INEGI/geoBoundaries; el asistente nunca genera coordenadas.', locality: 'Localidad', population: 'Población', protected: 'Áreas protegidas', none: 'Sin datos disponibles', weather: 'Datos de tiempo de incendios no disponibles para esta área.', enso: 'Fase ENSO', fwi: 'Anomalía FWI', analogs: 'Años análogos', resultHelp: 'Haz una consulta para ver aquí el resultado más reciente.' },
@@ -95,10 +146,10 @@ function Result({ turn, lang, profile, onProfile, onMap, onMethod }: { turn: Tur
         {peak && <VStack gap={0.5}><Text type="supporting">{t.peak}</Text><Text weight="semibold" hasTabularNumbers>{monthLabel(peak, lang)}, {format(peak.count_harm ?? 0)} {t.detections}</Text></VStack>}
         {latest && <VStack gap={0.5}><Text type="supporting">{t.latest}</Text><Text weight="semibold" hasTabularNumbers>{monthLabel(latest, lang)}, {format(latest.count_harm ?? 0)} {t.detections}</Text></VStack>}
         {latest && <VStack gap={0.5}><Text type="supporting">{t.anomaly}</Text><Text weight="semibold" hasTabularNumbers>{latest.anomaly_ratio == null ? t.unavailable : formatAnomaly(latest.anomaly_ratio, lang)}</Text></VStack>}
-        {latest && <VStack gap={0.5}><Text type="supporting">{t.returnPeriod}</Text><Text weight="semibold" hasTabularNumbers>{latest.return_period_years == null ? t.unavailable : `${format(latest.return_period_years)} ${t.years}`}</Text></VStack>}
+        {latest && profile !== 'curioso' && <VStack gap={0.5}><Text type="supporting">{t.returnPeriod}</Text><Text weight="semibold" hasTabularNumbers>{latest.return_period_years == null ? t.unavailable : `${format(latest.return_period_years)} ${t.years}`}</Text></VStack>}
       </HStack>
     </> : <EmptyState title={t.noData} description={t.noDataHelp} isCompact />}
-    <SegmentedControl label={t.profile} value={profile} onChange={(value) => onProfile(value as Profile)} size="sm"><SegmentedControlItem value="brigadista" label={t.brigade} /><SegmentedControlItem value="cientifico" label={t.scientist} /></SegmentedControl>
+    <SegmentedControl label={t.profile} value={profile} onChange={(value) => onProfile(value as Profile)} size="sm"><SegmentedControlItem value="curioso" label={curiousLabel[lang]} /><SegmentedControlItem value="brigadista" label={t.brigade} /><SegmentedControlItem value="cientifico" label={t.scientist} /></SegmentedControl>
     <VStack gap={1}><Text type="label" weight="semibold">{summaryLabel[lang]}</Text><Text as="p">{summary}</Text></VStack>
     <Text type="supporting">{t.methodology}: {response.methodology_version} · {t.cutoff}: {response.data_cutoff} · {t.source}: {response.attribution || 'NASA FIRMS'}</Text>
     <HStack gap={2} wrap="wrap"><Button label={t.map} variant="primary" onClick={onMap} /><Button label={t.method} variant="secondary" onClick={onMethod} /><DataLink queries={queries} lang={lang} /></HStack>
@@ -134,7 +185,7 @@ function FollowUpResult({ item, lang }: { item: FollowUp; lang: Lang }) {
 export default function Assistant() {
   const app = useApp(), lang = app.lang, t = messages[lang];
   const [turns, setTurns] = useState<Turn[]>([]), [draft, setDraft] = useState('');
-  const [profile, setProfile] = useState<Profile>('brigadista');
+  const [profile, setProfile] = useState<Profile>('curioso');
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const active = useRef<AbortController | null>(null), followUpController = useRef<AbortController | null>(null), nextId = useRef(0), nextFollowUpId = useRef(0);
   const change = (id: number, patch: Partial<Turn>) => setTurns((prev) => prev.map((turn) => turn.id === id ? { ...turn, ...patch } : turn));
@@ -153,8 +204,9 @@ export default function Assistant() {
     const histories: Record<number, MonthHistory> = {};
     for (const m of new Set(months.map(ym => Number(ym.slice(5, 7))))) histories[m] = monthHistory(rows, m, lastYear);
     const out = outlook.status === 'fulfilled' ? outlook.value : undefined;
-    const items = (out?.forecasts ?? []).map(f => ({ target: f.target, expected: f.expected_detections, normal: f.normal_detections, show: f.show }));
-    change(id, { future: { status: 'complete', months, outlook: out, histories, summary: futureSummary(months, items, histories, lang) } });
+    const items: FutureItem[] = (out?.forecasts ?? []).map(f => ({ target: f.target, horizon: f.horizon, expected: f.expected_detections, normal: f.normal_detections,
+      show: f.show, probabilities: f.probabilities, interval: f.interval_10_90, skill: f.skill.skill_vs_climatology }));
+    change(id, { future: { status: 'complete', months, outlook: out, histories, items } });
   }
   async function loadCalendar(id: number, selected: AreaSel, resolved: ResolveAreaResponse, controller: AbortController) {
     const from = resolved.intent.date_from || app.from, to = resolved.intent.date_to || app.to, query = calendarQuery(selected, from, to);
@@ -200,7 +252,7 @@ export default function Assistant() {
       if (controller.signal.aborted) return;
       change(id, { resolved, resolveStatus: 'complete' });
       const valid = resolved.candidates.map(candidateArea).filter((area): area is AreaSel => area !== null);
-      if (!resolved.ambiguous && valid.length === 1) await loadCalendar(id, valid[0], resolved, controller);
+      if (!resolved.ambiguous && valid.length >= 1) await loadCalendar(id, valid[0], resolved, controller);
     } catch (error) { if (!controller.signal.aborted) change(id, { resolveStatus: 'error', error: readableError(error, lang) }); }
   }
   function choose(id: number, candidate: AreaCandidate, resolved: ResolveAreaResponse) {
@@ -257,9 +309,8 @@ export default function Assistant() {
   const resultCard = latestTurn && <Result turn={latestTurn} lang={lang} profile={profile} onProfile={value => updateProfile(value, latestTurn)} onMap={() => app.patch({ area: latestTurn.selected!, from: latestTurn.from!, to: latestTurn.to!, page: 'explorar' })} onMethod={() => app.navigate('metodo')} />;
   return <Layout height="fill" content={<LayoutContent padding={0} isScrollable={false}><VStack xstyle={styles.page}>
     <VStack gap={3} xstyle={styles.header}>
-      <VStack gap={1}><Heading level={1}>{t.title}</Heading><Text type="supporting">{t.subtitle}</Text></VStack>
-      <HStack gap={2} wrap="wrap" vAlign="center"><Token label={`${ext.area}: ${app.area.label}`} /><Token label={`${ext.range}: ${app.from} – ${app.to}`} /></HStack>
-      <HStack gap={3} wrap="wrap" hAlign="between"><SegmentedControl label={t.profile} value={profile} onChange={value => { setProfile(value as Profile); if (latestTurn) change(latestTurn.id, { profile: value as Profile }); }} size="sm"><SegmentedControlItem value="brigadista" label={t.brigade}/><SegmentedControlItem value="cientifico" label={t.scientist}/></SegmentedControl><SegmentedControl label="Idioma / Language / Idioma" value={lang} onChange={value => app.setLang(value as Lang)} size="sm"><SegmentedControlItem value="es" label="ES"/><SegmentedControlItem value="en" label="EN"/><SegmentedControlItem value="pt" label="PT"/></SegmentedControl></HStack>
+      <HStack gap={3} wrap="wrap" vAlign="end" hAlign="between"><VStack gap={1}><Heading level={1}>{askGotita[lang]}</Heading><Text type="supporting">{t.subtitle}</Text></VStack><HStack gap={2} wrap="wrap" vAlign="center"><Token label={`${ext.area}: ${app.area.label}`} /><Token label={`${ext.range}: ${app.from} – ${app.to}`} /></HStack></HStack>
+      <PersonaPicker profile={profile} lang={lang} onChange={p => { setProfile(p); if (latestTurn) change(latestTurn.id, { profile: p }); }} />
     </VStack>
     <Grid columns={{ minWidth: 420, max: 2 }} gap={4} width="100%" xstyle={styles.body}>
       <VStack xstyle={styles.chatColumn}>
@@ -269,27 +320,27 @@ export default function Assistant() {
             const options = resolved?.candidates.filter(candidate => candidateArea(candidate) !== null) ?? [];
             return <VStack key={turn.id} gap={3}>
               <ChatMessage sender="user"><ChatMessageBubble>{turn.prompt}</ChatMessageBubble></ChatMessage>
-              <ChatMessage sender="assistant">
+              <ChatMessage sender="assistant" avatar={<GotitaAvatar profile={profile} lang={lang} />} name={GOTITA[profile].name[lang]}>
                 <ChatToolCalls defaultIsExpanded calls={[{ name: t.resolving, status: turn.resolveStatus }, ...(turn.calendarStatus ? [{ name: t.calendar, status: turn.calendarStatus }] : []), ...(turn.future ? [{ name: futureLabel[lang], status: turn.future.status }] : [])]} />
                 {turn.resolveStatus === 'running' && <ChatMessageBubble variant="ghost"><Skeleton width="75%" height="var(--spacing-6)" /></ChatMessageBubble>}
                 {resolved && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={3}>
                   <HStack gap={2} wrap="wrap"><Token label={`${t.place}: ${resolved.intent.place_text || '—'}`} /><Token label={`${t.from}: ${resolved.intent.date_from || app.from}`} /><Token label={`${t.to}: ${resolved.intent.date_to || app.to}`} /><Badge label={resolved.intent.source === 'llm' ? t.ai : t.rules} variant="neutral" /></HStack>
                   {resolved.intent.source === 'rules' && <Banner status="info" title={ext.template} description={ext.templateHelp}/>}
-                  {!turn.selected && options.length === 0 && <EmptyState title={t.noPlace} description={t.noPlaceHelp} isCompact actions={<Button label={suggestions[0]} variant="secondary" onClick={() => void submit(suggestions[0])} />} />}
+                  {!turn.selected && options.length === 0 && <EmptyState title={t.noPlace} description={t.noPlaceHelp} isCompact actions={<Button label={SUGGESTIONS[profile][0]} variant="secondary" onClick={() => void submit(SUGGESTIONS[profile][0])} />} />}
                   {!turn.selected && options.length > 0 && <VStack gap={2}><Text weight="semibold">{t.choose}</Text>{options.map((candidate, index) => <SelectableCard key={`${candidate.code || candidate.label}-${index}`} label={`${candidate.label}, ${candidate.kind || ''}, ${candidate.country || ''}${candidate.code ? `, ${candidate.code}` : ''}`} isSelected={false} onChange={() => choose(turn.id, candidate, resolved)} padding={3} width="100%"><VStack gap={0.5}><Text weight="semibold">{candidate.label}</Text><Text type="supporting">{[candidate.kind, candidate.country].filter(Boolean).join(', ')}</Text>{candidate.code && <Text type="code">{candidate.country?.toLowerCase().includes('mex') ? 'INEGI' : 'ID'} {candidate.code}</Text>}</VStack></SelectableCard>)}<HStack gap={2} wrap="wrap"><Button label={ext.other} variant="ghost" size="sm" onClick={() => { setDraft(''); document.querySelector<HTMLElement>('textarea, input[placeholder]')?.focus(); }}/><Button label={ext.draw} variant="ghost" size="sm" onClick={drawOnMap}/></HStack><Text type="supporting">{ext.geometry}</Text></VStack>}
                 </VStack></ChatMessageBubble>}
                 {turn.calendarStatus === 'running' && <ChatMessageBubble variant="ghost" width="100%"><Card width="100%"><VStack gap={3}><Skeleton width="50%" height="var(--spacing-6)" /><Skeleton width="100%" height="var(--spacing-10)" /><Skeleton width="70%" height="var(--spacing-6)" /></VStack></Card></ChatMessageBubble>}
                 {turn.future?.status === 'running' && <ChatMessageBubble variant="ghost" width="100%"><Skeleton width="100%" height="var(--spacing-10)" /></ChatMessageBubble>}
-                {turn.future?.status === 'complete' && turn.selected && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={2}><Text>{turn.future.summary}</Text><OutlookPanel area={turn.selected.area} lang={lang} /></VStack></ChatMessageBubble>}
+                {turn.future?.status === 'complete' && turn.selected && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={2}><Text>{futureSummary(turn.future.months, turn.future.items ?? [], turn.future.histories ?? {}, lang, profile, turn.future.outlook?.methodology_version)}</Text><OutlookPanel area={turn.selected.area} lang={lang} simple={profile === 'curioso'} /></VStack></ChatMessageBubble>}
                 {turn.calendar && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={2}><Text>{localSummary(turn.calendar, lang, profile, turn.referenceYears)}</Text><VStack xstyle={styles.resultMobile}><Result turn={turn} lang={lang} profile={profile} onProfile={value => updateProfile(value, turn)} onMap={() => app.patch({ area: turn.selected!, from: turn.from!, to: turn.to!, page: 'explorar' })} onMethod={() => app.navigate('metodo')} /></VStack></VStack></ChatMessageBubble>}
               </ChatMessage>
-              {followUps.filter(item => item.turnId === turn.id).map(item => <ChatMessage key={item.id} sender="assistant"><ChatMessageBubble variant="ghost" width="100%"><FollowUpResult item={item} lang={lang}/></ChatMessageBubble></ChatMessage>)}
+              {followUps.filter(item => item.turnId === turn.id).map(item => <ChatMessage key={item.id} sender="assistant" avatar={<GotitaAvatar profile={profile} lang={lang} />}><ChatMessageBubble variant="ghost" width="100%"><FollowUpResult item={item} lang={lang}/></ChatMessageBubble></ChatMessage>)}
               {turn.error && <ChatSystemMessage>{turn.error}</ChatSystemMessage>}
             </VStack>;
           })}
-        </ChatMessageList></ChatLayout> : <Center axis="both" width="100%" height="100%"><VStack gap={6} width="100%" maxWidth={760}><VStack gap={2}><Heading level={2}>{t.title}</Heading><Text type="large" color="secondary">{t.subtitle}</Text></VStack>{composer}<HStack gap={2} wrap="wrap">{suggestions.map(suggestion => <Button key={suggestion} label={suggestion} variant="secondary" size="sm" onClick={() => void submit(suggestion)} />)}</HStack></VStack></Center>}
+        </ChatMessageList></ChatLayout> : <Center axis="both" width="100%" height="100%"><VStack gap={4} width="100%" maxWidth={760}>{composer}<VStack gap={2}><Text type="label" color="secondary">{gotitaCopy[lang].try}</Text><HStack gap={2} wrap="wrap">{SUGGESTIONS[profile].map(suggestion => <Button key={suggestion} label={suggestion} variant="secondary" size="sm" onClick={() => void submit(suggestion)} />)}</HStack></VStack></VStack></Center>}
       </VStack>
-      <VStack gap={3} xstyle={styles.resultColumn}><Text type="label" color="secondary">{ext.result}</Text>{resultCard || <EmptyState title={ext.result} description={ext.resultHelp} isCompact/>}</VStack>
+      <VStack gap={3} xstyle={styles.resultColumn}>{resultCard ? <>{resultCard}<img {...stylex.props(styles.backdrop)} src={`${import.meta.env.BASE_URL}${GOTITA[profile].src}`} alt="" aria-hidden="true" /></> : <GotitaFigure profile={profile} lang={lang} />}</VStack>
     </Grid>
   </VStack></LayoutContent>} />;
 }
