@@ -18,6 +18,7 @@ import { onMapDraw } from '../lib/mapBus';
 import { monthNames, monthShort } from '../i18n';
 import { FlameLegend, registerFlameImage } from './map/FlameMarker';
 import { FLAME_ICON } from './map/flameImage';
+import { TERRAIN_CREDIT, TERRAIN_CREDIT_URL, TERRAIN_PITCH, TERRAIN_SOURCE, resetBearing, setMapRelief } from './map/mapScene';
 import { PRIORITY_STOPS, RECURRENCE_STOPS, mapInk } from '../lib/dataviz';
 import { Box, Caption, Inline, LinkButton, OutlineButton, Toggle, kit } from '../ui/kit';
 
@@ -59,6 +60,9 @@ const s = stylex.create({
   zoom: { position: 'absolute', right: '16px', top: '16px', zIndex: 3, display: 'flex', flexDirection: 'column', overflow: 'hidden', '@media (max-width: 720px)': { top: 'auto', bottom: '64px', right: 'auto', left: '12px', display: 'none' } },
   zoomBtn: { width: '32px', height: '32px', borderWidth: 0, backgroundColor: { default: 'transparent', ':hover': 'var(--color-background-muted)' }, color: 'var(--color-text-primary)', fontSize: '17px', cursor: 'pointer', fontFamily: 'inherit', ':focus-visible': { outline: '2px solid var(--color-accent)', outlineOffset: '-2px' } },
   zoomSep: { height: '1px', backgroundColor: 'var(--color-border)' },
+  zoomText: { fontSize: '12px', fontWeight: 700, ':disabled': { opacity: 0.4, cursor: 'not-allowed' } },
+  zoomOn: { color: 'var(--color-text-accent)', backgroundColor: 'var(--color-accent-muted)' },
+  north: { display: 'inline-block', fontSize: '12px', fontWeight: 700, color: 'var(--color-text-accent)' },
   notices: { position: 'absolute', top: '16px', right: '60px', zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', maxWidth: 'min(22rem, calc(100% - 400px))', pointerEvents: 'none', '@media (max-width: 1280px)': { top: 'auto', bottom: '120px', right: 'auto', left: '16px', alignItems: 'flex-start', maxWidth: 'calc(100% - 290px)' }, '@media (max-width: 720px)': { bottom: 'auto', top: '150px', left: '12px', maxWidth: 'calc(100% - 24px)' } },
   notice: { padding: '5px 9px', borderRadius: '2px', borderWidth: '1px', borderStyle: 'solid', borderColor: 'var(--color-border-emphasized)', backgroundColor: 'var(--color-background-surface)', fontSize: '12.5px', color: 'var(--color-text-primary)', lineHeight: 1.4 },
   noticeWarn: { borderColor: 'var(--color-accent)' },
@@ -109,6 +113,8 @@ export default function MapPanel() {
   const [territory, setTerritory] = useState<TerritoryResponse | null>(null), [spread, setSpread] = useState<{ inner: SpreadResponse; outer: SpreadResponse } | null>(null), [wind, setWind] = useState<WindLocalitiesResponse | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({}), [loading, setLoading] = useState<Record<string, boolean>>({}), [drawError, setDrawError] = useState('');
   const [picked, setPicked] = useState<{ lng: number; lat: number; props: Record<string, unknown> } | null>(null);
+  const [relief, setRelief] = useState(true), [reliefError, setReliefError] = useState(false), [bearing, setBearing] = useState(0);
+  const touch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
   const [layersOpen, setLayersOpen] = useState(() => typeof window === 'undefined' || !window.matchMedia('(max-width: 720px)').matches);
   const areaKey = JSON.stringify(app.area.area);
   const [periodFrom, periodTo] = app.selected || latestMonth ? hotspotPeriod(app.selected ?? latestMonth, app.from, app.to) : [app.from, app.to];
@@ -127,14 +133,17 @@ export default function MapPanel() {
       }, layers: [
         { id: 'earth', type: 'raster', source: 'earth', paint: { 'raster-brightness-max': blueMarbleBrightness(true), 'raster-saturation': -0.15 } },
       ] },
-      center: [-100.55, 25.45], zoom: 8, attributionControl: false, dragRotate: false, pitchWithRotate: false,
+      center: [-100.55, 25.45], zoom: 8, pitch: TERRAIN_PITCH, attributionControl: false, dragRotate: false, maxPitch: 70,
     });
     mapRef.current = map;
     const observer = new ResizeObserver(() => map.resize()); observer.observe(node.current);
     let frame = 0;
     let stopFlames = () => {};
     const bump = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => setTick(v => v + 1)); };
-    map.on('move', bump); map.on('resize', bump);
+    map.on('move', bump); map.on('resize', bump); map.on('terrain', bump);
+    map.on('rotate', () => setBearing(map.getBearing()));
+    map.on('sourcedata', e => { if (e.sourceId === TERRAIN_SOURCE && e.isSourceLoaded) bump(); });
+    map.on('error', e => { if ((e as unknown as { sourceId?: string }).sourceId === TERRAIN_SOURCE) { setRelief(false); setReliefError(true); } });
     map.on('load', () => {
       for (const id of ['firely-area', 'firely-points', 'firely-recent', 'firely-recurrence', 'firely-priority', 'firely-protected', 'firely-cone', 'firely-cone-inner']) map.addSource(id, { type: 'geojson', data: empty() });
       map.addLayer({ id: 'firely-recurrence', type: 'fill', source: 'firely-recurrence', paint: { 'fill-color': RECURRENCE_STOPS[0], 'fill-opacity': 0.55 } });
@@ -179,6 +188,8 @@ export default function MapPanel() {
     map.setPaintProperty('firely-border', 'line-color', ember); map.setPaintProperty('firely-area-fill', 'fill-color', ember);
   }, [ready, app.scheme]);
 
+  useEffect(() => { const map = mapRef.current; if (!ready || !map) return; setMapRelief(map, relief); }, [ready, relief]);
+
   useEffect(() => { const map = mapRef.current; if (!ready || !map) return; const g = areaGeometry(app.area); source(map, 'firely-area', fc(g)); const b = app.area.bbox ?? geometryBbox(g); if (b) map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: window.matchMedia('(max-width: 720px)').matches ? { top: 150, bottom: 70, left: 24, right: 24 } : { top: 70, bottom: 60, left: 60, right: 200 }, maxZoom: 11, duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 350 }); }, [areaKey, ready]);
   useEffect(() => { const map = mapRef.current; if (!ready || !map) return; source(map, 'firely-points', hotspots ? { type: 'FeatureCollection', features: hotspots.features.filter(f => !app.selectedDay || f.properties.date.slice(0, 10) === app.selectedDay) } as GeoJSON.FeatureCollection : empty()); map.setLayoutProperty('firely-points', 'visibility', app.layers.hotspots ? 'visible' : 'none'); }, [ready, hotspots, app.selectedDay, app.layers.hotspots]);
   useEffect(() => { const map = mapRef.current; if (!ready || !map) return; source(map, 'firely-recent', recent as GeoJSON.FeatureCollection ?? empty()); map.setLayoutProperty('firely-recent', 'visibility', app.layers.recent ? 'visible' : 'none'); }, [ready, recent, app.layers.recent]);
@@ -210,6 +221,7 @@ export default function MapPanel() {
 
   const beginDraw = () => {
     const map = mapRef.current; if (!map) return;
+    setRelief(false); setMapRelief(map, false, true); // drawing needs the flat view
     setDrawError(''); drawing.current = true; setIsDrawing(true); drawRef.current?.stop();
     const draw = new TerraDraw({ adapter: new TerraDrawMapLibreGLAdapter({ map }), modes: [new TerraDrawPolygonMode()] });
     drawRef.current = draw;
@@ -264,6 +276,7 @@ export default function MapPanel() {
   const method = hotspots?.methodology_version || recurrence?.methodology_version || territory?.methodology_version;
   const cutoff = hotspots?.data_cutoff || recent?.data_cutoff || territory?.data_cutoff;
   const notices: { key: string; text: string; warn?: boolean }[] = [];
+  if (reliefError) notices.push({ key: 'relief', warn: true, text: lang === 'es' ? 'No se pudo cargar el relieve. Se muestra la vista plana.' : lang === 'en' ? 'Terrain unavailable. Showing the flat view.' : 'Relevo indisponível. Mostrando a vista plana.' });
   if (drawError) notices.push({ key: 'draw', text: drawError, warn: true });
   for (const [key, message] of Object.entries(errors)) if (message && (key === 'territory' || (key === 'hotspots' && app.layers.hotspots) || (key === 'recent' && app.layers.recent) || (key === 'recurrence' && app.layers.recurrence) || (key === 'priority' && app.layers.priority) || (key === 'spread' && app.layers.spread))) notices.push({ key, text: key === 'spread' ? `${t.coneNo}. ${message}` : message, warn: true });
   if (loading.hotspots) notices.push({ key: 'loading', text: t.loading });
@@ -280,6 +293,11 @@ export default function MapPanel() {
     { key: 'spread', label: t.spread, sub: t.active, title: t.indicative },
     { key: 'exposure', label: t.exposure, sub: t.places },
   ];
+  const reliefLabel = lang === 'es' ? 'Relieve 3D' : lang === 'en' ? '3D terrain' : 'Relevo 3D';
+  const reliefHint = touch
+    ? (lang === 'es' ? 'Gira e inclina con dos dedos' : lang === 'en' ? 'Rotate and tilt with two fingers' : 'Gire e incline com dois dedos')
+    : (lang === 'es' ? 'Clic derecho y arrastra para girar' : lang === 'en' ? 'Right-click and drag to rotate' : 'Clique direito e arraste para girar');
+  const northLabel = lang === 'es' ? 'Orientar al norte' : lang === 'en' ? 'Reset north' : 'Orientar ao norte';
   const fmtKm = (km: number) => km < 1 ? `${km * 1000} m` : `${km} km`;
   const anpLabel = (name: string) => /^(anp|apff|pn|rb|parque|reserva|área)/i.test(name) ? name : `ANP ${name}`;
   const pp = picked?.props as { date?: string; ts_utc?: string; sensor?: string; platform?: string; frp_mw?: number; confidence_h?: string; daynight?: string } | undefined;
@@ -287,13 +305,13 @@ export default function MapPanel() {
   return (
     <Box xs={s.root}>
       <Box ref={node} xs={s.canvas} style={{ position: "absolute", inset: 0 }} role="application" aria-label={t.map} />
-      {view && <svg {...stylex.props(s.svg)} aria-hidden="true">
+      {view && !relief && <svg {...stylex.props(s.svg)} aria-hidden="true">
         {view.lats.map(l => <line key={`la${l.label}`} x1={0} x2={view.w} y1={l.y} y2={l.y} stroke="var(--color-border)" strokeWidth={1} opacity={0.75} />)}
         {view.lons.map(l => <line key={`lo${l.label}`} y1={0} y2={view.h} x1={l.x} x2={l.x} stroke="var(--color-border)" strokeWidth={1} opacity={0.75} />)}
       </svg>}
       {view && <Box xs={s.overlay}>
-        {view.lats.map(l => <Inline key={`la${l.label}`} xs={[s.tick, s.tickLat]} style={{ top: l.y }}>{l.label}</Inline>)}
-        {view.lons.map(l => <Inline key={`lo${l.label}`} xs={[s.tick, s.tickLon]} style={{ left: l.x }}>{l.label}</Inline>)}
+        {!relief && view.lats.map(l => <Inline key={`la${l.label}`} xs={[s.tick, s.tickLat]} style={{ top: l.y }}>{l.label}</Inline>)}
+        {!relief && view.lons.map(l => <Inline key={`lo${l.label}`} xs={[s.tick, s.tickLon]} style={{ left: l.x }}>{l.label}</Inline>)}
         {view.anps.map(a => <Inline key={a.name} xs={s.anp} style={{ left: a.x, top: a.y, color: mapInk.protectedArea }}>{anpLabel(a.name)}</Inline>)}
         {view.locs.map(l => <Inline key={l.name} xs={s.loc} style={{ left: l.x, top: l.y }} title={l.title}><Inline xs={s.locSq} style={{ backgroundColor: l.hot ? mapInk.exposedLocality : mapInk.otherLocality }} /><Inline xs={s.locName}>{l.name}</Inline></Inline>)}
         {view.cone?.inner && <Inline xs={s.coneLabel} style={{ left: view.cone.inner.x, top: view.cone.inner.y }} title={view.cone.title}>6 h</Inline>}
@@ -314,6 +332,10 @@ export default function MapPanel() {
         <button type="button" aria-label={t.zoomIn} title={t.zoomIn} onClick={() => mapRef.current?.zoomIn()} {...stylex.props(s.zoomBtn)}>+</button>
         <Inline xs={s.zoomSep} />
         <button type="button" aria-label={t.zoomOut} title={t.zoomOut} onClick={() => mapRef.current?.zoomOut()} {...stylex.props(s.zoomBtn)}>−</button>
+        <Inline xs={s.zoomSep} />
+        <button type="button" aria-pressed={relief} disabled={isDrawing} title={reliefLabel} aria-label={reliefLabel} onClick={() => { setReliefError(false); setRelief(v => !v); }} {...stylex.props(s.zoomBtn, s.zoomText, relief && s.zoomOn)}>3D</button>
+        {relief && Math.abs(bearing) > 0.5 && <><Inline xs={s.zoomSep} />
+        <button type="button" title={northLabel} aria-label={northLabel} onClick={() => mapRef.current && resetBearing(mapRef.current)} {...stylex.props(s.zoomBtn)}><Inline xs={s.north} style={{ transform: `rotate(${-bearing}deg)` }}>N</Inline></button></>}
       </Box>
 
       {notices.length > 0 && <Box xs={s.notices} aria-live="polite">{notices.map(n => <Inline key={n.key} xs={[s.notice, n.warn && s.noticeWarn]}>{n.text}</Inline>)}</Box>}
@@ -321,6 +343,10 @@ export default function MapPanel() {
       <Box xs={[s.card, s.layers]}>
         <button type="button" aria-expanded={layersOpen} onClick={() => setLayersOpen(v => !v)} {...stylex.props(s.layersHead)}><Inline>{t.layers}</Inline><Caption>{layersOpen ? '−' : '+'}</Caption></button>
         {layersOpen && <>
+          <Box xs={s.layer}>
+            <Inline xs={s.layerText}><Inline>{reliefLabel}</Inline><Inline xs={s.layerSub}>{reliefHint}</Inline></Inline>
+            <Toggle label={reliefLabel} isOn={relief} disabled={isDrawing} onChange={v => { setReliefError(false); setRelief(v); }} />
+          </Box>
           {layerRows.map(r => <Box key={r.key} xs={s.layer} title={r.title}>
             <Inline xs={s.layerText}><Inline>{r.label}</Inline><Inline xs={s.layerSub}>{r.sub}</Inline></Inline>
             <Toggle label={r.label} isOn={!r.disabled && app.layers[r.key]} disabled={r.disabled} title={r.disabled ? t.vision : undefined} onChange={v => { app.setLayer(r.key, v); if (r.key === 'recent' && v && !app.live) app.setLive(24); }} />
@@ -334,7 +360,7 @@ export default function MapPanel() {
           <Caption>{t.frp} · MW</Caption>
           <Inline xs={s.legendItems}><FlameLegend level={0} />&lt;15<FlameLegend level={1} />15–&lt;40<FlameLegend level={2} />≥40<FlameLegend level={3} />{lang === 'es' ? 'Sin dato' : lang === 'en' ? 'Unknown' : 'Sem dado'}</Inline>
         </Box>
-        {view && <Box xs={s.scale}><Inline xs={s.scaleBar} style={{ width: Math.round(view.px) }} />{fmtKm(view.km)}</Box>}
+        {view && !relief && <Box xs={s.scale}><Inline xs={s.scaleBar} style={{ width: Math.round(view.px) }} />{fmtKm(view.km)}</Box>}
       </Box>
 
       {picked && view?.pickedAt && pp && !picked.props.priority && <Box xs={[s.card, s.picked]} style={{ left: view.pickedAt.x, top: view.pickedAt.y }} role="dialog" aria-label={t.hotspots}>
@@ -353,7 +379,7 @@ export default function MapPanel() {
 
       {isDrawing && <Box xs={[s.card, s.drawHint]} role="status">{t.drawing}<OutlineButton size="sm" onClick={() => { drawRef.current?.stop(); drawRef.current = null; drawing.current = false; setIsDrawing(false); }}>{lang === 'en' ? 'Cancel (Esc)' : 'Cancelar (Esc)'}</OutlineButton></Box>}
 
-      <Box xs={s.attribution}>NASA FIRMS (MODIS C6.1 · VIIRS 375 m) {lang === 'en' ? 'harmonized' : 'armonizados'}{method ? ` · ${method}` : ''}{cutoff ? ` · ${cutoff}` : ''} · {BASEMAP_CREDIT}{territory?.admin?.source ? ` · ${territory.admin.source.split(' ')[0]}` : ''}</Box>
+      <Box xs={s.attribution}>NASA FIRMS (MODIS C6.1 · VIIRS 375 m) {lang === 'en' ? 'harmonized' : 'armonizados'}{method ? ` · ${method}` : ''}{cutoff ? ` · ${cutoff}` : ''} · {BASEMAP_CREDIT}{relief && <> · <a href={TERRAIN_CREDIT_URL} target="_blank" rel="noreferrer">{TERRAIN_CREDIT}</a></>}{territory?.admin?.source ? ` · ${territory.admin.source.split(' ')[0]}` : ''}</Box>
     </Box>
   );
 }
