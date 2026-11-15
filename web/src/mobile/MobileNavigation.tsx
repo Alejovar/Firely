@@ -25,7 +25,7 @@ export default function MobileNavigation() {
     </HStack>}
     <HStack gap={1} hAlign="between">
       <Button label={en ? 'Explore' : 'Explorar'} width="25%" size="lg" variant={app.page === 'explorar' ? 'primary' : 'ghost'} aria-current={app.page === 'explorar' ? 'page' : undefined} onClick={() => go('explorar')} />
-      <Button label={t.assistant} width="25%" size="lg" variant={app.page === 'asistente' ? 'primary' : 'ghost'} aria-current={app.page === 'asistente' ? 'page' : undefined} onClick={() => go('asistente')} />
+      <Button label="Chat" width="25%" size="lg" variant={app.page === 'asistente' ? 'primary' : 'ghost'} aria-current={app.page === 'asistente' ? 'page' : undefined} onClick={() => go('asistente')} />
       <Button label={en ? 'Field' : 'Campo'} width="25%" size="lg" variant={app.page === 'campo' ? 'primary' : 'ghost'} aria-current={app.page === 'campo' ? 'page' : undefined} onClick={() => go('campo')} />
       <Button label={en ? 'More' : pt ? 'Mais' : 'Más'} width="25%" size="lg" variant="ghost" aria-expanded={more} onClick={() => setMore(value => !value)} />
     </HStack>

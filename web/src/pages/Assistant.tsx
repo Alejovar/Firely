@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import * as stylex from '@stylexjs/stylex';
 import { Bar, BarChart, Cell, CartesianGrid, ResponsiveContainer, Tooltip as ChartTooltip, XAxis, YAxis } from 'recharts';
-import { Layout, LayoutContent, HStack, VStack } from '@astryxdesign/core/Layout';
-import { Center } from '@astryxdesign/core/Center';
+import { HStack, VStack } from '@astryxdesign/core/Layout';
 import { Heading, Text } from '@astryxdesign/core/Text';
-import { ChatComposer, ChatComposerInput, ChatLayout, ChatMessage, ChatMessageBubble, ChatMessageList, ChatSystemMessage, ChatToolCalls } from '@astryxdesign/core/Chat';
+import { ChatComposer, ChatComposerInput, ChatMessage, ChatMessageBubble, ChatMessageList, ChatSystemMessage } from '@astryxdesign/core/Chat';
 import { Button } from '@astryxdesign/core/Button';
 import { Card } from '@astryxdesign/core/Card';
 import { Grid } from '@astryxdesign/core/Grid';
 import { Table } from '@astryxdesign/core/Table';
 import { Banner } from '@astryxdesign/core/Banner';
-import { Token } from '@astryxdesign/core/Token';
-import { Badge } from '@astryxdesign/core/Badge';
+import { Collapsible } from '@astryxdesign/core/Collapsible';
+import { List, ListItem } from '@astryxdesign/core/List';
+import { SparklesIcon, MapPinIcon, ChartBarIcon, ArrowUpIcon, StopIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { IconButton } from '@astryxdesign/core/IconButton';
 import { SelectableCard } from '@astryxdesign/core/SelectableCard';
 import { SegmentedControl, SegmentedControlItem } from '@astryxdesign/core/SegmentedControl';
 import { Popover } from '@astryxdesign/core/Popover';
@@ -24,11 +25,12 @@ import { useApp } from '../state/AppState';
 import type { AreaSel } from '../state/hash';
 import { calendarQuery, candidateArea, contextWindow, formatAnomaly, formatCount, largestLocalities, latestContextRow, latestRow, localSummary, monthIndex, peakRow, returnPeriodQuery } from '../components/assistant/helpers';
 import { Caption } from '../ui/kit';
+import ConnectionStatus from '../components/assistant/ConnectionStatus';
 
 type Profile = 'brigadista' | 'cientifico';
 type FollowUp = { id: number; turnId: number; kind: 'territory' | 'context'; status: 'running' | 'complete' | 'error'; territory?: TerritoryResponse; context?: ContextResponse; analogs?: AnalogsResponse; error?: string };
 type Turn = {
-  id: number; prompt: string; resolveStatus: 'running' | 'complete' | 'error';
+  id: number; prompt: string; resolveStatus: 'running' | 'complete' | 'error'; cancelled?: boolean;
   calendarStatus?: 'running' | 'complete' | 'error'; resolved?: ResolveAreaResponse;
   selected?: AreaSel; from?: string; to?: string; calendar?: CalendarResponse;
   query?: string; contextQuery?: string; context?: CalendarResponse; contextStatus?: 'running' | 'complete' | 'error'; returnQuery?: string; referenceYears?: number; error?: string; profile: Profile;
@@ -38,19 +40,33 @@ const messages = {
   en: { title: 'Ask about fire in a place', subtitle: 'Describe a place and period. Firely interprets your request and shows verifiable data.', ask: 'Ask about a place and period…', send: 'Send question', limit: 'The assistant only interprets and writes; figures come from the harmonized NASA FIRMS series.', place: 'Place', from: 'From', to: 'To', rules: 'local rules', ai: 'AI', choose: 'Choose the place you meant', noPlace: 'We could not find that place', noPlaceHelp: 'Try a municipality, state, or country, such as “Arteaga, Coahuila” or “Chilecito, La Rioja”.', noData: 'No data for this period', noDataHelp: 'Try another place or date range.', peak: 'Peak month', latest: 'Latest month', anomaly: 'Anomaly', returnPeriod: 'Return period', unavailable: 'Unavailable', detections: 'harmonized detections', years: 'years', data: 'View data', map: 'View on map', method: 'How it was calculated', profile: 'Explanation profile', brigade: 'Firefighter', scientist: 'Scientist', source: 'Source', methodology: 'Methodology', cutoff: 'Data cutoff', query: 'Exact query', resolving: 'Finding place…', calendar: 'Reading calendar…', apiDown: 'Could not connect to the Firely API. Check that it is running and try again.', apiError: 'The API could not complete the request', retry: 'You can rephrase the question and try again.', descriptionError: 'The explanation could not be written. Figures shown come from the calendar.', dataDescription: 'Monthly harmonized detections; the exact query provides the numerical detail.' },
   pt: { title: 'Pergunte sobre o fogo de um lugar', subtitle: 'Descreva um lugar e período. Firely interpreta a pergunta e mostra dados verificáveis.', ask: 'Pergunte sobre um lugar e período…', send: 'Enviar pergunta', limit: 'O assistente apenas interpreta e redige; os números vêm da série harmonizada da NASA FIRMS.', place: 'Lugar', from: 'Desde', to: 'Até', rules: 'regras locais', ai: 'IA', choose: 'Escolha o lugar desejado', noPlace: 'Não encontramos esse lugar', noPlaceHelp: 'Tente um município, estado ou país, como “Arteaga, Coahuila” ou “Chilecito, La Rioja”.', noData: 'Sem dados para o período', noDataHelp: 'Tente outro lugar ou intervalo de datas.', peak: 'Mês de maior atividade', latest: 'Último mês', anomaly: 'Anomalia', returnPeriod: 'Período de retorno', unavailable: 'Indisponível', detections: 'detecções harmonizadas', years: 'anos', data: 'Ver dados', map: 'Ver no mapa', method: 'Como foi calculado', profile: 'Perfil da explicação', brigade: 'Brigadista', scientist: 'Cientista', source: 'Fonte', methodology: 'Metodologia', cutoff: 'Corte dos dados', query: 'Consulta exata', resolving: 'Buscando lugar…', calendar: 'Consultando calendário…', apiDown: 'Não foi possível conectar à API Firely. Verifique se está ativa e tente novamente.', apiError: 'A API não concluiu a consulta', retry: 'Reformule a pergunta e tente novamente.', descriptionError: 'Não foi possível redigir a explicação. Os números exibidos vêm do calendário.', dataDescription: 'Série mensal de detecções harmonizadas; a consulta exata fornece o detalhe numérico.' },
 } as const;
-const suggestions = ['Incendios en la sierra de Arteaga en marzo de 2021', 'Chilecito julio 2026', '¿Cómo fue la temporada en Coahuila?', 'fires in La Rioja last 6 months'];
-const summaryLabel: Record<Lang, string> = { es: 'Resumen automático', en: 'Automatic summary', pt: 'Resumo automático' };
+const suggestions: Record<Lang, { title: string; prompt: string }[]> = {
+  es: [{ title: 'Revisar un incendio', prompt: 'Incendios en Arteaga, Coahuila en marzo de 2021' }, { title: 'Consultar una temporada', prompt: 'Fuego en Coahuila durante 2021' }, { title: 'Explorar otro lugar', prompt: 'Chilecito, La Rioja en julio de 2026' }],
+  en: [{ title: 'Review a fire', prompt: 'Fires in Arteaga, Coahuila in March 2021' }, { title: 'Review a season', prompt: 'Fires in Coahuila during 2021' }, { title: 'Explore another place', prompt: 'Chilecito, La Rioja in July 2026' }],
+  pt: [{ title: 'Consultar um incêndio', prompt: 'Fogo em Arteaga, Coahuila em março de 2021' }, { title: 'Consultar uma temporada', prompt: 'Fogo em Coahuila durante 2021' }, { title: 'Explorar outro lugar', prompt: 'Chilecito, La Rioja em julho de 2026' }],
+};
+const chatCopy = {
+  es: { title: 'Asistente Firely', welcome: '¿Qué lugar quieres explorar?', lead: 'Pregunta por un lugar y una fecha. Conectamos tu pregunta con la historia del fuego.', example: 'Puedes empezar por aquí', stop: 'Detener consulta', stopped: 'Consulta detenida', reset: 'Nueva conversación', details: 'Ver evolución y cifras', intent: 'Lugar y fechas de la consulta', settings: 'Ajustar explicación', input: 'Escribe tu pregunta', retry: 'Reintentar consulta', working: 'Consultando los datos…', provenance: 'Respuestas con datos de NASA FIRMS', changePlace: 'Buscar otro lugar' },
+  en: { title: 'Firely assistant', welcome: 'Where would you like to explore?', lead: 'Ask about a place and date. Connect your question with its fire history.', example: 'Start with a question', stop: 'Stop request', stopped: 'Request stopped', reset: 'New conversation', details: 'View chart and figures', intent: 'Query place and dates', settings: 'Explanation settings', input: 'Type your question', retry: 'Retry request', working: 'Reading the data…', provenance: 'Answers based on NASA FIRMS data', changePlace: 'Find another place' },
+  pt: { title: 'Assistente Firely', welcome: 'Que lugar você quer explorar?', lead: 'Pergunte sobre um lugar e uma data. Conectamos sua pergunta com a história do fogo.', example: 'Comece por aqui', stop: 'Parar consulta', stopped: 'Consulta interrompida', reset: 'Nova conversa', details: 'Ver evolução e números', intent: 'Lugar e datas da consulta', settings: 'Ajustar explicação', input: 'Escreva sua pergunta', retry: 'Tentar novamente', working: 'Consultando os dados…', provenance: 'Respostas com dados da NASA FIRMS', changePlace: 'Buscar outro lugar' },
+};
 const queryListLabel: Record<Lang, string> = { es: 'Consultas exactas usadas', en: 'Exact queries used', pt: 'Consultas exatas usadas' };
 const copyLabel: Record<Lang, string> = { es: 'Copiar consulta', en: 'Copy query', pt: 'Copiar consulta' };
 const contextError: Record<Lang, string> = { es: 'No se pudo cargar el contexto mensual.', en: 'Monthly context could not be loaded.', pt: 'Não foi possível carregar o contexto mensal.' };
 const styles = stylex.create({
-  chat: { flex: 1, minHeight: 0, width: '100%' },
-  page: { width: '100%', minWidth: 0, height: '100%' },
-  body: { width: '100%', minWidth: 0, flex: 1, minHeight: 0 },
-  chatColumn: { minWidth: 0, height: '100%' },
-  resultColumn: { minWidth: 0, overflowY: 'auto', '@media (max-width: 56.25rem)': { display: 'none' } },
+  page: { width: '100%', minWidth: 0, flex: 1, minHeight: 0, overflow: 'hidden', backgroundColor: 'var(--color-background-body)' },
+  body: { width: '100%', minWidth: 0, flex: 1, minHeight: 0, alignItems: 'stretch', overflow: 'hidden' },
+  chatColumn: { minWidth: 0, flex: 1, minHeight: 0, overflow: 'hidden' },
+  transcript: { overflowY: 'auto', overscrollBehavior: 'contain', flex: 1, minHeight: 0, width: '100%', padding: 'var(--spacing-4)', scrollPaddingBlock: 'var(--spacing-4)' },
+  welcome: { width: '100%', maxWidth: '38rem', marginInline: 'auto', paddingBlock: 'var(--spacing-6)' },
+  composer: { width: '100%', maxWidth: '48rem', marginInline: 'auto', padding: 'var(--spacing-3)', flexShrink: 0, borderTop: 'thin solid var(--color-border)', backgroundColor: 'var(--color-background-surface)' },
+  resultColumn: { minWidth: 0, width: '26rem', flexShrink: 0, overflowY: 'auto', padding: 'var(--spacing-4)', borderLeft: 'thin solid var(--color-border)', '@media (max-width: 56.25rem)': { display: 'none' } },
   resultMobile: { width: '100%', '@media (min-width: 56.251rem)': { display: 'none' } },
-  header: { padding: 'var(--spacing-4)', borderBottom: 'thin solid var(--color-border)', width: '100%' },
+  desktopSummary: { display: { default: 'flex', '@media (max-width: 56.25rem)': 'none' } },
+  header: { padding: 'var(--spacing-3)', borderBottom: 'thin solid var(--color-border)', width: '100%', flexShrink: 0 },
+  symbol: { width: 'var(--spacing-8)', height: 'var(--spacing-8)', color: 'var(--color-accent)' },
+  smallIcon: { width: 'var(--spacing-5)', height: 'var(--spacing-5)' },
+  headerTitle: { fontSize: 'var(--font-size-lg)', lineHeight: 1.2 },
 });
 const extras = {
   es: { eyebrow: 'Asistente analista, panel lateral', result: 'Resultado', area: 'Área activa', range: 'Rango activo', template: 'Modo plantilla', templateHelp: 'El servicio de IA no intervino: Firely usa reglas locales y redacta respuestas con plantillas a partir de cifras de la API.', affected: '¿A quién afecta?', why: '¿Por qué este año?', pdf: 'Generar ficha PDF', other: 'Otro lugar…', draw: 'Dibujar en el mapa', geometry: 'La geometría viene de límites de INEGI/geoBoundaries; el asistente nunca genera coordenadas.', locality: 'Localidad', population: 'Población', protected: 'Áreas protegidas', none: 'Sin datos disponibles', weather: 'Datos de tiempo de incendios no disponibles para esta área.', enso: 'Fase ENSO', fwi: 'Anomalía FWI', analogs: 'Años análogos', resultHelp: 'Haz una consulta para ver aquí el resultado más reciente.' },
@@ -66,7 +82,7 @@ function DataLink({ queries, lang }: { queries: string[]; lang: Lang }) {
   const t = messages[lang];
   return <Popover label={queryListLabel[lang]} presentation="adaptive" content={<VStack gap={2}><Caption>{queryListLabel[lang]}</Caption>{queries.map((query) => <VStack key={query} gap={1}><Text type="code" as="p" wordBreak="break-all">{`${API_URL}${query}`}</Text><Button label={copyLabel[lang]} variant="ghost" size="sm" onClick={() => void navigator.clipboard?.writeText(`${API_URL}${query}`)} /></VStack>)}</VStack>}><Button label={t.data} variant="ghost" size="sm" /></Popover>;
 }
-function Result({ turn, lang, profile, onProfile, onMap, onMethod }: { turn: Turn; lang: Lang; profile: Profile; onProfile: (value: Profile) => void; onMap: () => void; onMethod: () => void }) {
+function Result({ turn, lang, profile, onMap, onMethod }: { turn: Turn; lang: Lang; profile: Profile; onMap: () => void; onMethod: () => void }) {
   const t = messages[lang], response = turn.calendar!, query = turn.query!;
   const rows = response.rows.filter((row) => Number.isFinite(row.count_harm));
   const contextRows = (turn.context?.rows ?? rows).filter((row) => Number.isFinite(row.count_harm));
@@ -76,7 +92,9 @@ function Result({ turn, lang, profile, onProfile, onMap, onMethod }: { turn: Tur
   const summary = localSummary(response, lang, profile, turn.referenceYears);
   return <Card width="100%" padding={4}><VStack gap={4}>
     <VStack gap={1}><Heading level={3}>{turn.selected?.label}</Heading><Text type="supporting">{turn.from} – {turn.to}</Text></VStack>
+    <Text as="p">{summary}</Text>
     {rows.length ? <>
+      <Collapsible trigger={chatCopy[lang].details} defaultIsOpen={false}>
       <VStack gap={1} role="img" aria-label={`${t.dataDescription} ${contextRows.map((row) => `${monthLabel(row, lang)}: ${format(row.count_harm ?? 0)}`).join('; ')}. ${t.methodology}: ${response.methodology_version}; ${t.cutoff}: ${response.data_cutoff}; ${t.source}: ${response.attribution}.`}>
         {turn.contextStatus === 'running' ? <Skeleton width="100%" height="var(--spacing-10)" /> : <ResponsiveContainer width="100%" aspect={2.4}>
           <BarChart data={contextRows} accessibilityLayer>
@@ -88,15 +106,14 @@ function Result({ turn, lang, profile, onProfile, onMap, onMethod }: { turn: Tur
           </BarChart>
         </ResponsiveContainer>}{turn.contextStatus === 'error' && <Text type="supporting">{contextError[lang]}</Text>}<Text type="supporting">{t.dataDescription}</Text>
       </VStack>
-      <HStack gap={4} wrap="wrap">
-        {peak && <VStack gap={0.5}><Text type="supporting">{t.peak}</Text><Text weight="semibold" hasTabularNumbers>{monthLabel(peak, lang)}, {format(peak.count_harm ?? 0)} {t.detections}</Text></VStack>}
-        {latest && <VStack gap={0.5}><Text type="supporting">{t.latest}</Text><Text weight="semibold" hasTabularNumbers>{monthLabel(latest, lang)}, {format(latest.count_harm ?? 0)} {t.detections}</Text></VStack>}
+      </Collapsible>
+      <Grid columns={2} gap={3}>
+        {peak && <VStack gap={0.5}><Text type="supporting">{t.peak}</Text><Text weight="semibold" hasTabularNumbers>{format(peak.count_harm ?? 0)} · {monthLabel(peak, lang)}</Text></VStack>}
+        {latest && <VStack gap={0.5}><Text type="supporting">{t.latest}</Text><Text weight="semibold" hasTabularNumbers>{format(latest.count_harm ?? 0)} · {monthLabel(latest, lang)}</Text></VStack>}
         {latest && <VStack gap={0.5}><Text type="supporting">{t.anomaly}</Text><Text weight="semibold" hasTabularNumbers>{latest.anomaly_ratio == null ? t.unavailable : formatAnomaly(latest.anomaly_ratio, lang)}</Text></VStack>}
         {latest && <VStack gap={0.5}><Text type="supporting">{t.returnPeriod}</Text><Text weight="semibold" hasTabularNumbers>{latest.return_period_years == null ? t.unavailable : `${format(latest.return_period_years)} ${t.years}`}</Text></VStack>}
-      </HStack>
+      </Grid>
     </> : <EmptyState title={t.noData} description={t.noDataHelp} isCompact />}
-    <SegmentedControl label={t.profile} value={profile} onChange={(value) => onProfile(value as Profile)} size="sm"><SegmentedControlItem value="brigadista" label={t.brigade} /><SegmentedControlItem value="cientifico" label={t.scientist} /></SegmentedControl>
-    <VStack gap={1}><Text type="label" weight="semibold">{summaryLabel[lang]}</Text><Text as="p">{summary}</Text></VStack>
     <Text type="supporting">{t.methodology}: {response.methodology_version} · {t.cutoff}: {response.data_cutoff} · {t.source}: {response.attribution || 'NASA FIRMS'}</Text>
     <HStack gap={2} wrap="wrap"><Button label={t.map} variant="primary" onClick={onMap} /><Button label={t.method} variant="secondary" onClick={onMethod} /><DataLink queries={queries} lang={lang} /></HStack>
   </VStack></Card>;
@@ -133,9 +150,23 @@ export default function Assistant() {
   const [turns, setTurns] = useState<Turn[]>([]), [draft, setDraft] = useState('');
   const [profile, setProfile] = useState<Profile>('brigadista');
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
+  const transcriptRef = useRef<HTMLDivElement | null>(null), followLatest = useRef(true);
   const active = useRef<AbortController | null>(null), followUpController = useRef<AbortController | null>(null), nextId = useRef(0), nextFollowUpId = useRef(0);
   const change = (id: number, patch: Partial<Turn>) => setTurns((prev) => prev.map((turn) => turn.id === id ? { ...turn, ...patch } : turn));
   useEffect(() => () => { active.current?.abort(); followUpController.current?.abort(); }, []);
+  useEffect(() => {
+    if (!followLatest.current) return;
+    const frame = requestAnimationFrame(() => {
+      const el = transcriptRef.current;
+      if (!el) return;
+      const followUp = followUps.at(-1);
+      const target = followUp?.turnId === turns.at(-1)?.id ? `[data-followup-id="${followUp?.id}"]` : `[data-turn-id="${turns.at(-1)?.id}"]`;
+      const last = el.querySelector<HTMLElement>(target);
+      if (last) el.scrollTop += last.getBoundingClientRect().top - el.getBoundingClientRect().top;
+      else el.scrollTop = 0;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [turns, followUps]);
   async function loadCalendar(id: number, selected: AreaSel, resolved: ResolveAreaResponse, controller: AbortController) {
     const from = resolved.intent.date_from || app.from, to = resolved.intent.date_to || app.to, query = calendarQuery(selected, from, to);
     change(id, { selected, from, to, query, calendarStatus: 'running', error: undefined });
@@ -164,6 +195,7 @@ export default function Assistant() {
   }
   async function submit(value: string) {
     const prompt = value.trim(); if (!prompt) return;
+    followLatest.current = true;
     active.current?.abort();
     followUpController.current?.abort();
     setFollowUps(prev => prev.filter(item => item.status !== 'running'));
@@ -173,6 +205,8 @@ export default function Assistant() {
       ...turn,
       resolveStatus: turn.resolveStatus === 'running' ? 'error' as const : turn.resolveStatus,
       calendarStatus: turn.calendarStatus === 'running' ? 'error' as const : turn.calendarStatus,
+      contextStatus: turn.contextStatus === 'running' ? 'error' as const : turn.contextStatus,
+      cancelled: turn.resolveStatus === 'running' || turn.calendarStatus === 'running' || turn.contextStatus === 'running' || turn.cancelled,
     })), { id, prompt, profile, resolveStatus: 'running' }]);
     try {
       const resolved = await resolveArea(prompt, lang, controller.signal);
@@ -192,12 +226,27 @@ export default function Assistant() {
     setProfile(value);
     change(turn.id, { profile: value });
   }
+  function stop() {
+    active.current?.abort(); followUpController.current?.abort();
+    setTurns(prev => prev.map(turn => ({ ...turn,
+      cancelled: turn.resolveStatus === 'running' || turn.calendarStatus === 'running' || turn.contextStatus === 'running' || turn.cancelled,
+      resolveStatus: turn.resolveStatus === 'running' ? 'error' : turn.resolveStatus,
+      calendarStatus: turn.calendarStatus === 'running' ? 'error' : turn.calendarStatus,
+      contextStatus: turn.contextStatus === 'running' ? 'error' : turn.contextStatus,
+    })));
+    setFollowUps(prev => prev.filter(item => item.status !== 'running'));
+  }
+  function reset() {
+    active.current?.abort(); followUpController.current?.abort();
+    setTurns([]); setFollowUps([]); setDraft(''); followLatest.current = true;
+  }
   async function followUp(turn: Turn, kind: 'territory' | 'context') {
     if (!turn.selected || !turn.calendar) return;
+    followLatest.current = true;
     followUpController.current?.abort();
     const controller = new AbortController(); followUpController.current = controller;
     const id = ++nextFollowUpId.current;
-    setFollowUps(prev => [...prev, { id, turnId: turn.id, kind, status: 'running' }]);
+    setFollowUps(prev => [...prev.filter(item => item.status !== 'running'), { id, turnId: turn.id, kind, status: 'running' }]);
     const update = (patch: Partial<FollowUp>) => setFollowUps(prev => prev.map(item => item.id === id ? { ...item, ...patch } : item));
     try {
       if (kind === 'territory') {
@@ -225,48 +274,100 @@ export default function Assistant() {
     window.dispatchEvent(new CustomEvent('firely:request-draw', { detail: { mode: 'polygon' } }));
   }
   const latestTurn = [...turns].reverse().find(turn => turn.calendar);
-  const ext = extras[lang];
-  const quickActions = latestTurn && <HStack gap={2} wrap="wrap">
-    <Button label={ext.affected} size="sm" variant="secondary" onClick={() => void followUp(latestTurn, 'territory')}/>
-    <Button label={ext.why} size="sm" variant="secondary" onClick={() => void followUp(latestTurn, 'context')}/>
-    <Button label={ext.pdf} size="sm" variant="secondary" onClick={() => { app.patch({ area: latestTurn.selected!, from: latestTurn.from!, to: latestTurn.to! }); app.navigate('ficha'); }}/>
-  </HStack>;
-  const composer = <VStack gap={2} width="100%">{quickActions}<ChatComposer onSubmit={submit} value={draft} onChange={setDraft} placeholder={t.ask} input={<ChatComposerInput label={t.send} pasteAsToken={false} />} /><Text type="supporting">{t.limit}</Text></VStack>;
-  const transcript = turns.length > 0;
-  const resultCard = latestTurn && <Result turn={latestTurn} lang={lang} profile={profile} onProfile={value => updateProfile(value, latestTurn)} onMap={() => app.patch({ area: latestTurn.selected!, from: latestTurn.from!, to: latestTurn.to!, page: 'explorar' })} onMethod={() => app.navigate('metodo')} />;
-  return <Layout height="fill" content={<LayoutContent padding={0} isScrollable={false}><VStack xstyle={styles.page}>
-    <VStack gap={3} xstyle={styles.header}>
-      <VStack gap={1}><Heading level={1}>{t.title}</Heading><Text type="supporting">{t.subtitle}</Text></VStack>
-      <HStack gap={2} wrap="wrap" vAlign="center"><Token label={`${ext.area}: ${app.area.label}`} /><Token label={`${ext.range}: ${app.from} – ${app.to}`} /></HStack>
-      <HStack gap={3} wrap="wrap" hAlign="between"><SegmentedControl label={t.profile} value={profile} onChange={value => { setProfile(value as Profile); if (latestTurn) change(latestTurn.id, { profile: value as Profile }); }} size="sm"><SegmentedControlItem value="brigadista" label={t.brigade}/><SegmentedControlItem value="cientifico" label={t.scientist}/></SegmentedControl><SegmentedControl label="Idioma / Language / Idioma" value={lang} onChange={value => app.setLang(value as Lang)} size="sm"><SegmentedControlItem value="es" label="ES"/><SegmentedControlItem value="en" label="EN"/><SegmentedControlItem value="pt" label="PT"/></SegmentedControl></HStack>
-    </VStack>
-    <Grid columns={{ minWidth: 420, max: 2 }} gap={4} width="100%" xstyle={styles.body}>
-      <VStack xstyle={styles.chatColumn}>
-        {transcript ? <ChatLayout density="balanced" composer={composer} xstyle={styles.chat}><ChatMessageList align="top">
-          {turns.map(turn => {
-            const resolved = turn.resolved;
-            const options = resolved?.candidates.filter(candidate => candidateArea(candidate) !== null) ?? [];
-            return <VStack key={turn.id} gap={3}>
-              <ChatMessage sender="user"><ChatMessageBubble>{turn.prompt}</ChatMessageBubble></ChatMessage>
-              <ChatMessage sender="assistant">
-                <ChatToolCalls defaultIsExpanded calls={[{ name: t.resolving, status: turn.resolveStatus }, ...(turn.calendarStatus ? [{ name: t.calendar, status: turn.calendarStatus }] : [])]} />
-                {turn.resolveStatus === 'running' && <ChatMessageBubble variant="ghost"><Skeleton width="75%" height="var(--spacing-6)" /></ChatMessageBubble>}
-                {resolved && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={3}>
-                  <HStack gap={2} wrap="wrap"><Token label={`${t.place}: ${resolved.intent.place_text || '—'}`} /><Token label={`${t.from}: ${resolved.intent.date_from || app.from}`} /><Token label={`${t.to}: ${resolved.intent.date_to || app.to}`} /><Badge label={resolved.intent.source === 'llm' ? t.ai : t.rules} variant="neutral" /></HStack>
-                  {resolved.intent.source === 'rules' && <Banner status="info" title={ext.template} description={ext.templateHelp}/>}
-                  {!turn.selected && options.length === 0 && <EmptyState title={t.noPlace} description={t.noPlaceHelp} isCompact actions={<Button label={suggestions[0]} variant="secondary" onClick={() => void submit(suggestions[0])} />} />}
-                  {!turn.selected && options.length > 0 && <VStack gap={2}><Text weight="semibold">{t.choose}</Text>{options.map((candidate, index) => <SelectableCard key={`${candidate.code || candidate.label}-${index}`} label={`${candidate.label}, ${candidate.kind || ''}, ${candidate.country || ''}${candidate.code ? `, ${candidate.code}` : ''}`} isSelected={false} onChange={() => choose(turn.id, candidate, resolved)} padding={3} width="100%"><VStack gap={0.5}><Text weight="semibold">{candidate.label}</Text><Text type="supporting">{[candidate.kind, candidate.country].filter(Boolean).join(', ')}</Text>{candidate.code && <Text type="code">{candidate.country?.toLowerCase().includes('mex') ? 'INEGI' : 'ID'} {candidate.code}</Text>}</VStack></SelectableCard>)}<HStack gap={2} wrap="wrap"><Button label={ext.other} variant="ghost" size="sm" onClick={() => { setDraft(''); document.querySelector<HTMLElement>('textarea, input[placeholder]')?.focus(); }}/><Button label={ext.draw} variant="ghost" size="sm" onClick={drawOnMap}/></HStack><Text type="supporting">{ext.geometry}</Text></VStack>}
-                </VStack></ChatMessageBubble>}
-                {turn.calendarStatus === 'running' && <ChatMessageBubble variant="ghost" width="100%"><Card width="100%"><VStack gap={3}><Skeleton width="50%" height="var(--spacing-6)" /><Skeleton width="100%" height="var(--spacing-10)" /><Skeleton width="70%" height="var(--spacing-6)" /></VStack></Card></ChatMessageBubble>}
-                {turn.calendar && <ChatMessageBubble variant="ghost" width="100%"><VStack gap={2}><Text>{localSummary(turn.calendar, lang, profile, turn.referenceYears)}</Text><VStack xstyle={styles.resultMobile}><Result turn={turn} lang={lang} profile={profile} onProfile={value => updateProfile(value, turn)} onMap={() => app.patch({ area: turn.selected!, from: turn.from!, to: turn.to!, page: 'explorar' })} onMethod={() => app.navigate('metodo')} /></VStack></VStack></ChatMessageBubble>}
-              </ChatMessage>
-              {followUps.filter(item => item.turnId === turn.id).map(item => <ChatMessage key={item.id} sender="assistant"><ChatMessageBubble variant="ghost" width="100%"><FollowUpResult item={item} lang={lang}/></ChatMessageBubble></ChatMessage>)}
-              {turn.error && <ChatSystemMessage>{turn.error}</ChatSystemMessage>}
-            </VStack>;
-          })}
-        </ChatMessageList></ChatLayout> : <Center axis="both" width="100%" height="100%"><VStack gap={6} width="100%" maxWidth={760}><VStack gap={2}><Heading level={2}>{t.title}</Heading><Text type="large" color="secondary">{t.subtitle}</Text></VStack>{composer}<HStack gap={2} wrap="wrap">{suggestions.map(suggestion => <Button key={suggestion} label={suggestion} variant="secondary" size="sm" onClick={() => void submit(suggestion)} />)}</HStack></VStack></Center>}
+  const ext = extras[lang], ui = chatCopy[lang];
+  const busy = turns.some(turn => turn.resolveStatus === 'running' || turn.calendarStatus === 'running' || turn.contextStatus === 'running') || followUps.some(item => item.status === 'running');
+  const resultCard = (turn: Turn) => <Result turn={turn} lang={lang} profile={profile}
+    onMap={() => app.patch({ area: turn.selected!, from: turn.from!, to: turn.to!, page: 'explorar' })}
+    onMethod={() => app.navigate('metodo')} />;
+  const focusComposer = () => document.querySelector<HTMLElement>('[contenteditable="true"][role="textbox"]')?.focus();
+  const composer = <VStack gap={2} xstyle={styles.composer}>
+    {latestTurn && <HStack gap={2} wrap="wrap">
+      <Button label={ext.affected} size="sm" variant="ghost" isDisabled={busy} onClick={() => void followUp(latestTurn, 'territory')} />
+      <Button label={ext.why} size="sm" variant="ghost" isDisabled={busy} onClick={() => void followUp(latestTurn, 'context')} />
+    </HStack>}
+    <ChatComposer onSubmit={value => void submit(value)} value={draft} onChange={setDraft} placeholder={t.ask}
+      onStop={stop} isStopShown={busy} elevation="none" density="compact"
+      input={<ChatComposerInput label={ui.input} maxRows={4} pasteAsToken={false} enterKeyHint="send" />}
+      sendButton={<Button label={busy ? ui.stop : t.send} variant="primary" size="sm"
+        icon={busy ? <StopIcon /> : <ArrowUpIcon />} isDisabled={!busy && !draft.trim()}
+        onClick={() => busy ? stop() : void submit(draft)} />} />
+    <Text type="supporting">{ui.provenance}</Text>
+  </VStack>;
+  return <VStack xstyle={styles.page}>
+    <HStack gap={3} vAlign="center" hAlign="between" xstyle={styles.header}>
+      <VStack gap={1}>
+        <Heading level={1} xstyle={styles.headerTitle}>{ui.title}</Heading>
+        <ConnectionStatus lang={lang} />
       </VStack>
-      <VStack gap={3} xstyle={styles.resultColumn}><Text type="label" color="secondary">{ext.result}</Text>{resultCard || <EmptyState title={ext.result} description={ext.resultHelp} isCompact/>}</VStack>
-    </Grid>
-  </VStack></LayoutContent>} />;
+      <HStack gap={1}>
+        <Popover label={ui.settings} presentation="adaptive" content={<VStack gap={3}>
+          <Text type="supporting">{t.limit}</Text>
+          <SegmentedControl label={t.profile} value={profile} onChange={value => { setProfile(value as Profile); if (latestTurn) updateProfile(value as Profile, latestTurn); }}>
+            <SegmentedControlItem value="brigadista" label={t.brigade} /><SegmentedControlItem value="cientifico" label={t.scientist} />
+          </SegmentedControl>
+        </VStack>}><Button label={profile === 'brigadista' ? t.brigade : t.scientist} variant="ghost" size="sm" /></Popover>
+        <IconButton label={ui.reset} tooltip={ui.reset} variant="ghost" icon={<PlusIcon />} isDisabled={!turns.length && !draft} onClick={reset} />
+      </HStack>
+    </HStack>
+    <HStack gap={0} xstyle={styles.body}>
+      <VStack xstyle={styles.chatColumn}>
+        <VStack ref={transcriptRef} xstyle={styles.transcript} role="region" aria-label={ui.title}
+          onScroll={() => { const el = transcriptRef.current; if (el) followLatest.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120; }}>
+          {turns.length === 0 ? <VStack gap={6} xstyle={styles.welcome}>
+            <VStack gap={3}>
+              <SparklesIcon {...stylex.props(styles.symbol)} aria-hidden="true" />
+              <Heading level={2}>{ui.welcome}</Heading>
+              <Text color="secondary">{ui.lead}</Text>
+              <Text type="supporting">{app.area.label} · {app.from} — {app.to}</Text>
+            </VStack>
+            <VStack gap={2}>
+              <Text type="label" color="secondary">{ui.example}</Text>
+              <List hasDividers edge="flush">{suggestions[lang].map((suggestion, index) => <ListItem key={suggestion.prompt}
+                label={suggestion.title} description={<Text type="supporting">{suggestion.prompt}</Text>}
+                startContent={index === 1 ? <ChartBarIcon {...stylex.props(styles.smallIcon)} aria-hidden="true" /> : <MapPinIcon {...stylex.props(styles.smallIcon)} aria-hidden="true" />}
+                onClick={() => void submit(suggestion.prompt)} />)}</List>
+            </VStack>
+          </VStack> : <ChatMessageList align="top">
+            {turns.map(turn => {
+              const resolved = turn.resolved;
+              const options = resolved?.candidates.filter(candidate => candidateArea(candidate) !== null) ?? [];
+              const loading = turn.resolveStatus === 'running' || turn.calendarStatus === 'running';
+              return <VStack key={turn.id} gap={3} data-turn-id={turn.id}>
+                <ChatMessage sender="user"><ChatMessageBubble>{turn.prompt}</ChatMessageBubble></ChatMessage>
+                <ChatMessage sender="assistant">
+                  {loading && <ChatMessageBubble variant="ghost"><VStack gap={2} aria-live="polite">
+                    <Text type="supporting">{turn.resolveStatus === 'running' ? t.resolving : t.calendar}</Text>
+                    <Skeleton width="100%" height="var(--spacing-6)" />
+                  </VStack></ChatMessageBubble>}
+                  {resolved && !turn.cancelled && <ChatMessageBubble variant="ghost" width="100%">
+                    <Collapsible key={turn.selected ? 'resolved' : 'choosing'} trigger={turn.selected ? ui.intent : t.choose} defaultIsOpen={!turn.selected}>
+                      <VStack gap={3}>
+                        <Text type="supporting">{resolved.intent.place_text || '—'} · {resolved.intent.date_from || app.from} — {resolved.intent.date_to || app.to}</Text>
+                        <Text type="supporting">{resolved.intent.source === 'llm' ? t.ai : ext.templateHelp}</Text>
+                        {!turn.selected && options.length === 0 && <EmptyState title={t.noPlace} description={t.noPlaceHelp} isCompact />}
+                        {!turn.selected && options.map((candidate, index) => <SelectableCard key={`${candidate.code || candidate.label}-${index}`}
+                          label={candidate.label} isSelected={false} onChange={() => choose(turn.id, candidate, resolved)} padding={3} width="100%">
+                          <VStack gap={1}><Text weight="semibold">{candidate.label}</Text><Text type="supporting">{[candidate.kind, candidate.country].filter(Boolean).join(', ')}</Text></VStack>
+                        </SelectableCard>)}
+                        {!turn.selected && <HStack gap={2} wrap="wrap"><Button label={ui.changePlace} variant="ghost" size="sm" onClick={focusComposer} /><Button label={ext.draw} variant="ghost" size="sm" onClick={drawOnMap} /></HStack>}
+                      </VStack>
+                    </Collapsible>
+                  </ChatMessageBubble>}
+                  {turn.calendar && <VStack width="100%">
+                    <VStack xstyle={styles.resultMobile}>{resultCard(turn)}</VStack>
+                    <VStack xstyle={styles.desktopSummary}><Text>{localSummary(turn.calendar, lang, profile, turn.referenceYears)}</Text></VStack>
+                  </VStack>}
+                  {turn.cancelled && <ChatSystemMessage>{ui.stopped}</ChatSystemMessage>}
+                  {turn.error && <Banner status="error" title={turn.error} endContent={<Button label={ui.retry} onClick={() => void submit(turn.prompt)} />} />}
+                </ChatMessage>
+                {followUps.filter(item => item.turnId === turn.id).map(item => <ChatMessage key={item.id} sender="assistant"><VStack width="100%" data-followup-id={item.id}><FollowUpResult item={item} lang={lang} /></VStack></ChatMessage>)}
+              </VStack>;
+            })}
+          </ChatMessageList>}
+        </VStack>
+        {composer}
+      </VStack>
+      {latestTurn && <VStack gap={3} xstyle={styles.resultColumn}><Text type="label" color="secondary">{ext.result}</Text>{resultCard(latestTurn)}</VStack>}
+    </HStack>
+  </VStack>;
 }

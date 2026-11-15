@@ -16,6 +16,9 @@ import { NativeSupport } from './mobile/NativeSupport';
 import MobileNavigation from './mobile/MobileNavigation';
 
 const s = stylex.create({
+  chatApp: { height: '100dvh', minHeight: 0, overflow: 'hidden' },
+  nativeChatApp: { display: 'flex', flexDirection: 'column' },
+  chatMain: { display: 'flex', flexDirection: 'column', overflow: 'hidden', flex: 1 },
   nativeApp: { display: 'block', height: 'auto', minHeight: '100dvh', paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'calc(var(--spacing-10) * 2 + env(safe-area-inset-bottom))', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' },
   nativeRail: { display: 'none' },
   nativeBody: { display: 'contents' },
@@ -103,7 +106,7 @@ function Shell() {
     <button key={key} type="button" aria-current={page === key ? 'page' : undefined} onClick={() => app.navigate(key)} {...stylex.props(s.navItem, minor && s.navMinor, page === key && s.navOn)}>{label}</button>
   );
   return (
-    <Box xs={[s.app, isMobileApp && s.nativeApp]}>
+    <Box xs={[s.app, isMobileApp && s.nativeApp, page === 'asistente' && s.chatApp, isMobileApp && page === 'asistente' && s.nativeChatApp]}>
       <Box as="nav" aria-label={t.main} xs={[s.rail, isMobileApp && s.nativeRail]}>
         <Logo />
         {item('explorar', t.explore)}{item('asistente', t.assistant)}{item('metodo', t.method)}{item('plataforma', t.platform)}{item('historia', t.history)}
@@ -128,7 +131,7 @@ function Shell() {
             </button>
           </Box>
         </Box>
-        <Box as="main" xs={s.main}>
+        <Box as="main" xs={[s.main, page === 'asistente' && s.chatMain]}>
           <NativeSupport />
           <Suspense fallback={<Box xs={s.fallback}><Skeleton width="100%" height="60vh" /></Box>}>
             {page === 'explorar' && <Explorer />}

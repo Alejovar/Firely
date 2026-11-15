@@ -73,7 +73,35 @@ env FIRELY_USB_API_URL=http://localhost:8080/api npm run android:usb
 Si ya se guardó un servidor en esa instalación, cambiarlo en **Campo** para
 probar la API local. Para volver a la variante remota, ejecutar `npm run apk`.
 
-## Áreas de campo
+## EC2 por SSH durante el desarrollo
+
+Si el servidor todavía no ofrece HTTPS, se puede probar a través de SSH y USB
+sin cambiar su despliegue. Abre el túnel en una terminal y déjalo activo:
+
+```sh
+ssh -i /ruta/firely.pem -N -L 127.0.0.1:18080:127.0.0.1:80 ubuntu@IP_PUBLICA
+```
+
+En otra terminal, desde `web/`, compila e instala contra ese túnel:
+
+```sh
+env FIRELY_USB_API_URL=http://localhost:18080/api npm run android:usb
+```
+
+El teléfono consulta EC2 a través de la computadora. El cable y SSH deben
+permanecer activos. El acceso independiente del teléfono sigue requiriendo una
+URL pública HTTPS. Nunca se incluye el `.pem` en el APK ni en el repositorio.
+
+## Asistente móvil
+
+El chat tiene una columna en móvil, entrada fija dentro de la pantalla,
+preguntas de ejemplo y estado de conexión comprobado contra la API. Presenta
+primero el resumen y permite desplegar la evolución mensual. Se pueden elegir
+lugares ambiguos, detener una consulta, reintentar errores y empezar una
+conversación nueva. La interpretación por reglas se identifica en los detalles;
+las cifras continúan saliendo de la API.
+
+## Áreas de campo: uso
 
 1. Selecciona área, fechas, métrica, referencia y tipo en Explorar. Si quieres
    detalle diario, selecciona también el mes antes de descargar.
