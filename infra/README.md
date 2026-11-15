@@ -31,7 +31,7 @@ La API lee `./data/processed` (cámbialo con `FIRELY_DATA_PROCESSED=/ruta`). Las
    sudo find data/processed -type d -exec chmod g+s {} +
    docker compose up -d --build
    ```
-3. Abre el puerto 80/443 en el grupo de seguridad y pon HTTPS delante (CloudFront, un ALB, o Caddy con tu dominio). El contenedor `web` escucha en `FIRELY_PORT` (8080 por defecto).
+3. Abre el puerto 80/443 en el grupo de seguridad. El contenedor `web` escucha en `FIRELY_PORT` (8080 por defecto) y, con HTTPS, en `FIRELY_HTTPS_PORT` (8443 por defecto). Para el dominio, ver "Dominio y HTTPS".
 
 El procesamiento histórico completo (ingesta, H3, armonización) necesita más memoria y se corre aparte. Antes de exportar datos para despliegue, materializa los derivados:
 
@@ -92,3 +92,37 @@ Los logs no deben contener la llave de FIRMS, el token de Telegram ni el `chat_i
 ## Riesgo próximo (GFWED)
 
 `GET /risk/forecast` baja en vivo solo los renglones del pronóstico GEOS-5 de 8 días que cruzan el área (peticiones HTTP Range, IPv4) y guarda el resultado en `/state/cache/gfwed_forecast`. La climatología 1981–2010 sale de `context/fwi_longterm_month.parquet`, que se genera en local con `python -m pipeline.fwi_climatology` antes de `export-runtime-data.sh` (solo cubre Coahuila; fuera de ahí se usa la clase EFFIS absoluta).
+
+## Dominio y HTTPS (firely.lat, Cloudflare + Let's Encrypt)
+
+Cloudflare atiende el dominio (proxy, nube naranja) y se conecta al EC2 por HTTPS con un certificado de Let's Encrypt
+(modo SSL/TLS **Full (strict)**). nginx toma la IP real del visitante de `CF-Connecting-IP` solo cuando la petición
+viene de un rango de Cloudflare (`infra/nginx/cloudflare-realip.conf`), así el límite por IP cuenta visitantes.
+
+1. Cloudflare › DNS: registros `A` `firely.lat` y `www` → IP del EC2, con proxy. Borra los registros del
+   estacionamiento del registrador. Deja *Always Use HTTPS* apagado hasta tener el certificado (paso 3): si no, el
+   reto de Let's Encrypt se redirige a un HTTPS que aún no existe.
+2. En el EC2, `.env`:
+   ```
+   FIRELY_PORT=80
+   FIRELY_HTTPS_PORT=443
+   FIRELY_LETSENCRYPT_DIR=/etc/letsencrypt
+   FIRELY_PUBLIC_URL=https://firely.lat
+   FIRELY_PUBLIC_API_URL=https://firely.lat/api
+   ```
+3. Certificado (el reto HTTP-01 pasa por el puerto 80, también a través del proxy de Cloudflare):
+   ```bash
+   sudo apt-get install -y certbot
+   mkdir -p infra/certbot-webroot infra/tls-enabled && docker compose up -d --build web
+   sudo certbot certonly --webroot -w /opt/firely/infra/certbot-webroot -d firely.lat -d www.firely.lat \
+        --agree-tos --register-unsafely-without-email -n
+   cp infra/nginx/tls.conf.example infra/tls-enabled/firely.conf
+   docker compose up -d web && docker compose exec web nginx -s reload
+   ```
+4. Renovación: el paquete `certbot` instala un temporizador de systemd. Para que nginx cargue el certificado nuevo:
+   ```bash
+   printf '#!/bin/sh\ndocker compose -f /opt/firely/docker-compose.yml exec -T web nginx -s reload\n' | \
+     sudo tee /etc/letsencrypt/renewal-hooks/deploy/firely-nginx.sh && sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/firely-nginx.sh
+   sudo certbot renew --dry-run
+   ```
+5. Ya con HTTPS en el EC2: Cloudflare › SSL/TLS **Full (strict)** y Edge Certificates › *Always Use HTTPS*.

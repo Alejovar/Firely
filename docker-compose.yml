@@ -44,6 +44,12 @@ services:
         condition: service_healthy
     ports:
       - "${FIRELY_PORT:-8080}:80"
+      - "${FIRELY_HTTPS_PORT:-8443}:443"
+    # HTTPS (see infra/README.md, "Dominio y HTTPS"): an empty infra/tls-enabled/ means HTTP only.
+    volumes:
+      - ./infra/tls-enabled:/etc/nginx/firely/tls:ro
+      - ./infra/certbot-webroot:/var/www/certbot:ro
+      - ${FIRELY_LETSENCRYPT_DIR:-./infra/letsencrypt}:/etc/letsencrypt:ro
 
   # Public MCP server (streamable HTTP), reached through nginx at /mcp. Calls the API on the internal network.
   mcp:

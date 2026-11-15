@@ -30,3 +30,18 @@ dist/
 data/external/
 *.tsbuildinfo
 .duckdb_tmp/
+
+# video (HyperFrames)
+video/renders/
+video/.hyperframes/
+video/assets/vo/tmp_*
+video/ref/
+video-en/renders/
+video-en/.hyperframes/
+video-trailer/renders/
+video-trailer/.hyperframes/
+
+# HTTPS on the host (certificates and the enabled TLS server)
+infra/tls-enabled/
+infra/certbot-webroot/
+infra/letsencrypt/

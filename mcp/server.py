@@ -200,7 +200,8 @@ def http_app(path: str = "/mcp"):
     from starlette.routing import Route
 
     split = lambda name: [x.strip() for x in os.environ.get(name, "").split(",") if x.strip()]
-    hosts = split("FIRELY_MCP_ALLOWED_HOSTS") or ["localhost", "localhost:*", "127.0.0.1", "127.0.0.1:*", "54.80.16.144"]
+    hosts = split("FIRELY_MCP_ALLOWED_HOSTS") or ["localhost", "localhost:*", "127.0.0.1", "127.0.0.1:*", "54.80.16.144",
+                                                       "firely.lat", "www.firely.lat"]
     security = TransportSecuritySettings(enable_dns_rebinding_protection=True, allowed_hosts=hosts,
                                          allowed_origins=split("FIRELY_MCP_ALLOWED_ORIGINS"))
     app = mcp.streamable_http_app(streamable_http_path=path, stateless_http=True, transport_security=security,

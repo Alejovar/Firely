@@ -1,0 +1,16 @@
+# HTTPS for firely.lat with a Let's Encrypt certificate (certbot --webroot on the host).
+# Enable: cp infra/nginx/tls.conf.example infra/tls-enabled/firely.conf; docker compose up -d web
+server {
+  listen 443 ssl;
+  http2 on;
+  server_name firely.lat www.firely.lat;
+
+  ssl_certificate     /etc/letsencrypt/live/firely.lat/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/firely.lat/privkey.pem;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers off;
+  ssl_session_cache shared:firely_tls:10m;
+  ssl_session_timeout 1d;
+
+  include /etc/nginx/firely/site.conf;
+}

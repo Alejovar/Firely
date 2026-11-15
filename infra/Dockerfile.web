@@ -10,7 +10,9 @@ ENV VITE_API_URL=${VITE_API_URL}
 RUN npm run build
 
 FROM nginx:1.27-alpine
-COPY infra/nginx.conf /etc/nginx/conf.d/default.conf
+COPY infra/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY infra/nginx/site.conf infra/nginx/cloudflare-realip.conf /etc/nginx/firely/
+RUN mkdir -p /etc/nginx/firely/tls /var/www/certbot
 COPY --from=build /app/web/dist /usr/share/nginx/html
-EXPOSE 80
+EXPOSE 80 443
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD wget -qO- http://127.0.0.1/ >/dev/null || exit 1
