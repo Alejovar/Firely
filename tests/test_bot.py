@@ -13,6 +13,7 @@ META = {"methodology_version": "test-v1", "data_cutoff": "2026-08-31", "attribut
 class FakeAPITransport:
     def __init__(self, *, ambiguous=False, down=False):
         self.calls = []
+        self.subscriptions = []
         self.ambiguous = ambiguous
         self.down = down
 
@@ -23,6 +24,11 @@ class FakeAPITransport:
 
     def post(self, url, json=None):
         self.calls.append(("POST", url, json))
+        if url.endswith("/subscriptions"):
+            row = {"id": f"sub{len(self.subscriptions) + 1:02d}", "name": json["name"],
+                   "min_index": json["min_index"], "chat_id": json["chat_id"]}
+            self.subscriptions.append(row)
+            return self._response("POST", url, {**META, "subscription": {k: v for k, v in row.items() if k != "chat_id"}})
         candidates = [{"label": "Arteaga, Coahuila", "bbox": "-100.9,25.2,-100.2,25.7"}]
         if self.ambiguous:
             candidates.append({"label": "Arteaga, Michoacán", "bbox": "-102.4,18.2,-102.0,18.5"})
@@ -36,12 +42,25 @@ class FakeAPITransport:
                  "return_period_years": 8, "is_estimated": True},
                 {"year": 2021, "month": 4, "count_harm": 4, "anomaly_ratio": 0.8,
                  "return_period_years": 2, "is_estimated": False}]}
+        elif url.endswith("/alerts/preview"):
+            body = {"attribution": "NASA FIRMS", "triggered": True, "sent": False,
+                    "message": "[EJERCICIO / PRUEBA] Mensaje de prueba de Firely; no es una alerta oficial.\nÁrea: " + params["name"]}
+        elif url.endswith("/subscriptions"):
+            body = {**META, "rows": [{k: v for k, v in row.items() if k != "chat_id"}
+                                    for row in self.subscriptions if row["chat_id"] == params["chat_id"]]}
         elif url.endswith("/season"):
             body = {**META, "summary_es": "Temporada de prueba.", "rows": []}
         else:
             body = {**META, "rows": [{"rank": i, "start_date": f"202{i}-03-01",
                                         "n_hotspots_harm": i * 10} for i in range(1, 5)]}
         return self._response("GET", url, body)
+
+    def delete(self, url, params=None):
+        self.calls.append(("DELETE", url, params))
+        sub_id = url.rsplit("/", 1)[-1]
+        self.subscriptions = [row for row in self.subscriptions
+                              if not (row["id"] == sub_id and row["chat_id"] == params["chat_id"])]
+        return self._response("DELETE", url, {"deleted": sub_id})
 
 
 class FakeTelegramTransport:
@@ -135,3 +154,46 @@ def test_png_bytes():
     png = calendar_png({**META, "rows": [{"year": 2005, "month": 1,
                                          "count_harm": 7, "is_estimated": True}]})
     assert png.startswith(b"\x89PNG\r\n\x1a\n")
+
+
+def test_alert_command_replies_with_exercise_message(tmp_path):
+    api = FakeAPITransport()
+    bot, telegram = make_bot(tmp_path, api)
+    bot.handle_update(update("/alerta Arteaga"))
+    assert any(url.endswith("/alerts/preview") and params["bbox"] == "-100.9,25.2,-100.2,25.7" for _, url, params in api.calls)
+    assert telegram.messages[-1].startswith("[EJERCICIO / PRUEBA]") and "Arteaga, Coahuila" in telegram.messages[-1]
+
+
+def test_subscribe_list_and_unsubscribe(tmp_path):
+    api = FakeAPITransport()
+    bot, telegram = make_bot(tmp_path, api)
+    bot.handle_update(update("/suscribir Arteaga"))
+    posts = [call for call in api.calls if call[1].endswith("/subscriptions") and call[0] == "POST"]
+    assert posts[0][2] == {"name": "Arteaga, Coahuila", "area": {"bbox": "-100.9,25.2,-100.2,25.7"},
+                           "chat_id": 42, "min_index": 55, "lang": "es"}
+    assert "evaluación diaria" in telegram.messages[-1] and "/baja" in telegram.messages[-1]
+    bot.handle_update(update("/suscripciones"))
+    assert "Arteaga, Coahuila · umbral 55 · ID sub01" in telegram.messages[-1]
+    bot.handle_update(update("/baja sub"))
+    assert "varias" not in telegram.messages[-1] and "Arteaga, Coahuila" in telegram.messages[-1]
+    assert ("DELETE", "http://fake-api/subscriptions/sub01", {"chat_id": 42}) in api.calls
+    bot.handle_update(update("/baja"))
+    assert "No tienes suscripciones" in telegram.messages[-1]
+
+
+def test_ambiguous_subscribe_and_remove_all(tmp_path):
+    api = FakeAPITransport(ambiguous=True)
+    bot, telegram = make_bot(tmp_path, api)
+    bot.handle_update(update("/lang en"))
+    bot.handle_update(update("/suscribir Arteaga"))
+    assert "2. Arteaga, Michoacán" in telegram.messages[-1]
+    bot.handle_update(update("2"))
+    assert api.subscriptions[0]["name"] == "Arteaga, Michoacán"
+    assert "evaluated daily" in telegram.messages[-1]
+    bot.handle_update(update("/suscribir Arteaga"))
+    bot.handle_update(update("1"))
+    bot.handle_update(update("/baja sub"))
+    assert "matches several" in telegram.messages[-1] and len(api.subscriptions) == 2
+    bot.handle_update(update("/baja"))
+    assert "Arteaga, Michoacán" in telegram.messages[-1] and "Arteaga, Coahuila" in telegram.messages[-1]
+    assert api.subscriptions == []

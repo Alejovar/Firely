@@ -51,8 +51,12 @@ class FirelyClient:
         try:
             if method == "POST":
                 response = self.transport.post(self.base_url + path, json=json)
-            else:
+            elif method == "GET":
                 response = self.transport.get(self.base_url + path, params=params)
+            elif method == "DELETE":
+                response = self.transport.delete(self.base_url + path, params=params)
+            else:
+                raise ValueError("Unsupported HTTP method")
             response.raise_for_status()
             body = response.json()
             if not isinstance(body, dict):
@@ -78,6 +82,19 @@ class FirelyClient:
 
     def events(self, bbox: str) -> dict:
         return self.request("GET", "/events", params={"bbox": bbox})
+
+    def alert(self, bbox: str, name: str, lang: str) -> dict:
+        return self.request("GET", "/alerts/preview", params={"bbox": bbox, "name": name[:80], "lang": lang})
+
+    def subscribe(self, name: str, bbox: str, chat_id: int, lang: str, min_index: float = 55) -> dict:
+        return self.request("POST", "/subscriptions", json={"name": name, "area": {"bbox": bbox},
+                            "chat_id": chat_id, "min_index": min_index, "lang": lang})
+
+    def my_subscriptions(self, chat_id: int) -> dict:
+        return self.request("GET", "/subscriptions", params={"chat_id": chat_id})
+
+    def unsubscribe(self, sub_id: str, chat_id: int) -> dict:
+        return self.request("DELETE", f"/subscriptions/{sub_id}", params={"chat_id": chat_id})
 
     def outlook(self, bbox: str) -> dict:
         return self.request("GET", "/forecast", params={"bbox": bbox})

@@ -40,10 +40,14 @@ export function playCalendar(rows: CalendarRow[], onMonth:(year:number,month:num
   let stopped=false;
   const ordered=[...rows].sort((a,b)=>a.year-b.year||a.month-b.month);
   const max=Math.max(1,...ordered.map(r=>r.count_harm??0));
+  // Master chain: notes about 3x louder than before, a triangle wave (richer than a sine, so it carries on laptop
+  // speakers) and a limiter so overlapping notes never clip.
+  const limiter=ctx.createDynamicsCompressor();limiter.threshold.value=-6;limiter.knee.value=0;limiter.ratio.value=20;limiter.attack.value=.002;limiter.release.value=.1;
+  const master=ctx.createGain();master.gain.value=1;master.connect(limiter).connect(ctx.destination);
   ordered.forEach((r,i)=>{
     const start=ctx.currentTime+i*.12;
-    const volume=Math.min(.3,.05+.25*Math.sqrt((r.count_harm??0)/max));
-    const tone=(freq:number,duration:number)=>{const osc=ctx.createOscillator();const gain=ctx.createGain();osc.frequency.value=freq;osc.type='sine';gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(volume,start+.01);gain.gain.exponentialRampToValueAtTime(.001,start+duration);osc.connect(gain).connect(ctx.destination);osc.start(start);osc.stop(start+duration);};
+    const volume=Math.min(.9,.15+.75*Math.sqrt((r.count_harm??0)/max));
+    const tone=(freq:number,duration:number)=>{const osc=ctx.createOscillator();const gain=ctx.createGain();osc.frequency.value=freq;osc.type='triangle';gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(volume,start+.01);gain.gain.exponentialRampToValueAtTime(.001,start+duration);osc.connect(gain).connect(master);osc.start(start);osc.stop(start+duration);};
     tone(220+550*Math.sqrt((r.count_harm??0)/max),.1);
     if((r.anomaly_ratio??0)>=2) tone(370,.08);
     window.setTimeout(()=>{if(!stopped)onMonth(r.year,r.month)},i*120);

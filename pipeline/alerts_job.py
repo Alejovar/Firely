@@ -88,9 +88,14 @@ def evaluate(sub: dict) -> dict:
             "triggered": bool(reasons), "reasons": reasons, "data_cutoff": risk.get("data_cutoff")}
 
 
-def message(sub: dict, ev: dict) -> str:
+def message(sub: dict, ev: dict, on_demand: bool = False) -> str:
+    """Alert text. on_demand: asked for by the person who receives it (bot /alerta, web test button); it says whether
+    today's figures reach the threshold and has no unsubscribe line."""
     year, month = map(int, ev["period"].split("-"))
     lines = [PREFIX.get(sub.get("lang"), PREFIX["es"]), f"Área: {sub['name']}", ev["summary_es"]]
+    if on_demand:
+        lines.append(f"Umbral de aviso: índice {sub.get('min_index', 55):g}. "
+                     + ("Hoy SE ALCANZA: el aviso diario se enviaría." if ev["triggered"] else "Hoy no se alcanza: el aviso diario no se enviaría."))
     if ev["anomaly_ratio"] is not None:
         lines.append(f"Anomalía de {extra_routes.MONTHS[month-1].lower()} {year}: {ev['anomaly_ratio']:.1f}× la mediana "
                      f"del mismo mes ({ev['current']:.1f} frente a {ev['median']:.1f} detecciones equivalentes).")
@@ -99,7 +104,8 @@ def message(sub: dict, ev: dict) -> str:
         from urllib.parse import urlencode
         lines.append(f"Ver datos: {base}/risk?{urlencode(subs.area_params(sub['area']))}")
     lines.append(f"Fuente: {ATTRIBUTION} · methodology_version {VERSION} · corte {ev['data_cutoff'] or _cutoff()}")
-    lines.append(f"Para dejar de recibir estos ejercicios, pide al operador la baja de la suscripción {sub['id']}.")
+    if not on_demand:
+        lines.append(f"Para dejar de recibir estos ejercicios, pide al operador la baja de la suscripción {sub['id']}.")
     return "\n".join(lines)
 
 

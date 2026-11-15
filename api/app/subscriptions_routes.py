@@ -1,10 +1,8 @@
-"""Alert subscriptions (§10.1 of docs/firely-descripcion.md).
+"""Exercise alert subscriptions evaluated daily by ``pipeline.alerts_job``.
 
-A subscription is an area, a threshold and a Telegram chat. The daily job ``pipeline.alerts_job`` evaluates them with
-the real priority index (/risk) and the harmonized anomaly; nothing is sent until an operator approves the
-subscription on the server (``python -m pipeline.alerts_job --approve <id>``), and every message is marked as an
-exercise/test. The store is a JSON file in ``FIRELY_STATE_DIR`` (writable volume), guarded by a file lock because the
-API runs several workers.
+New subscriptions are approved automatically. Messages go only to the subscriber's Telegram chat,
+are marked EXERCISE/TEST, and can be stopped from Telegram with /baja. Public CAP alerts are a
+separate feature with human review. The JSON store in ``FIRELY_STATE_DIR`` is guarded by a file lock.
 """
 from __future__ import annotations
 
@@ -14,7 +12,7 @@ import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from . import db
@@ -107,10 +105,11 @@ def create_subscription(body: SubscriptionIn):
         raise HTTPException(422, "Empty area")
     if len(cells) > MAX_CELLS:
         raise HTTPException(422, detail={"code": "area_too_large", "message": f"At most {MAX_CELLS} r6 cells"})
-    item = {"id": uuid.uuid4().hex[:12], "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    item = {"id": uuid.uuid4().hex[:12], "created_at": now,
             "name": body.name, "area": params, "area_cells": len(cells), "chat_id": body.chat_id,
             "min_index": body.min_index, "min_anomaly_ratio": body.min_anomaly_ratio, "lang": body.lang,
-            "approved": False, "approved_at": None}
+            "approved": True, "approved_at": now}
     try:
         with locked():
             items = load()
@@ -121,13 +120,67 @@ def create_subscription(body: SubscriptionIn):
     except OSError as exc:
         raise HTTPException(503, detail={"code": "state_unwritable", "message": "FIRELY_STATE_DIR is not writable"}) from exc
     return {"attribution": ATTRIBUTION, "subscription": public(item),
-            "note": "Pendiente de aprobación humana: el operador la aprueba en el servidor antes de cualquier envío. "
-                    "Los mensajes van marcados como ejercicio/prueba."}
+            "note": "Los mensajes van solo al chat de la persona suscrita, marcados EJERCICIO / PRUEBA. "
+                    "Para darte de baja desde Telegram, escribe /baja."}
 
 
 @router.get("/subscriptions")
-def list_subscriptions():
-    return {"attribution": ATTRIBUTION, "rows": [public(i) for i in load()]}
+def list_subscriptions(chat_id: int | None = None):
+    return {"attribution": ATTRIBUTION, "rows": [public(i) for i in load()
+            if chat_id is None or i.get("chat_id") == chat_id]}
+
+
+TEST_COOLDOWN_S = 120
+
+
+@router.get("/alerts/preview")
+def preview_area(h3: str | None = None, bbox: str | None = None, lat: float | None = None, lon: float | None = None,
+                 radius_km: float | None = None, admin: str | None = None, name: str = Query("Área", max_length=80),
+                 min_index: float = 55.0, lang: str = "es"):
+    """Alert for an area evaluated now, without a subscription (bot /alerta, pitch demo). It is the reply to the
+    person who asks, never a broadcast."""
+    from pipeline import alerts_job
+    params = area_params({"h3": h3, "bbox": bbox, "lat": lat, "lon": lon, "radius_km": radius_km, "admin": admin})
+    if not params:
+        raise HTTPException(422, "area requires one selector (h3, bbox, lat+lon[+radius_km] or admin)")
+    item = {"id": "demo", "name": name, "area": params,
+            "min_index": max(0.0, min(100.0, min_index)), "lang": lang if lang in ("es", "en", "pt") else "es"}
+    ev = alerts_job.evaluate(item)
+    return {"attribution": ATTRIBUTION, "evaluation": ev, "triggered": ev["triggered"],
+            "message": alerts_job.message(item, ev, on_demand=True), "sent": False}
+
+
+@router.post("/subscriptions/{sub_id}/test")
+def send_test(sub_id: str):
+    """Send the exercise message of a subscription to its Telegram chat NOW (demo / operator check). Rate limited
+    per subscription; only the chat that subscribed receives it, and Telegram only delivers to chats that opened
+    the bot."""
+    from ai.intent import setting
+    from pipeline import alerts_job
+    token = setting("TELEGRAM_BOT_TOKEN")
+    if not token:
+        raise HTTPException(503, detail={"code": "telegram_not_configured", "message": "Telegram bot is not configured"})
+    now = datetime.now(timezone.utc)
+    with locked():
+        items = load()
+        item = next((i for i in items if i.get("id") == sub_id), None)
+        if item is None:
+            raise HTTPException(404, "Subscription not found")
+        if not item.get("chat_id"):
+            raise HTTPException(422, detail={"code": "no_chat", "message": "This subscription has no Telegram chat"})
+        last = item.get("last_test_at")
+        if last and (now - datetime.fromisoformat(last)).total_seconds() < TEST_COOLDOWN_S:
+            raise HTTPException(429, detail={"code": "test_cooldown", "message": f"Wait {TEST_COOLDOWN_S} s between tests"})
+        item["last_test_at"] = now.isoformat(timespec="seconds")
+        save(items)
+    ev = alerts_job.evaluate(item)
+    text = alerts_job.message(item, ev, on_demand=True)
+    try:
+        alerts_job._telegram(token).send_message(item["chat_id"], text)
+    except Exception as exc:  # noqa: BLE001 - report delivery failure, never the token
+        raise HTTPException(502, detail={"code": "telegram_failed",
+                                         "message": "Telegram rejected the message: open the bot and send /start first"}) from exc
+    return {"attribution": ATTRIBUTION, "sent": True, "triggered": ev["triggered"], "message": text}
 
 
 @router.get("/subscriptions/{sub_id}/preview")
@@ -158,13 +211,16 @@ def preview_subscription(sub_id: str):
 
 
 @router.delete("/subscriptions/{sub_id}")
-def delete_subscription(sub_id: str):
+def delete_subscription(sub_id: str, chat_id: int | None = None):
     try:
         with locked():
             items = load()
-            kept = [i for i in items if i.get("id") != sub_id]
-            if len(kept) == len(items):
+            item = next((i for i in items if i.get("id") == sub_id), None)
+            if item is None:
                 raise HTTPException(404, "Subscription not found")
+            if item.get("chat_id") is not None and item["chat_id"] != chat_id:
+                raise HTTPException(403, detail={"code": "chat_mismatch"})
+            kept = [i for i in items if i.get("id") != sub_id]
             save(kept)
     except OSError as exc:
         raise HTTPException(503, detail={"code": "state_unwritable", "message": "FIRELY_STATE_DIR is not writable"}) from exc

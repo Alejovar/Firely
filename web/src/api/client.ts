@@ -332,6 +332,8 @@ export interface SubscriptionPreview {
 }
 export const previewServerSubscription = (id: string, signal?: AbortSignal) =>
   request<SubscriptionPreview>(`/subscriptions/${encodeURIComponent(id)}/preview`, { signal });
+export const testServerSubscription = (id: string, signal?: AbortSignal) =>
+  request<{ sent: boolean; triggered: boolean; message: string }>(`/subscriptions/${encodeURIComponent(id)}/test`, { method: 'POST', signal });
 export const deleteServerSubscription = (id: string, signal?: AbortSignal) =>
   request<{ deleted: string }>(`/subscriptions/${encodeURIComponent(id)}`, { method: 'DELETE', signal });
 

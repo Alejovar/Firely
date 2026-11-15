@@ -21,6 +21,7 @@ class FakeVoice:
 def client(tmp_path, monkeypatch):
     monkeypatch.setenv("FIRELY_STATE_DIR", str(tmp_path))
     monkeypatch.setattr(tts_routes, "_voice", lambda lang: FakeVoice())
+    monkeypatch.setenv("FIRELY_TTS_ENGINE", "piper")
     app = FastAPI(); app.include_router(tts_routes.router)
     return TestClient(app)
 
@@ -37,3 +38,17 @@ def test_tts_returns_wav_and_caches(client, tmp_path):
 def test_tts_validates_input(client):
     assert client.get("/tts", params={"text": "x" * 801}).status_code == 422
     assert client.get("/tts", params={"text": "hola", "lang": "fr"}).status_code == 422
+
+
+def test_edge_first_then_piper_fallback(client, monkeypatch, tmp_path):
+    monkeypatch.setenv("FIRELY_TTS_ENGINE", "edge,piper")
+    def fake_edge(text, lang, dest):
+        dest.write_bytes(b"ID3" + b"\x00" * 2000)
+    monkeypatch.setattr(tts_routes, "_edge", fake_edge)
+    r = client.get("/tts", params={"text": "Hola", "lang": "es"})
+    assert r.headers["content-type"] == "audio/mpeg" and r.headers["x-tts-engine"] == "edge"
+    def broken_edge(text, lang, dest):
+        raise ConnectionError("offline")
+    monkeypatch.setattr(tts_routes, "_edge", broken_edge)
+    r = client.get("/tts", params={"text": "Otra frase", "lang": "es"})
+    assert r.headers["content-type"] == "audio/wav" and r.headers["x-tts-engine"] == "piper"
